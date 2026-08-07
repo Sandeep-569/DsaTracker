@@ -181,6 +181,8 @@ const TOPIC_RULES = [
 
 function getTopicOrder(topicName) {
   if (topicName === 'All Questions') return 0;
+  if (topicName === '⭐ Bookmarked Questions') return 0.5;
+  if (topicName === '✅ Solved Questions') return 0.6;
   const found = TOPIC_RULES.find(r => r.name === topicName);
   return found ? found.order : 99;
 }
@@ -229,39 +231,89 @@ function getTopicIcon(topicName) {
   return found ? found.icon : '📝';
 }
 
-// Initialize Data from LEETCODE_DATA
+const knownAcronyms = new Set(['AI', 'DB', 'DP', 'UI', 'IT', 'QA', 'ML', 'FE', 'BE', 'HR', 'US', 'UK', 'ADP', 'BCG', 'DSI', 'DHI', 'GE', 'GS', 'EPAM', 'DE', 'AQR', 'CME', 'C3', 'IIT', 'MAQ', 'BNY', 'DJA', 'ZS']);
+
+function normalizeCompanyNameKey(name) {
+  return name.toLowerCase()
+    .replace(/\b(inc|llc|corp|corporation|ltd|limited|se|lp|l\.p\.|co|company)\b/g, '')
+    .replace(/-/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function formatCompanyTitle(str) {
+  if (!str) return '';
+  if (str.toLowerCase() === 'ebay') return 'eBay';
+  if (str.includes(' ') && /[A-Z]/.test(str)) {
+    return str.trim();
+  }
+  return str.replace(/-/g, ' ').split(' ').map(w => {
+    if (!w) return '';
+    const upper = w.toUpperCase();
+    if (knownAcronyms.has(upper)) return upper;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(' ').trim();
+}
+
+// Initialize Data from LEETCODE_DATA (with company merging & capitalization normalization)
 function initData() {
   companyList = [];
   const uniqueProbs = new Set();
   const topicMap = new Map();
 
-  for (const [name, rawProblems] of Object.entries(LEETCODE_DATA)) {
-    let e = 0, m = 0, h = 0;
+  const mergedCompanyMap = new Map();
 
-    const problems = rawProblems.map(p => {
+  for (const [rawName, rawProblems] of Object.entries(LEETCODE_DATA)) {
+    const normKey = normalizeCompanyNameKey(rawName);
+
+    if (!mergedCompanyMap.has(normKey)) {
+      mergedCompanyMap.set(normKey, {
+        name: formatCompanyTitle(rawName),
+        problemsMap: new Map()
+      });
+    } else {
+      const existing = mergedCompanyMap.get(normKey);
+      if (rawName.includes(' ') && /[A-Z]/.test(rawName) && (!existing.name.includes(' ') || !/[A-Z]/.test(existing.name))) {
+        existing.name = rawName.trim();
+      }
+    }
+
+    const companyEntry = mergedCompanyMap.get(normKey);
+
+    rawProblems.forEach(p => {
       uniqueProbs.add(p.title);
-      if (p.diff === 'Easy') e++;
-      else if (p.diff === 'Medium') m++;
-      else if (p.diff === 'Hard') h++;
-
       const tags = getTopicsForProblem(p);
       tags.forEach(t => {
         topicMap.set(t, (topicMap.get(t) || 0) + 1);
       });
 
-      return {
-        ...p,
-        tags
-      };
+      if (!companyEntry.problemsMap.has(p.title)) {
+        companyEntry.problemsMap.set(p.title, {
+          ...p,
+          tags
+        });
+      }
+    });
+  }
+
+  // Convert merged map to companyList array
+  mergedCompanyMap.forEach((entry) => {
+    const problems = Array.from(entry.problemsMap.values());
+    let e = 0, m = 0, h = 0;
+    problems.forEach(p => {
+      if (p.diff === 'Easy') e++;
+      else if (p.diff === 'Medium') m++;
+      else if (p.diff === 'Hard') h++;
     });
 
     companyList.push({
-      name,
+      name: entry.name,
       total: problems.length,
       e, m, h,
       problems
     });
-  }
+  });
 
   totalUniqueCount = uniqueProbs.size;
 
@@ -506,13 +558,6 @@ function renderHomeProblemsResults(problemsList) {
     const starBtn = tr.querySelector('.star-btn');
     starBtn.addEventListener('click', (e) => toggleStar(p.title, e));
 
-    // Row click opens LeetCode link
-    tr.onclick = (e) => {
-      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON' && !e.target.classList.contains('topic-tag')) {
-        window.open(p.url, '_blank');
-      }
-    };
-
     frag.appendChild(tr);
   });
 
@@ -534,6 +579,8 @@ function openCompany(companyObj) {
   document.getElementById('company-topics-title').textContent = `${companyObj.name} LeetCode Topics`;
 
   document.getElementById('home-view').classList.add('hidden');
+  document.getElementById('bookmarks-view')?.classList.remove('active');
+  document.getElementById('solved-view')?.classList.remove('active');
   document.getElementById('company-topics-view').classList.add('active');
   document.getElementById('topic-problems-view').classList.remove('active');
 
@@ -567,6 +614,30 @@ function renderCompanyTopics() {
     e: currentCompanyObj.e,
     m: currentCompanyObj.m,
     h: currentCompanyObj.h
+  });
+
+  // Special "⭐ Bookmarked Questions" card for this company
+  const companyStarred = currentCompanyObj.problems.filter(p => starredProblems.has(p.title));
+  topicMap.set('⭐ Bookmarked Questions', {
+    name: '⭐ Bookmarked Questions',
+    icon: '⭐',
+    problems: companyStarred,
+    total: companyStarred.length,
+    e: companyStarred.filter(p => p.diff === 'Easy').length,
+    m: companyStarred.filter(p => p.diff === 'Medium').length,
+    h: companyStarred.filter(p => p.diff === 'Hard').length
+  });
+
+  // Special "✅ Solved Questions" card for this company
+  const companySolved = currentCompanyObj.problems.filter(p => solvedProblems.has(p.title));
+  topicMap.set('✅ Solved Questions', {
+    name: '✅ Solved Questions',
+    icon: '✅',
+    problems: companySolved,
+    total: companySolved.length,
+    e: companySolved.filter(p => p.diff === 'Easy').length,
+    m: companySolved.filter(p => p.diff === 'Medium').length,
+    h: companySolved.filter(p => p.diff === 'Hard').length
   });
 
   currentCompanyObj.problems.forEach(p => {
@@ -675,6 +746,10 @@ function renderTopicProblems() {
   let pool = [];
   if (currentTopicName === 'All Questions') {
     pool = currentCompanyObj.problems;
+  } else if (currentTopicName === '⭐ Bookmarked Questions') {
+    pool = currentCompanyObj.problems.filter(p => starredProblems.has(p.title));
+  } else if (currentTopicName === '✅ Solved Questions') {
+    pool = currentCompanyObj.problems.filter(p => solvedProblems.has(p.title));
   } else {
     pool = currentCompanyObj.problems.filter(p => p.tags.includes(currentTopicName));
   }
@@ -816,12 +891,181 @@ function renderProblemTableSection(tbodyId, sectionId, problemsList) {
       });
     });
 
-    // Row click opens LeetCode link
-    tr.onclick = (e) => {
-      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON' && !e.target.classList.contains('topic-tag')) {
-        window.open(p.url, '_blank');
+    frag.appendChild(tr);
+  });
+
+  tbody.appendChild(frag);
+}
+
+// ----------------------------------------------------
+// 4. BOOKMARKS VIEW: All Bookmarked Questions
+// ----------------------------------------------------
+let currentBookmarkFilter = 'All';
+
+function openBookmarksView() {
+  document.getElementById('home-view').classList.add('hidden');
+  document.getElementById('company-topics-view')?.classList.remove('active');
+  document.getElementById('topic-problems-view')?.classList.remove('active');
+  document.getElementById('bookmarks-view')?.classList.add('active');
+
+  const searchEl = document.getElementById('bookmarks-search');
+  if (searchEl) searchEl.value = '';
+
+  setBookmarkFilter('All');
+  window.scrollTo(0, 0);
+}
+
+function setBookmarkFilter(diff) {
+  currentBookmarkFilter = diff;
+  document.querySelectorAll('#bookmarks-filters-container .filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === diff);
+  });
+  renderBookmarksView();
+}
+
+function renderBookmarksView() {
+  const query = (document.getElementById('bookmarks-search')?.value || '').trim().toLowerCase();
+
+  // Deduplicate and aggregate starred problems across all companies
+  const probMap = new Map();
+  companyList.forEach(c => {
+    c.problems.forEach(p => {
+      if (!starredProblems.has(p.title)) return;
+
+      const normTitle = p.title.trim();
+      if (!probMap.has(normTitle)) {
+        probMap.set(normTitle, {
+          ...p,
+          title: normTitle,
+          companies: [c.name]
+        });
+      } else {
+        const existing = probMap.get(normTitle);
+        if (!existing.companies.includes(c.name)) {
+          existing.companies.push(c.name);
+        }
       }
-    };
+    });
+  });
+
+  let pool = Array.from(probMap.values());
+
+  // Apply Status / Difficulty Filter
+  if (currentBookmarkFilter === 'Easy' || currentBookmarkFilter === 'Medium' || currentBookmarkFilter === 'Hard') {
+    pool = pool.filter(p => p.diff === currentBookmarkFilter);
+  } else if (currentBookmarkFilter === 'Solved') {
+    pool = pool.filter(p => solvedProblems.has(p.title));
+  }
+
+  // Apply Search Query Filter (title, topic tags, or company names)
+  if (query) {
+    pool = pool.filter(p =>
+      p.title.toLowerCase().includes(query) ||
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) ||
+      (p.companies && p.companies.some(c => c.toLowerCase().includes(query)))
+    );
+  }
+
+  const emptyState = document.getElementById('bookmarks-empty-state');
+  if (pool.length === 0) {
+    if (emptyState) emptyState.style.display = 'block';
+    document.getElementById('bm-section-easy').style.display = 'none';
+    document.getElementById('bm-section-medium').style.display = 'none';
+    document.getElementById('bm-section-hard').style.display = 'none';
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = 'none';
+
+  // Sort problems topic-wise (basic→advanced) then alphabetically
+  pool = sortProblemsByTopic(pool);
+
+  const easyProblems = pool.filter(p => p.diff === 'Easy');
+  const medProblems = pool.filter(p => p.diff === 'Medium');
+  const hardProblems = pool.filter(p => p.diff === 'Hard');
+
+  document.getElementById('bm-count-easy').textContent = `${easyProblems.length} Problems`;
+  document.getElementById('bm-count-medium').textContent = `${medProblems.length} Problems`;
+  document.getElementById('bm-count-hard').textContent = `${hardProblems.length} Problems`;
+
+  renderBookmarkTableSection('bm-tbody-easy', 'bm-section-easy', easyProblems);
+  renderBookmarkTableSection('bm-tbody-medium', 'bm-section-medium', medProblems);
+  renderBookmarkTableSection('bm-tbody-hard', 'bm-section-hard', hardProblems);
+}
+
+function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
+  const tbody = document.getElementById(tbodyId);
+  const section = document.getElementById(sectionId);
+  if (!tbody || !section) return;
+
+  tbody.innerHTML = '';
+
+  if (problemsList.length === 0) {
+    if (currentBookmarkFilter !== 'All' && currentBookmarkFilter !== 'Solved') {
+      section.style.display = 'none';
+    } else {
+      section.style.display = 'block';
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="padding: 24px 16px;">No questions in this section.</td></tr>`;
+    }
+    return;
+  }
+
+  section.style.display = 'block';
+  const frag = document.createDocumentFragment();
+
+  problemsList.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.className = 'row';
+
+    const isSolved = solvedProblems.has(p.title);
+    const isStarred = starredProblems.has(p.title);
+
+    const tagsHTML = p.tags && p.tags.length > 0 ? `<div class="tags-row">${p.tags.map(t => `<span class="topic-tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
+
+    let companyBadgeHTML = '';
+    if (p.companies && p.companies.length > 0) {
+      const maxShown = 2;
+      const shown = p.companies.slice(0, maxShown);
+      const remaining = p.companies.length - maxShown;
+
+      companyBadgeHTML = shown.map(comp => 
+        `<button class="back-btn" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName('${escapeHtml(comp)}')">🏢 ${escapeHtml(comp)}</button>`
+      ).join('');
+
+      if (remaining > 0) {
+        companyBadgeHTML += `<span style="font-size: 11px; color: var(--text-secondary); font-family: var(--mono);" title="${escapeHtml(p.companies.join(', '))}">+${remaining} more</span>`;
+      }
+    }
+
+    tr.innerHTML = `
+      <td class="cb-cell">
+        <input type="checkbox" class="status-cb" ${isSolved ? 'checked' : ''}>
+      </td>
+      <td style="text-align:center;">
+        <button class="star-btn ${isStarred ? 'starred' : ''}" title="${isStarred ? 'Unstar' : 'Bookmark for revision'}">
+          ★
+        </button>
+      </td>
+      <td>
+        <div class="prob-title">
+          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${escapeHtml(p.title)}</a>
+          ${tagsHTML}
+        </div>
+      </td>
+      <td>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px;">
+          ${companyBadgeHTML}
+        </div>
+      </td>
+      <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
+      <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
+    `;
+
+    const cb = tr.querySelector('.status-cb');
+    cb.addEventListener('click', (e) => toggleSolved(p.title, e));
+
+    const starBtn = tr.querySelector('.star-btn');
+    starBtn.addEventListener('click', (e) => toggleStar(p.title, e));
 
     frag.appendChild(tr);
   });
@@ -857,6 +1101,8 @@ function goBackToCompanyTopics() {
 function goHome() {
   document.getElementById('company-topics-view').classList.remove('active');
   document.getElementById('topic-problems-view').classList.remove('active');
+  document.getElementById('bookmarks-view')?.classList.remove('active');
+  document.getElementById('solved-view')?.classList.remove('active');
   document.getElementById('home-view').classList.remove('hidden');
   currentCompanyObj = null;
   currentTopicName = null;
@@ -881,8 +1127,14 @@ function toggleSolved(title, event) {
     solvedProblems.add(title);
   }
   updateSolvedStats();
-  if (document.getElementById('topic-problems-view').classList.contains('active')) {
+  if (document.getElementById('solved-view')?.classList.contains('active')) {
+    renderSolvedView();
+  } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+    renderBookmarksView();
+  } else if (document.getElementById('topic-problems-view').classList.contains('active')) {
     renderTopicProblems();
+  } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    renderCompanyTopics();
   } else if (!document.getElementById('home-view').classList.contains('hidden')) {
     filterCompanies();
   }
@@ -897,8 +1149,14 @@ function toggleStar(title, event) {
     starredProblems.add(title);
   }
   updateStarredStats();
-  if (document.getElementById('topic-problems-view').classList.contains('active')) {
+  if (document.getElementById('solved-view')?.classList.contains('active')) {
+    renderSolvedView();
+  } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+    renderBookmarksView();
+  } else if (document.getElementById('topic-problems-view').classList.contains('active')) {
     renderTopicProblems();
+  } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    renderCompanyTopics();
   } else if (!document.getElementById('home-view').classList.contains('hidden')) {
     filterCompanies();
   }
