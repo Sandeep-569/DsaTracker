@@ -1,24 +1,13 @@
-// App State & Local Storage Management
+// App State & Secure In-Memory Management
 let companyList = [];
 let maxTotal = 1;
 let currentCompanyObj = null;
 let currentTopicName = null;
 let currentTopicFilter = 'All';
 
-// Safe LocalStorage Helper
-function getStorageItem(key, fallback) {
-  try {
-    const val = localStorage.getItem(key);
-    return val ? JSON.parse(val) : fallback;
-  } catch (e) {
-    console.warn(`Error reading localStorage key "${key}":`, e);
-    return fallback;
-  }
-}
-
-let solvedProblems = new Set(getStorageItem('leetcode_solved_v1', []));
-let starredProblems = new Set(getStorageItem('leetcode_starred_v1', []));
-
+// In-Memory Progress Sets (populates only after authenticated)
+let solvedProblems = new Set();
+let starredProblems = new Set();
 let totalUniqueCount = 0;
 
 // ============================================================
