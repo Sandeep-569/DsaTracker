@@ -345,6 +345,8 @@ function updateSolvedStats() {
   const textEl = document.getElementById('overall-progress-text');
   if (fillEl) fillEl.style.width = `${pct}%`;
   if (textEl) textEl.textContent = `${solvedProblems.size} / ${totalUniqueCount} (${pct}%) Completed`;
+
+  syncToCloudDebounced();
 }
 
 function updateStarredStats() {
@@ -354,6 +356,8 @@ function updateStarredStats() {
   } catch (e) {
     console.error("Error saving starred problems to localStorage:", e);
   }
+
+  syncToCloudDebounced();
 }
 
 // Company Sorting
@@ -1180,8 +1184,635 @@ function closeModal() {
   document.getElementById('random-modal').classList.remove('active');
 }
 
+// ============================================================
+// DATA BACKUP & RESTORE (EXPORT / IMPORT) WITH LOCALSTORAGE SYNC
+// ============================================================
+
+function openBackupModal() {
+  const statSolvedEl = document.getElementById('backup-stat-solved');
+  const statStarredEl = document.getElementById('backup-stat-starred');
+  if (statSolvedEl) statSolvedEl.textContent = solvedProblems.size.toLocaleString();
+  if (statStarredEl) statStarredEl.textContent = starredProblems.size.toLocaleString();
+
+  // Reset file input & paste area
+  const fileInput = document.getElementById('backup-file-input');
+  if (fileInput) fileInput.value = '';
+  const pasteArea = document.getElementById('import-paste-area');
+  if (pasteArea) pasteArea.value = '';
+  const dropzoneText = document.getElementById('dropzone-text');
+  if (dropzoneText) dropzoneText.textContent = 'Click to choose JSON file or drag & drop';
+
+  document.getElementById('backup-modal')?.classList.add('active');
+}
+
+function closeBackupModal() {
+  document.getElementById('backup-modal')?.classList.remove('active');
+}
+
+function generateBackupPayload() {
+  return {
+    version: '1.0',
+    app: 'DSA Tracker',
+    exportedAt: new Date().toISOString(),
+    stats: {
+      solvedCount: solvedProblems.size,
+      starredCount: starredProblems.size
+    },
+    solvedProblems: Array.from(solvedProblems),
+    starredProblems: Array.from(starredProblems)
+  };
+}
+
+function exportDataToFile() {
+  try {
+    const payload = generateBackupPayload();
+    const jsonStr = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `dsa-tracker-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    showToast(`✅ Exported ${payload.stats.solvedCount} solved & ${payload.stats.starredCount} bookmarked questions!`, 'success');
+  } catch (err) {
+    console.error('Export error:', err);
+    showToast('❌ Failed to export backup file.', 'error');
+  }
+}
+
+async function copyBackupToClipboard() {
+  try {
+    const payload = generateBackupPayload();
+    const jsonStr = JSON.stringify(payload, null, 2);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(jsonStr);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = jsonStr;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+
+    showToast('📋 Backup JSON copied to clipboard!', 'success');
+  } catch (err) {
+    console.error('Clipboard copy error:', err);
+    showToast('❌ Failed to copy to clipboard.', 'error');
+  }
+}
+
+function parseImportJson(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    throw new Error('Invalid JSON format. Please ensure your backup is valid JSON.');
+  }
+
+  if (!parsed) {
+    throw new Error('Empty JSON backup.');
+  }
+
+  let solvedList = [];
+  let starredList = [];
+
+  // Format 1: Standard structured format { solvedProblems: [...], starredProblems: [...] }
+  if (Array.isArray(parsed.solvedProblems)) {
+    solvedList = parsed.solvedProblems;
+  } else if (Array.isArray(parsed.solved)) {
+    solvedList = parsed.solved;
+  } else if (Array.isArray(parsed.leetcode_solved_v1)) {
+    solvedList = parsed.leetcode_solved_v1;
+  }
+
+  if (Array.isArray(parsed.starredProblems)) {
+    starredList = parsed.starredProblems;
+  } else if (Array.isArray(parsed.starred)) {
+    starredList = parsed.starred;
+  } else if (Array.isArray(parsed.leetcode_starred_v1)) {
+    starredList = parsed.leetcode_starred_v1;
+  }
+
+  // Format 2: Raw Array of solved problems
+  if (Array.isArray(parsed) && solvedList.length === 0 && starredList.length === 0) {
+    solvedList = parsed;
+  }
+
+  // Sanitize: ensure string array, trimmed, remove empties
+  solvedList = solvedList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
+  starredList = starredList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
+
+  if (solvedList.length === 0 && starredList.length === 0) {
+    throw new Error('No valid solved or bookmarked questions found in this backup.');
+  }
+
+  return { solvedList, starredList };
+}
+
+function processImportJsonString(jsonString) {
+  try {
+    const { solvedList, starredList } = parseImportJson(jsonString);
+
+    const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
+
+    if (mode === 'overwrite') {
+      solvedProblems = new Set(solvedList);
+      starredProblems = new Set(starredList);
+    } else {
+      // Merge mode
+      solvedList.forEach(p => solvedProblems.add(p));
+      starredList.forEach(p => starredProblems.add(p));
+    }
+
+    // Persist to localStorage using existing storage keys & update UI
+    updateSolvedStats();
+    updateStarredStats();
+
+    // Re-render currently active view
+    if (document.getElementById('solved-view')?.classList.contains('active')) {
+      renderSolvedView();
+    } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+      renderBookmarksView();
+    } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+      renderTopicProblems();
+    } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+      renderCompanyTopics();
+    } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+      filterCompanies();
+    }
+
+    // Update modal stats
+    const statSolvedEl = document.getElementById('backup-stat-solved');
+    const statStarredEl = document.getElementById('backup-stat-starred');
+    if (statSolvedEl) statSolvedEl.textContent = solvedProblems.size.toLocaleString();
+    if (statStarredEl) statStarredEl.textContent = starredProblems.size.toLocaleString();
+
+    showToast(`🎉 Successfully imported (${mode === 'overwrite' ? 'Overwritten' : 'Merged'}): ${solvedList.length} solved, ${starredList.length} bookmarked!`, 'success');
+    closeBackupModal();
+  } catch (err) {
+    console.error('Import error:', err);
+    showToast(`❌ Import failed: ${err.message}`, 'error');
+  }
+}
+
+function handleFileSelect(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const dropzoneText = document.getElementById('dropzone-text');
+  if (dropzoneText) dropzoneText.textContent = `Reading ${file.name}...`;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    processImportJsonString(text);
+  };
+  reader.onerror = () => {
+    showToast('❌ Error reading selected file.', 'error');
+  };
+  reader.readAsText(file);
+}
+
+function handlePasteImport() {
+  const pasteArea = document.getElementById('import-paste-area');
+  const text = (pasteArea?.value || '').trim();
+  if (!text) {
+    showToast('⚠️ Please paste JSON backup text first.', 'error');
+    return;
+  }
+  processImportJsonString(text);
+}
+
+function resetAllProgress() {
+  const count = solvedProblems.size + starredProblems.size;
+  if (count === 0) {
+    showToast('ℹ️ No saved progress to reset.', 'info');
+    return;
+  }
+
+  const confirmed = window.confirm(`Are you sure you want to reset all progress?\n\nThis will permanently clear ${solvedProblems.size} solved questions and ${starredProblems.size} bookmarks from browser storage.\n\nMake sure to Export a backup if you want to keep your progress!`);
+  if (!confirmed) return;
+
+  solvedProblems.clear();
+  starredProblems.clear();
+
+  updateSolvedStats();
+  updateStarredStats();
+
+  if (document.getElementById('solved-view')?.classList.contains('active')) {
+    renderSolvedView();
+  } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+    renderBookmarksView();
+  } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+    renderTopicProblems();
+  } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    renderCompanyTopics();
+  } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+    filterCompanies();
+  }
+
+  showToast('🧹 All progress has been reset.', 'info');
+  closeBackupModal();
+}
+
+// Toast Notifications System
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  const iconMap = {
+    success: '✅',
+    error: '❌',
+    info: 'ℹ️'
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${iconMap[type] || '🔔'}</span>
+    <span class="toast-msg">${message}</span>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px) scale(0.95)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3800);
+}
+
+// Drag & Drop Setup for Dropzone
+function setupDropzone() {
+  const dropzone = document.getElementById('backup-dropzone');
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      const dropzoneText = document.getElementById('dropzone-text');
+      if (dropzoneText) dropzoneText.textContent = `Reading ${file.name}...`;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        processImportJsonString(ev.target.result);
+      };
+      reader.onerror = () => {
+        showToast('❌ Error reading dropped file.', 'error');
+      };
+      reader.readAsText(file);
+    }
+  });
+}
+
+// Debounced Cloud Sync
+let cloudSyncTimeout = null;
+function syncToCloudDebounced() {
+  if (cloudSyncTimeout) clearTimeout(cloudSyncTimeout);
+  cloudSyncTimeout = setTimeout(() => {
+    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      window.FirebaseService.saveProgressToCloud(
+        Array.from(solvedProblems),
+        Array.from(starredProblems)
+      );
+    }
+  }, 1000);
+}
+
+// ============================================================
+// FIREBASE AUTH & CLOUD SYNC CONTROLLERS
+// ============================================================
+
+let isAuthModeSignUp = false;
+
+function openAuthModal(tab = 'auth') {
+  switchAuthTab(tab);
+
+  // Populate active config in config tab
+  const configInput = document.getElementById('firebase-config-input');
+  if (configInput && window.FirebaseService) {
+    const cfg = window.FirebaseService.getFirebaseConfig();
+    configInput.value = JSON.stringify(cfg, null, 2);
+  }
+
+  // Update profile counts if user is logged in
+  const user = window.FirebaseService?.getCurrentUser();
+  if (user) {
+    updateAuthUserUI(user);
+  }
+
+  document.getElementById('auth-modal')?.classList.add('active');
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal')?.classList.remove('active');
+}
+
+function switchAuthTab(tabName) {
+  const tabAuthBtn = document.getElementById('tab-btn-auth');
+  const tabConfigBtn = document.getElementById('tab-btn-config');
+  const tabAuthContent = document.getElementById('auth-tab-account');
+  const tabConfigContent = document.getElementById('auth-tab-config');
+
+  if (tabName === 'config') {
+    tabAuthBtn?.classList.remove('active');
+    tabConfigBtn?.classList.add('active');
+    if (tabAuthContent) tabAuthContent.style.display = 'none';
+    if (tabConfigContent) tabConfigContent.style.display = 'block';
+  } else {
+    tabConfigBtn?.classList.remove('active');
+    tabAuthBtn?.classList.add('active');
+    if (tabConfigContent) tabConfigContent.style.display = 'none';
+    if (tabAuthContent) tabAuthContent.style.display = 'block';
+  }
+}
+
+function toggleAuthMode() {
+  isAuthModeSignUp = !isAuthModeSignUp;
+  const nameField = document.getElementById('auth-signup-name-field');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const switchText = document.getElementById('auth-switch-text');
+  const switchBtn = document.getElementById('auth-switch-btn');
+
+  if (isAuthModeSignUp) {
+    if (nameField) nameField.style.display = 'block';
+    if (submitBtn) submitBtn.textContent = 'Create Account';
+    if (switchText) switchText.textContent = 'Already have an account?';
+    if (switchBtn) switchBtn.textContent = 'Sign In';
+  } else {
+    if (nameField) nameField.style.display = 'none';
+    if (submitBtn) submitBtn.textContent = 'Sign In';
+    if (switchText) switchText.textContent = "Don't have an account?";
+    if (switchBtn) switchBtn.textContent = 'Sign Up';
+  }
+}
+
+async function handleGoogleSignIn() {
+  if (!window.FirebaseService || !window.FirebaseService.isFirebaseConfigured()) {
+    showToast("⚠️ Please connect your Firebase project in 'Firebase Setup' tab first.", "error");
+    switchAuthTab('config');
+    return;
+  }
+  try {
+    const user = await window.FirebaseService.signInWithGoogle();
+    showToast(`👋 Welcome back, ${user.displayName || user.email}!`, 'success');
+  } catch (err) {
+    showToast(`❌ Google Sign-In failed: ${err.message}`, 'error');
+  }
+}
+
+async function handleEmailAuthSubmit(e) {
+  e.preventDefault();
+  if (!window.FirebaseService || !window.FirebaseService.isFirebaseConfigured()) {
+    showToast("⚠️ Please connect your Firebase project in 'Firebase Setup' tab first.", "error");
+    switchAuthTab('config');
+    return;
+  }
+
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const displayName = document.getElementById('auth-display-name')?.value.trim() || '';
+
+  try {
+    if (isAuthModeSignUp) {
+      const user = await window.FirebaseService.signUpWithEmail(email, password, displayName);
+      showToast(`🎉 Account created! Welcome, ${displayName || email}`, 'success');
+    } else {
+      const user = await window.FirebaseService.signInWithEmail(email, password);
+      showToast(`👋 Signed in as ${user.displayName || user.email}`, 'success');
+    }
+  } catch (err) {
+    showToast(`❌ Authentication failed: ${err.message}`, 'error');
+  }
+}
+
+async function handleSignOut() {
+  try {
+    if (window.FirebaseService) {
+      await window.FirebaseService.logoutUser();
+    }
+    showToast("👋 Signed out successfully.", "info");
+  } catch (err) {
+    showToast(`❌ Sign out failed: ${err.message}`, 'error');
+  }
+}
+
+async function triggerManualCloudSync() {
+  if (!window.FirebaseService || !window.FirebaseService.getCurrentUser()) {
+    showToast("⚠️ Please sign in to sync with Cloud Firestore.", "error");
+    return;
+  }
+  try {
+    const success = await window.FirebaseService.saveProgressToCloud(
+      Array.from(solvedProblems),
+      Array.from(starredProblems)
+    );
+    if (success) {
+      showToast("☁️ Progress successfully synced to Cloud Firestore!", "success");
+    }
+  } catch (err) {
+    showToast(`❌ Sync failed: ${err.message}`, "error");
+  }
+}
+
+function handleSaveFirebaseConfig() {
+  const text = document.getElementById('firebase-config-input')?.value.trim();
+  if (!text) {
+    showToast("⚠️ Please paste your Firebase config.", "error");
+    return;
+  }
+
+  try {
+    let cleanJson = text;
+    if (cleanJson.includes('{') && cleanJson.includes('}')) {
+      const start = cleanJson.indexOf('{');
+      const end = cleanJson.lastIndexOf('}') + 1;
+      cleanJson = cleanJson.slice(start, end);
+    }
+    cleanJson = cleanJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
+
+    const configObj = JSON.parse(cleanJson);
+    const success = window.FirebaseService.saveFirebaseConfig(configObj);
+    if (success) {
+      showToast("🔥 Firebase connected successfully!", "success");
+      switchAuthTab('auth');
+    } else {
+      showToast("❌ Could not initialize Firebase with provided config.", "error");
+    }
+  } catch (err) {
+    console.error("Config parse error:", err);
+    showToast("❌ Invalid config format. Please ensure valid JSON.", "error");
+  }
+}
+
+function handleResetFirebaseConfig() {
+  if (window.FirebaseService) {
+    window.FirebaseService.clearFirebaseConfig();
+    showToast("Reset to Local Storage mode.", "info");
+  }
+  const configInput = document.getElementById('firebase-config-input');
+  if (configInput) configInput.value = '';
+}
+
+function updateAuthUserUI(user) {
+  const authBtn = document.getElementById('auth-btn');
+  const authLabel = document.getElementById('auth-btn-label');
+  const syncDot = document.getElementById('sync-dot');
+  const loggedOutView = document.getElementById('auth-logged-out-view');
+  const loggedInView = document.getElementById('auth-logged-in-view');
+
+  if (user) {
+    const name = user.displayName || user.email.split('@')[0];
+    if (authLabel) authLabel.textContent = name;
+    if (authBtn) {
+      authBtn.classList.add('logged-in');
+      authBtn.title = `Signed in as ${user.email} (Cloud Sync Active)`;
+    }
+    if (syncDot) syncDot.className = 'sync-dot synced';
+
+    if (loggedOutView) loggedOutView.style.display = 'none';
+    if (loggedInView) loggedInView.style.display = 'block';
+
+    const userDispName = document.getElementById('user-display-name');
+    const userEmail = document.getElementById('user-email');
+    const userAvatar = document.getElementById('user-avatar');
+    const pSolved = document.getElementById('profile-solved-count');
+    const pStarred = document.getElementById('profile-starred-count');
+
+    if (userDispName) userDispName.textContent = user.displayName || 'Learner';
+    if (userEmail) userEmail.textContent = user.email || '';
+    if (pSolved) pSolved.textContent = solvedProblems.size;
+    if (pStarred) pStarred.textContent = starredProblems.size;
+
+    if (userAvatar) {
+      if (user.photoURL) {
+        userAvatar.innerHTML = `<img src="${escapeHtml(user.photoURL)}" alt="Avatar">`;
+      } else {
+        const initial = (user.displayName || user.email || 'U')[0].toUpperCase();
+        userAvatar.textContent = initial;
+      }
+    }
+  } else {
+    if (authLabel) authLabel.textContent = 'Cloud Sync';
+    if (authBtn) {
+      authBtn.classList.remove('logged-in');
+      authBtn.title = 'Firebase Cloud Sync & Account';
+    }
+    if (syncDot) syncDot.className = 'sync-dot';
+
+    if (loggedOutView) loggedOutView.style.display = 'block';
+    if (loggedInView) loggedInView.style.display = 'none';
+  }
+}
+
+// Global Firebase Event Listeners
+window.addEventListener('firebase-auth-change', (e) => {
+  const user = e.detail?.user;
+  updateAuthUserUI(user);
+});
+
+window.addEventListener('cloud-data-received', (e) => {
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred } = e.detail;
+  let changed = false;
+
+  if (Array.isArray(cloudSolved)) {
+    cloudSolved.forEach(p => {
+      if (!solvedProblems.has(p)) {
+        solvedProblems.add(p);
+        changed = true;
+      }
+    });
+  }
+
+  if (Array.isArray(cloudStarred)) {
+    cloudStarred.forEach(p => {
+      if (!starredProblems.has(p)) {
+        starredProblems.add(p);
+        changed = true;
+      }
+    });
+  }
+
+  if (changed) {
+    updateSolvedStats();
+    updateStarredStats();
+    if (document.getElementById('solved-view')?.classList.contains('active')) {
+      renderSolvedView();
+    } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+      renderBookmarksView();
+    } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+      renderTopicProblems();
+    } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+      renderCompanyTopics();
+    } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+      filterCompanies();
+    }
+    showToast("☁️ Progress updated from Cloud Firestore!", "info");
+  }
+});
+
+window.addEventListener('cloud-new-user-init', () => {
+  // Push local progress to cloud for brand new user
+  if (solvedProblems.size > 0 || starredProblems.size > 0) {
+    if (window.FirebaseService) {
+      window.FirebaseService.saveProgressToCloud(
+        Array.from(solvedProblems),
+        Array.from(starredProblems)
+      );
+    }
+  }
+});
+
+window.addEventListener('cloud-sync-status', (e) => {
+  const syncDot = document.getElementById('sync-dot');
+  const statusText = document.getElementById('cloud-sync-status-text');
+  const status = e.detail?.status;
+
+  if (syncDot) {
+    if (status === 'synced') syncDot.className = 'sync-dot synced';
+    else if (status === 'syncing') syncDot.className = 'sync-dot syncing';
+    else if (status === 'error') syncDot.className = 'sync-dot error';
+  }
+
+  if (statusText) {
+    if (status === 'synced') statusText.textContent = `Synced (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+    else if (status === 'syncing') statusText.textContent = 'Syncing...';
+    else if (status === 'error') statusText.textContent = 'Sync Error';
+  }
+});
+
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
   initData();
   renderCompanies();
+  setupDropzone();
 });

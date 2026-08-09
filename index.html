@@ -34,27 +34,42 @@
             <p>Master top-asked interview questions curated by frequency & difficulty</p>
           </div>
         </div>
-        <div class="social-links">
-          <a href="https://www.linkedin.com/in/sandeep-kumar-saha-69a149386/" id="linkedin-link" target="_blank" class="social-btn linkedin" title="Sandeep Kumar Saha on LinkedIn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+        <div class="header-actions">
+          <button class="social-btn auth-btn" id="auth-btn" onclick="openAuthModal()" title="Firebase Cloud Sync & Account">
+            <span class="auth-icon" id="auth-btn-icon">☁️</span>
+            <span id="auth-btn-label">Cloud Sync</span>
+            <span class="sync-dot" id="sync-dot"></span>
+          </button>
+          <button class="social-btn backup-btn" id="backup-btn" onclick="openBackupModal()" title="Export or Import DSA progress">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <span>LinkedIn</span>
-          </a>
-          <a href="https://github.com/Sandeep-569" id="github-link" target="_blank" class="social-btn github" title="Sandeep-569 on GitHub">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
-            </svg>
-            <span>GitHub</span>
-          </a>
-          <a href="https://leetcode.com/u/codedbysandeep/" id="leetcode-link" target="_blank" class="social-btn leetcode" title="codedbysandeep on LeetCode">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z" fill="#B3B3B3"/>
-              <path d="M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
-              <path d="M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
-            </svg>
-            <span>LeetCode</span>
-          </a>
+            <span>Backup / Restore</span>
+          </button>
+          <div class="social-links">
+            <a href="https://www.linkedin.com/in/sandeep-kumar-saha-69a149386/" id="linkedin-link" target="_blank" class="social-btn linkedin" title="Sandeep Kumar Saha on LinkedIn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+              </svg>
+              <span>LinkedIn</span>
+            </a>
+            <a href="https://github.com/Sandeep-569" id="github-link" target="_blank" class="social-btn github" title="Sandeep-569 on GitHub">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
+              </svg>
+              <span>GitHub</span>
+            </a>
+            <a href="https://leetcode.com/u/codedbysandeep/" id="leetcode-link" target="_blank" class="social-btn leetcode" title="codedbysandeep on LeetCode">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z" fill="#B3B3B3"/>
+                <path d="M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
+                <path d="M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
+              </svg>
+              <span>LeetCode</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -509,6 +524,266 @@
     </div>
   </main>
 
+  <!-- Modal for Backup & Restore (Export / Import) -->
+  <div class="modal-overlay" id="backup-modal" onclick="if(event.target === this) closeBackupModal()">
+    <div class="modal-box backup-modal-box">
+      <div class="backup-modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon">💾</div>
+          <div>
+            <h2>Data Backup & Sync</h2>
+            <p class="modal-subtitle">Export your DSA tracker progress to JSON or import to restore across devices.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeBackupModal()" title="Close">&times;</button>
+      </div>
+
+      <!-- Current Progress Summary Card -->
+      <div class="backup-stats-pill">
+        <div class="backup-stat-item">
+          <span class="backup-stat-val" id="backup-stat-solved">0</span>
+          <span class="backup-stat-lbl">✅ Solved Questions</span>
+        </div>
+        <div class="backup-stat-divider"></div>
+        <div class="backup-stat-item">
+          <span class="backup-stat-val" id="backup-stat-starred">0</span>
+          <span class="backup-stat-lbl">⭐ Bookmarked</span>
+        </div>
+      </div>
+
+      <!-- 2-Column Section for Export and Import -->
+      <div class="backup-sections-grid">
+        <!-- 1. EXPORT SECTION -->
+        <div class="backup-card">
+          <div class="backup-card-head">
+            <div class="backup-card-icon export-icon">📤</div>
+            <div>
+              <h3>Export Backup</h3>
+              <p>Save your progress safely as a portable JSON file.</p>
+            </div>
+          </div>
+          <div class="backup-card-actions">
+            <button class="action-btn btn-primary" onclick="exportDataToFile()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Download Backup (.json)</span>
+            </button>
+            <button class="action-btn btn-secondary" onclick="copyBackupToClipboard()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Copy to Clipboard</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. IMPORT SECTION -->
+        <div class="backup-card">
+          <div class="backup-card-head">
+            <div class="backup-card-icon import-icon">📥</div>
+            <div>
+              <h3>Import Backup</h3>
+              <p>Restore questions from an exported backup file.</p>
+            </div>
+          </div>
+
+          <!-- Import Mode Selection -->
+          <div class="import-mode-selector">
+            <label class="mode-radio-label">
+              <input type="radio" name="import-mode" value="merge" checked id="import-mode-merge">
+              <span class="mode-radio-custom"></span>
+              <span class="mode-text">
+                <strong>Merge</strong> <span class="mode-desc">(Keep current + add new)</span>
+              </span>
+            </label>
+            <label class="mode-radio-label">
+              <input type="radio" name="import-mode" value="overwrite" id="import-mode-overwrite">
+              <span class="mode-radio-custom"></span>
+              <span class="mode-text">
+                <strong>Overwrite</strong> <span class="mode-desc">(Replace current)</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- File Dropzone -->
+          <div class="dropzone" id="backup-dropzone" onclick="document.getElementById('backup-file-input').click()">
+            <input type="file" id="backup-file-input" accept=".json,application/json" style="display:none;" onchange="handleFileSelect(event)">
+            <div class="dropzone-content">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                <path d="M12 12v9"/>
+                <path d="m16 16-4-4-4 4"/>
+              </svg>
+              <span id="dropzone-text">Click to choose JSON file or drag & drop</span>
+            </div>
+          </div>
+
+          <!-- Direct Paste Accordion -->
+          <details class="paste-details">
+            <summary>Or paste JSON text directly</summary>
+            <div class="paste-box">
+              <textarea id="import-paste-area" placeholder='Paste your backup JSON here, e.g. {"solvedProblems": ["Two Sum", ...]}'></textarea>
+              <button class="action-btn btn-secondary" style="width: 100%; margin-top: 8px;" onclick="handlePasteImport()">
+                Import from Pasted Text
+              </button>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Danger Zone: Reset -->
+      <div class="backup-danger-zone">
+        <details class="danger-details">
+          <summary>⚠️ Advanced: Reset All Local Data</summary>
+          <div class="danger-box">
+            <p>Erase all solved and starred records from browser storage. Export a backup first if you want to keep your progress.</p>
+            <button class="btn-danger" onclick="resetAllProgress()">Clear All Progress</button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Firebase Auth & Cloud Sync -->
+  <div class="modal-overlay" id="auth-modal" onclick="if(event.target === this) closeAuthModal()">
+    <div class="modal-box auth-modal-box">
+      <div class="backup-modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon" id="auth-modal-badge-icon">🔥</div>
+          <div>
+            <h2 id="auth-modal-heading">Firebase Cloud Sync</h2>
+            <p class="modal-subtitle" id="auth-modal-subheading">Sync your solved problems and bookmarks in real-time across devices.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAuthModal()" title="Close">&times;</button>
+      </div>
+
+      <!-- Auth Navigation Tabs (Sign In / Config) -->
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tab-btn-auth" onclick="switchAuthTab('auth')">Account & Sync</button>
+        <button class="auth-tab-btn" id="tab-btn-config" onclick="switchAuthTab('config')">Firebase Setup</button>
+      </div>
+
+      <!-- TAB 1: Account / Sign In / Profile -->
+      <div class="auth-tab-content active" id="auth-tab-account">
+        <!-- Logged Out View -->
+        <div id="auth-logged-out-view">
+          <!-- Quick Google Sign In -->
+          <button class="google-sign-in-btn" onclick="handleGoogleSignIn()">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div class="auth-divider"><span>OR WITH EMAIL</span></div>
+
+          <!-- Email / Password Form -->
+          <form id="auth-email-form" onsubmit="handleEmailAuthSubmit(event)">
+            <div id="auth-signup-name-field" style="display: none; margin-bottom: 12px;">
+              <label class="auth-input-label">Display Name</label>
+              <input type="text" id="auth-display-name" class="auth-input" placeholder="e.g. Alex Doe">
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label class="auth-input-label">Email Address</label>
+              <input type="email" id="auth-email" class="auth-input" placeholder="you@example.com" required>
+            </div>
+            <div style="margin-bottom: 16px;">
+              <label class="auth-input-label">Password</label>
+              <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" required minlength="6">
+            </div>
+
+            <button type="submit" class="action-btn btn-primary" id="auth-submit-btn">
+              Sign In
+            </button>
+          </form>
+
+          <div class="auth-switch-prompt">
+            <span id="auth-switch-text">Don't have an account?</span>
+            <button type="button" class="link-btn" id="auth-switch-btn" onclick="toggleAuthMode()">Sign Up</button>
+          </div>
+        </div>
+
+        <!-- Logged In View -->
+        <div id="auth-logged-in-view" style="display: none;">
+          <div class="user-profile-card">
+            <div class="user-avatar" id="user-avatar">👤</div>
+            <div class="user-details">
+              <h3 id="user-display-name">User Name</h3>
+              <p id="user-email">user@example.com</p>
+              <div class="cloud-sync-badge-active" id="cloud-sync-badge">
+                <span class="pulse-dot"></span>
+                <span id="cloud-sync-status-text">Cloud Sync Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-stats-grid">
+            <div class="pstat-item">
+              <span class="pstat-val" id="profile-solved-count">0</span>
+              <span class="pstat-lbl">Cloud Solved</span>
+            </div>
+            <div class="pstat-item">
+              <span class="pstat-val" id="profile-starred-count">0</span>
+              <span class="pstat-lbl">Cloud Bookmarked</span>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button class="action-btn btn-primary" onclick="triggerManualCloudSync()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span>Sync Now</span>
+            </button>
+            <button class="action-btn btn-secondary" onclick="handleSignOut()">
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Firebase Project Config Setup -->
+      <div class="auth-tab-content" id="auth-tab-config" style="display: none;">
+        <div class="config-instructions">
+          <h4>Connect your Firebase Project:</h4>
+          <ol>
+            <li>Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: var(--accent);">Firebase Console</a> and create or select a project.</li>
+            <li>Enable <strong>Authentication</strong> (turn on <em>Google</em> and/or <em>Email/Password</em> sign-in).</li>
+            <li>Enable <strong>Cloud Firestore</strong> database.</li>
+            <li>In Project Settings &gt; General &gt; Your Apps, register a <strong>Web App</strong> and copy the <code>firebaseConfig</code> object.</li>
+            <li>Paste your config JSON below and click <strong>Save &amp; Connect</strong>!</li>
+          </ol>
+        </div>
+
+        <div class="config-editor-box">
+          <label class="auth-input-label">Firebase Web Config (JSON format)</label>
+          <textarea id="firebase-config-input" class="config-textarea" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "your-app.firebaseapp.com",
+  "projectId": "your-app-id",
+  "storageBucket": "your-app.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}'></textarea>
+          <div class="config-actions">
+            <button class="action-btn btn-primary" onclick="handleSaveFirebaseConfig()">
+              💾 Save &amp; Connect Firebase
+            </button>
+            <button class="action-btn btn-secondary" onclick="handleResetFirebaseConfig()">
+              Reset to Local Mode
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal for Random Problem -->
   <div class="modal-overlay" id="random-modal">
     <div class="modal-box">
@@ -522,8 +797,12 @@
     </div>
   </div>
 
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
   <script src="data.js"></script>
   <script src="solvedQuestion.js"></script>
+  <script type="module" src="firebase-service.js"></script>
   <script src="app.js"></script>
 </body>
 
