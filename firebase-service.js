@@ -1,10 +1,13 @@
 // ============================================================
-// FIREBASE SERVICE MODULE (Compat SDK)
+// FIREBASE SERVICE MODULE
 // Pre-configured for dsatracker-6e8d0
 // Auth (Google, Email/Password) + Cloud Firestore Sync
 // ============================================================
 
 (function() {
+  // Only this email is allowed to sign in and use the app
+  const ALLOWED_EMAIL = 'codedbysandeep@gmail.com';
+
   const firebaseConfig = {
     apiKey: "AIzaSyDHnoMx4VGoJmFLfecowFVCQsaoa51WYCg",
     authDomain: "dsatracker-6e8d0.firebaseapp.com",
@@ -40,6 +43,16 @@
 
       // Listen to Auth State
       auth.onAuthStateChanged((user) => {
+        if (user && user.email !== ALLOWED_EMAIL) {
+          auth.signOut();
+          currentUser = null;
+          window.dispatchEvent(new CustomEvent('firebase-auth-change', { 
+            detail: { user: null } 
+          }));
+          alert("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
+          return;
+        }
+
         currentUser = user;
         window.dispatchEvent(new CustomEvent('firebase-auth-change', { 
           detail: { user } 
@@ -68,6 +81,10 @@
     if (!auth) throw new Error("Firebase Auth is not available. Please check your internet connection.");
     try {
       const result = await auth.signInWithPopup(googleProvider);
+      if (result.user.email !== ALLOWED_EMAIL) {
+        await auth.signOut();
+        throw new Error("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
+      }
       return result.user;
     } catch (error) {
       console.error("Google sign-in error:", error);
@@ -80,6 +97,9 @@
     if (!auth) initFirebase();
     if (!auth) throw new Error("Firebase Auth is not available.");
     try {
+      if (email.trim().toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+        throw new Error("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
+      }
       const result = await auth.signInWithEmailAndPassword(email, password);
       return result.user;
     } catch (error) {
@@ -93,6 +113,9 @@
     if (!auth) initFirebase();
     if (!auth) throw new Error("Firebase Auth is not available.");
     try {
+      if (email.trim().toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+        throw new Error("This app is private. Registration is restricted to codedbysandeep@gmail.com only.");
+      }
       const result = await auth.createUserWithEmailAndPassword(email, password);
       if (displayName && result.user) {
         await result.user.updateProfile({ displayName });
