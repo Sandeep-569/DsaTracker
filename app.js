@@ -331,7 +331,7 @@ function initData() {
   updateStarredStats();
 }
 
-function updateSolvedStats() {
+function updateSolvedStats(skipCloudSync = false) {
   document.getElementById('stat-solved').textContent = solvedProblems.size.toLocaleString();
   try {
     localStorage.setItem('leetcode_solved_v1', JSON.stringify(Array.from(solvedProblems)));
@@ -346,18 +346,23 @@ function updateSolvedStats() {
   if (fillEl) fillEl.style.width = `${pct}%`;
   if (textEl) textEl.textContent = `${solvedProblems.size} / ${totalUniqueCount} (${pct}%) Completed`;
 
-  syncToCloudDebounced();
+  if (!skipCloudSync) {
+    syncToCloudDebounced();
+  }
 }
 
-function updateStarredStats() {
-  document.getElementById('stat-starred').textContent = starredProblems.size.toLocaleString();
+function updateStarredStats(skipCloudSync = false) {
+  const statStarredEl = document.getElementById('stat-starred');
+  if (statStarredEl) statStarredEl.textContent = starredProblems.size.toLocaleString();
   try {
     localStorage.setItem('leetcode_starred_v1', JSON.stringify(Array.from(starredProblems)));
   } catch (e) {
     console.error("Error saving starred problems to localStorage:", e);
   }
 
-  syncToCloudDebounced();
+  if (!skipCloudSync) {
+    syncToCloudDebounced();
+  }
 }
 
 // Company Sorting
@@ -1505,7 +1510,7 @@ function syncToCloudDebounced() {
         Array.from(starredProblems)
       );
     }
-  }, 1000);
+  }, 400);
 }
 
 // ============================================================
@@ -1666,55 +1671,71 @@ function updateAuthUserUI(user) {
 }
 
 // Global Firebase Event Listeners
+let isInitialCloudSyncDone = false;
+
 window.addEventListener('firebase-auth-change', (e) => {
   const user = e.detail?.user;
   updateAuthUserUI(user);
+  if (!user) {
+    isInitialCloudSyncDone = false;
+  }
 });
 
 window.addEventListener('cloud-data-received', (e) => {
   const { solvedProblems: cloudSolved, starredProblems: cloudStarred } = e.detail;
-  let changed = false;
 
-  if (Array.isArray(cloudSolved)) {
-    cloudSolved.forEach(p => {
-      if (!solvedProblems.has(p)) {
-        solvedProblems.add(p);
-        changed = true;
-      }
-    });
-  }
+  if (!isInitialCloudSyncDone) {
+    // 1. Initial Login Merge: Combine local cached progress with remote cloud data
+    isInitialCloudSyncDone = true;
+    const mergedSolved = new Set([...solvedProblems, ...(cloudSolved || [])]);
+    const mergedStarred = new Set([...starredProblems, ...(cloudStarred || [])]);
 
-  if (Array.isArray(cloudStarred)) {
-    cloudStarred.forEach(p => {
-      if (!starredProblems.has(p)) {
-        starredProblems.add(p);
-        changed = true;
-      }
-    });
-  }
+    solvedProblems = mergedSolved;
+    starredProblems = mergedStarred;
 
-  if (changed) {
-    updateSolvedStats();
-    updateStarredStats();
-    if (document.getElementById('solved-view')?.classList.contains('active')) {
-      renderSolvedView();
-    } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
-      renderBookmarksView();
-    } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
-      renderTopicProblems();
-    } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
-      renderCompanyTopics();
-    } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
-      filterCompanies();
+    updateSolvedStats(true);
+    updateStarredStats(true);
+
+    // Save initial union back to cloud
+    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      window.FirebaseService.saveProgressToCloud(
+        Array.from(solvedProblems),
+        Array.from(starredProblems)
+      );
     }
-    showToast("☁️ Progress updated from Cloud Firestore!", "info");
+  } else {
+    // 2. Live Cloud Update: Sync exact state from Firestore (both additions and removals)
+    solvedProblems = new Set(cloudSolved || []);
+    starredProblems = new Set(cloudStarred || []);
+
+    updateSolvedStats(true);
+    updateStarredStats(true);
   }
+
+  // Re-render active view
+  if (document.getElementById('solved-view')?.classList.contains('active')) {
+    renderSolvedView();
+  } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+    renderBookmarksView();
+  } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+    renderTopicProblems();
+  } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    renderCompanyTopics();
+  } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+    filterCompanies();
+  }
+
+  const pSolved = document.getElementById('profile-solved-count');
+  const pStarred = document.getElementById('profile-starred-count');
+  if (pSolved) pSolved.textContent = solvedProblems.size;
+  if (pStarred) pStarred.textContent = starredProblems.size;
 });
 
 window.addEventListener('cloud-new-user-init', () => {
   // Push local progress to cloud for brand new user
+  isInitialCloudSyncDone = true;
   if (solvedProblems.size > 0 || starredProblems.size > 0) {
-    if (window.FirebaseService) {
+    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       window.FirebaseService.saveProgressToCloud(
         Array.from(solvedProblems),
         Array.from(starredProblems)

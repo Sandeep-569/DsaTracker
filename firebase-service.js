@@ -149,6 +149,11 @@
     }));
 
     currentUnsubscribe = db.collection('users').doc(uid).onSnapshot((docSnap) => {
+      // Ignore local optimistic writes still in-flight from this browser tab
+      if (docSnap.metadata && docSnap.metadata.hasPendingWrites) {
+        return;
+      }
+
       if (docSnap.exists) {
         const data = docSnap.data();
         window.dispatchEvent(new CustomEvent('cloud-data-received', { 
