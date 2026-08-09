@@ -1583,7 +1583,13 @@ async function handleSignOut() {
     localStorage.removeItem('leetcode_starred_v1');
     updateSolvedStats(true);
     updateStarredStats(true);
-    renderCompanies();
+    closeAuthModal();
+
+    const gate = document.getElementById('auth-gate-screen');
+    const content = document.getElementById('app-content');
+    if (gate) gate.style.display = 'flex';
+    if (content) content.style.display = 'none';
+
     showToast("👋 Signed out successfully.", "info");
   } catch (err) {
     showToast(`❌ Sign out failed: ${err.message}`, 'error');
@@ -1660,9 +1666,24 @@ function updateAuthUserUI(user) {
 }
 
 // Global Firebase Event Listeners
+const ALLOWED_EMAIL = 'codedbysandeep@gmail.com';
+
 window.addEventListener('firebase-auth-change', (e) => {
   const user = e.detail?.user;
-  updateAuthUserUI(user);
+  const gate = document.getElementById('auth-gate-screen');
+  const content = document.getElementById('app-content');
+
+  if (user && user.email === ALLOWED_EMAIL) {
+    // Verified owner — unlock and show the tracker UI
+    if (gate) gate.style.display = 'none';
+    if (content) content.style.display = 'block';
+    updateAuthUserUI(user);
+  } else {
+    // Not signed in, or signed in as someone else — show gate, lock app
+    if (gate) gate.style.display = 'flex';
+    if (content) content.style.display = 'none';
+    updateAuthUserUI(null);
+  }
 });
 
 window.addEventListener('cloud-data-received', (e) => {
