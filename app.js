@@ -1514,16 +1514,7 @@ function syncToCloudDebounced() {
 
 let isAuthModeSignUp = false;
 
-function openAuthModal(tab = 'auth') {
-  switchAuthTab(tab);
-
-  // Populate active config in config tab
-  const configInput = document.getElementById('firebase-config-input');
-  if (configInput && window.FirebaseService) {
-    const cfg = window.FirebaseService.getFirebaseConfig();
-    configInput.value = JSON.stringify(cfg, null, 2);
-  }
-
+function openAuthModal() {
   // Update profile counts if user is logged in
   const user = window.FirebaseService?.getCurrentUser();
   if (user) {
@@ -1535,25 +1526,6 @@ function openAuthModal(tab = 'auth') {
 
 function closeAuthModal() {
   document.getElementById('auth-modal')?.classList.remove('active');
-}
-
-function switchAuthTab(tabName) {
-  const tabAuthBtn = document.getElementById('tab-btn-auth');
-  const tabConfigBtn = document.getElementById('tab-btn-config');
-  const tabAuthContent = document.getElementById('auth-tab-account');
-  const tabConfigContent = document.getElementById('auth-tab-config');
-
-  if (tabName === 'config') {
-    tabAuthBtn?.classList.remove('active');
-    tabConfigBtn?.classList.add('active');
-    if (tabAuthContent) tabAuthContent.style.display = 'none';
-    if (tabConfigContent) tabConfigContent.style.display = 'block';
-  } else {
-    tabConfigBtn?.classList.remove('active');
-    tabAuthBtn?.classList.add('active');
-    if (tabConfigContent) tabConfigContent.style.display = 'none';
-    if (tabAuthContent) tabAuthContent.style.display = 'block';
-  }
 }
 
 function toggleAuthMode() {
@@ -1577,26 +1549,23 @@ function toggleAuthMode() {
 }
 
 async function handleGoogleSignIn() {
-  if (!window.FirebaseService || !window.FirebaseService.isFirebaseConfigured()) {
-    showToast("⚠️ Please connect your Firebase project in 'Firebase Setup' tab first.", "error");
-    switchAuthTab('config');
-    return;
-  }
   try {
     const user = await window.FirebaseService.signInWithGoogle();
     showToast(`👋 Welcome back, ${user.displayName || user.email}!`, 'success');
   } catch (err) {
-    showToast(`❌ Google Sign-In failed: ${err.message}`, 'error');
+    console.error("Google sign-in error:", err);
+    if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+      showToast("⚠️ Domain unauthorized: Add 'localhost' and '127.0.0.1' in Firebase Console > Authentication > Settings > Authorized domains.", 'error');
+    } else if (err.code === 'auth/popup-closed-by-user') {
+      showToast("ℹ️ Sign-in popup was closed.", 'info');
+    } else {
+      showToast(`❌ Google Sign-In failed: ${err.message}`, 'error');
+    }
   }
 }
 
 async function handleEmailAuthSubmit(e) {
   e.preventDefault();
-  if (!window.FirebaseService || !window.FirebaseService.isFirebaseConfigured()) {
-    showToast("⚠️ Please connect your Firebase project in 'Firebase Setup' tab first.", "error");
-    switchAuthTab('config');
-    return;
-  }
 
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
@@ -1611,6 +1580,7 @@ async function handleEmailAuthSubmit(e) {
       showToast(`👋 Signed in as ${user.displayName || user.email}`, 'success');
     }
   } catch (err) {
+    console.error("Email auth error:", err);
     showToast(`❌ Authentication failed: ${err.message}`, 'error');
   }
 }
@@ -1642,45 +1612,6 @@ async function triggerManualCloudSync() {
   } catch (err) {
     showToast(`❌ Sync failed: ${err.message}`, "error");
   }
-}
-
-function handleSaveFirebaseConfig() {
-  const text = document.getElementById('firebase-config-input')?.value.trim();
-  if (!text) {
-    showToast("⚠️ Please paste your Firebase config.", "error");
-    return;
-  }
-
-  try {
-    let cleanJson = text;
-    if (cleanJson.includes('{') && cleanJson.includes('}')) {
-      const start = cleanJson.indexOf('{');
-      const end = cleanJson.lastIndexOf('}') + 1;
-      cleanJson = cleanJson.slice(start, end);
-    }
-    cleanJson = cleanJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":').replace(/'/g, '"');
-
-    const configObj = JSON.parse(cleanJson);
-    const success = window.FirebaseService.saveFirebaseConfig(configObj);
-    if (success) {
-      showToast("🔥 Firebase connected successfully!", "success");
-      switchAuthTab('auth');
-    } else {
-      showToast("❌ Could not initialize Firebase with provided config.", "error");
-    }
-  } catch (err) {
-    console.error("Config parse error:", err);
-    showToast("❌ Invalid config format. Please ensure valid JSON.", "error");
-  }
-}
-
-function handleResetFirebaseConfig() {
-  if (window.FirebaseService) {
-    window.FirebaseService.clearFirebaseConfig();
-    showToast("Reset to Local Storage mode.", "info");
-  }
-  const configInput = document.getElementById('firebase-config-input');
-  if (configInput) configInput.value = '';
 }
 
 function updateAuthUserUI(user) {
