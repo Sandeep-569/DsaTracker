@@ -1542,8 +1542,6 @@ function syncToCloudDebounced() {
 // FIREBASE AUTH & CLOUD SYNC CONTROLLERS
 // ============================================================
 
-let isAuthModeSignUp = false;
-
 function openAuthModal() {
   // Update profile counts if user is logged in
   const user = window.FirebaseService?.getCurrentUser();
@@ -1556,26 +1554,6 @@ function openAuthModal() {
 
 function closeAuthModal() {
   document.getElementById('auth-modal')?.classList.remove('active');
-}
-
-function toggleAuthMode() {
-  isAuthModeSignUp = !isAuthModeSignUp;
-  const nameField = document.getElementById('auth-signup-name-field');
-  const submitBtn = document.getElementById('auth-submit-btn');
-  const switchText = document.getElementById('auth-switch-text');
-  const switchBtn = document.getElementById('auth-switch-btn');
-
-  if (isAuthModeSignUp) {
-    if (nameField) nameField.style.display = 'block';
-    if (submitBtn) submitBtn.textContent = 'Create Account';
-    if (switchText) switchText.textContent = 'Already have an account?';
-    if (switchBtn) switchBtn.textContent = 'Sign In';
-  } else {
-    if (nameField) nameField.style.display = 'none';
-    if (submitBtn) submitBtn.textContent = 'Sign In';
-    if (switchText) switchText.textContent = "Don't have an account?";
-    if (switchBtn) switchBtn.textContent = 'Sign Up';
-  }
 }
 
 async function handleGoogleSignIn() {
@@ -1591,27 +1569,6 @@ async function handleGoogleSignIn() {
     } else {
       showToast(`❌ Google Sign-In failed: ${err.message}`, 'error');
     }
-  }
-}
-
-async function handleEmailAuthSubmit(e) {
-  e.preventDefault();
-
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const displayName = document.getElementById('auth-display-name')?.value.trim() || '';
-
-  try {
-    if (isAuthModeSignUp) {
-      const user = await window.FirebaseService.signUpWithEmail(email, password, displayName);
-      showToast(`🎉 Account created! Welcome, ${displayName || email}`, 'success');
-    } else {
-      const user = await window.FirebaseService.signInWithEmail(email, password);
-      showToast(`👋 Signed in as ${user.displayName || user.email}`, 'success');
-    }
-  } catch (err) {
-    console.error("Email auth error:", err);
-    showToast(`❌ Authentication failed: ${err.message}`, 'error');
   }
 }
 
