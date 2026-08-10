@@ -252,8 +252,14 @@ function initData() {
   const topicMap = new Map();
 
   const mergedCompanyMap = new Map();
+  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : null);
 
-  for (const [rawName, rawProblems] of Object.entries(LEETCODE_DATA)) {
+  if (!dataObj) {
+    console.error("LEETCODE_DATA is not available yet!");
+    return;
+  }
+
+  for (const [rawName, rawProblems] of Object.entries(dataObj)) {
     const normKey = normalizeCompanyNameKey(rawName);
 
     if (!mergedCompanyMap.has(normKey)) {
@@ -1721,8 +1727,7 @@ function loadTrackerDataScripts() {
 // Global Firebase Event Listeners
 const ALLOWED_EMAIL = 'codedbysandeep@gmail.com';
 
-window.addEventListener('firebase-auth-change', async (e) => {
-  const user = e.detail?.user;
+async function handleAuthState(user) {
   const gate = document.getElementById('auth-gate-screen');
   const content = document.getElementById('app-content');
   const gateBtn = document.querySelector('#auth-gate-screen .auth-gate-btn');
@@ -1764,6 +1769,10 @@ window.addEventListener('firebase-auth-change', async (e) => {
     }
     updateAuthUserUI(null);
   }
+}
+
+window.addEventListener('firebase-auth-change', (e) => {
+  handleAuthState(e.detail?.user);
 });
 
 window.addEventListener('cloud-data-received', (e) => {
@@ -1829,4 +1838,10 @@ window.addEventListener('cloud-sync-status', (e) => {
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
   setupDropzone();
+  if (window.FirebaseService) {
+    const user = window.FirebaseService.getCurrentUser();
+    if (user) {
+      handleAuthState(user);
+    }
+  }
 });
