@@ -11,3 +11,7 @@ for (const [company, problems] of Object.entries(RAW_DATA)) {
     tags: []
   }));
 }
+
+window.RAW_DATA = RAW_DATA;
+window.LEETCODE_DATA = LEETCODE_DATA;
+
