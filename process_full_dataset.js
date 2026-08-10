@@ -45,20 +45,7 @@ try {
   console.log(`Unique Problems: ${uniqueProblems.size}`);
   console.log(`========================================`);
 
-  const jsContent = `// Auto-generated LeetCode Dataset containing ${companyNames.length} companies & ${totalPairs} company-problem pairs
-const RAW_DATA = ${JSON.stringify(parsedData)};
-
-const LEETCODE_DATA = {};
-for (const [company, problems] of Object.entries(RAW_DATA)) {
-  LEETCODE_DATA[company] = problems.map(p => ({
-    title: p[0],
-    diff: p[1],
-    url: p[2],
-    src: p[3],
-    tags: []
-  }));
-}
-`;
+  const jsContent = `const RAW_DATA=${JSON.stringify(parsedData)},LEETCODE_DATA={};for(const[c,p]of Object.entries(RAW_DATA))LEETCODE_DATA[c]=p.map(x=>({title:x[0],diff:x[1],url:x[2],src:x[3],tags:[]}));`;
 
   fs.writeFileSync(targetDataPath, jsContent, 'utf8');
   console.log(`Successfully updated ${targetDataPath}! (${(jsContent.length / 1024 / 1024).toFixed(2)} MB)`);

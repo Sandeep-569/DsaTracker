@@ -10,6 +10,11 @@ let solvedProblems = new Set();
 let starredProblems = new Set();
 let totalUniqueCount = 0;
 
+// True once Firestore has delivered authoritative data for this session.
+// Prevents initData()'s localStorage seed-merge from overwriting/polluting
+// cloud data if the cloud snapshot arrives before data.js finishes loading.
+let cloudAuthoritativeDataLoaded = false;
+
 // ============================================================
 // TOPIC CLASSIFICATION ENGINE — 31 Topics, Basic → Advanced
 // Uses URL slug matching (most accurate) + keyword fallbacks
@@ -323,7 +328,7 @@ function initData() {
   document.getElementById('stat-unique').textContent = totalUniqueCount.toLocaleString();
 
   // Load saved progress from localStorage on startup before updating stats if not already populated
-  if (solvedProblems.size === 0 && starredProblems.size === 0) {
+  if (!cloudAuthoritativeDataLoaded) {
     try {
       const savedSolved = JSON.parse(localStorage.getItem('leetcode_solved_v1') || '[]');
       if (Array.isArray(savedSolved)) {
@@ -342,8 +347,8 @@ function initData() {
     }
   }
 
-  updateSolvedStats();
-  updateStarredStats();
+  updateSolvedStats(true);
+  updateStarredStats(true);
 }
 
 function updateSolvedStats(skipCloudSync = false) {
@@ -1594,6 +1599,7 @@ async function handleSignOut() {
     if (window.FirebaseService) {
       await window.FirebaseService.logoutUser();
     }
+    cloudAuthoritativeDataLoaded = false;
     solvedProblems.clear();
     starredProblems.clear();
     localStorage.removeItem('leetcode_solved_v1');
@@ -1745,8 +1751,10 @@ async function handleAuthState(user) {
   const gate = document.getElementById('auth-gate-screen');
   const content = document.getElementById('app-content');
   const gateBtn = document.querySelector('#auth-gate-screen .gate-google-btn, #auth-gate-screen .google-sign-in-btn, #auth-gate-screen .auth-gate-btn');
+  const loadingEl = document.getElementById('data-loading-indicator');
 
   if (user && isAllowedUser(user)) {
+    if (loadingEl) loadingEl.style.display = 'block';
     if (gateBtn) {
       gateBtn.innerHTML = `<span>⏳</span> Authenticated! Loading dataset...`;
       gateBtn.style.pointerEvents = 'none';
@@ -1755,18 +1763,21 @@ async function handleAuthState(user) {
       await loadTrackerDataScripts();
     } catch (err) {
       console.error('Failed to load tracker data:', err);
+      if (loadingEl) loadingEl.style.display = 'none';
       if (gateBtn) {
         gateBtn.innerHTML = `<span>❌</span> Failed to load dataset. Please refresh.`;
         gateBtn.style.pointerEvents = 'auto';
       }
       return; // keep gate visible if data fails to load
     }
+    if (loadingEl) loadingEl.style.display = 'none';
     if (gate) gate.style.display = 'none';
     if (content) content.style.display = 'block';
     updateAuthUserUI(user);
     initData();
     renderCompanies();
   } else {
+    if (loadingEl) loadingEl.style.display = 'none';
     if (gate) gate.style.display = 'flex';
     if (content) content.style.display = 'none';
     if (gateBtn) {
@@ -1791,6 +1802,8 @@ window.addEventListener('firebase-auth-change', (e) => {
 
 window.addEventListener('cloud-data-received', (e) => {
   const { solvedProblems: cloudSolved, starredProblems: cloudStarred } = e.detail;
+
+  cloudAuthoritativeDataLoaded = true;
 
   // Cloud Firestore is the authoritative source of truth for the logged-in user
   solvedProblems = new Set((cloudSolved || []).map(t => (typeof t === 'string' ? t.trim() : t)));
