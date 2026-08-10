@@ -40,9 +40,11 @@
       db = firebase.firestore();
       googleProvider = new firebase.auth.GoogleAuthProvider();
 
+      const isAllowedEmail = (u) => u && u.email && u.email.trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase();
+
       // Listen to Auth State changes
       auth.onAuthStateChanged((user) => {
-        if (user && user.email !== ALLOWED_EMAIL) {
+        if (user && !isAllowedEmail(user)) {
           auth.signOut();
           currentUser = null;
           window.dispatchEvent(new CustomEvent('firebase-auth-change', { 
@@ -80,7 +82,7 @@
     if (!auth) throw new Error("Firebase Auth is not available. Please check your internet connection.");
     try {
       const result = await auth.signInWithPopup(googleProvider);
-      if (result.user.email !== ALLOWED_EMAIL) {
+      if (!result.user || !result.user.email || result.user.email.trim().toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
         await auth.signOut();
         throw new Error("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
       }
