@@ -1214,7 +1214,8 @@ function toggleStar(title, event) {
 
 // Random Problem Picker
 function pickRandomProblem() {
-  const pool = currentCompanyObj ? currentCompanyObj.problems : (typeof LEETCODE_DATA !== 'undefined' ? Object.values(LEETCODE_DATA).flat() : []);
+  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : {});
+  const pool = currentCompanyObj ? currentCompanyObj.problems : Object.values(dataObj).flat();
   if (!pool || pool.length === 0) return;
 
   const randomProblem = pool[Math.floor(Math.random() * pool.length)];
@@ -1686,40 +1687,48 @@ function updateAuthUserUI(user) {
 let dataScriptsLoaded = false;
 let dataLoadingPromise = null;
 
-function loadTrackerDataScripts() {
-  if (dataScriptsLoaded) return Promise.resolve();
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = Array.from(document.querySelectorAll('script')).find(s => s.src && s.src.includes(src.split('?')[0]));
+    if (existing) {
+      existing.remove();
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.onload = () => {
+      console.log(`[DSA Tracker] Script loaded successfully: ${src}`);
+      resolve();
+    };
+    script.onerror = (err) => {
+      console.error(`[DSA Tracker] Failed to load script: ${src}`, err);
+      reject(err);
+    };
+    (document.head || document.body).appendChild(script);
+  });
+}
+
+async function loadTrackerDataScripts() {
+  if (window.LEETCODE_DATA && Object.keys(window.LEETCODE_DATA).length > 0) {
+    dataScriptsLoaded = true;
+    return;
+  }
+  if (dataScriptsLoaded) return;
   if (dataLoadingPromise) return dataLoadingPromise;
 
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
-  dataLoadingPromise = new Promise((resolve, reject) => {
-    const scripts = ['data.js?v=2.2.0', 'solvedQuestion.js?v=2.2.0'];
-    let loadedCount = 0;
-    let hasError = false;
-
-    scripts.forEach((src) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = false;
-      script.onload = () => {
-        if (hasError) return;
-        loadedCount++;
-        console.log(`[DSA Tracker] Script loaded: ${src} (${loadedCount}/${scripts.length})`);
-        if (loadedCount === scripts.length) {
-          dataScriptsLoaded = true;
-          dataLoadingPromise = null;
-          console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
-          resolve();
-        }
-      };
-      script.onerror = (err) => {
-        hasError = true;
-        dataLoadingPromise = null;
-        console.error(`[DSA Tracker] Failed to load script: ${src}`, err);
-        reject(err);
-      };
-      (document.head || document.body).appendChild(script);
-    });
-  });
+  dataLoadingPromise = (async () => {
+    try {
+      await loadScript('data.js?v=2.3.0');
+      await loadScript('solvedQuestion.js?v=2.3.0');
+      dataScriptsLoaded = true;
+      console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
+    } catch (err) {
+      dataScriptsLoaded = false;
+      dataLoadingPromise = null;
+      throw err;
+    }
+  })();
 
   return dataLoadingPromise;
 }

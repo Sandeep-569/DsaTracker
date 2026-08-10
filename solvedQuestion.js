@@ -1,5 +1,5 @@
 // Solved Questions View & Manager Module
-let currentSolvedFilter = 'All';
+var currentSolvedFilter = typeof currentSolvedFilter !== 'undefined' ? currentSolvedFilter : 'All';
 
 function openSolvedView() {
   document.getElementById('home-view')?.classList.add('hidden');
