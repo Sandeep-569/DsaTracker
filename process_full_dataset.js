@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const sourceFilePath = 'C:/Users/sandu/.gemini/antigravity/scratch/leetcode-company-tracker/company-problems-combined.html';
-const targetDataPath = 'C:/Users/sandu/.gemini/antigravity/scratch/leetcode-company-tracker/data.js';
+const sourceFilePath = path.join(__dirname, 'company-problems-combined.html');
+const targetDataPath = path.join(__dirname, 'data.js');
 
 try {
   console.log(`Reading source file: ${sourceFilePath}...`);

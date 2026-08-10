@@ -316,6 +316,26 @@ function initData() {
   document.getElementById('stat-companies').textContent = companyList.length.toLocaleString();
   document.getElementById('stat-unique').textContent = totalUniqueCount.toLocaleString();
 
+  // Load saved progress from localStorage on startup before updating stats if not already populated
+  if (solvedProblems.size === 0 && starredProblems.size === 0) {
+    try {
+      const savedSolved = JSON.parse(localStorage.getItem('leetcode_solved_v1') || '[]');
+      if (Array.isArray(savedSolved)) {
+        savedSolved.forEach(title => {
+          if (title && typeof title === 'string') solvedProblems.add(title.trim());
+        });
+      }
+      const savedStarred = JSON.parse(localStorage.getItem('leetcode_starred_v1') || '[]');
+      if (Array.isArray(savedStarred)) {
+        savedStarred.forEach(title => {
+          if (title && typeof title === 'string') starredProblems.add(title.trim());
+        });
+      }
+    } catch (e) {
+      console.error("Error loading progress from localStorage:", e);
+    }
+  }
+
   updateSolvedStats();
   updateStarredStats();
 }
@@ -532,7 +552,7 @@ function renderHomeProblemsResults(problemsList) {
       const remaining = p.companies.length - maxShown;
 
       companyBadgeHTML = shown.map(comp => 
-        `<button class="back-btn" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName('${escapeHtml(comp)}')">🏢 ${escapeHtml(comp)}</button>`
+        `<button class="back-btn" data-comp="${escapeHtml(comp)}" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName(this.dataset.comp)">🏢 ${escapeHtml(comp)}</button>`
       ).join('');
 
       if (remaining > 0) {
@@ -919,6 +939,7 @@ function openBookmarksView() {
   document.getElementById('home-view').classList.add('hidden');
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
+  document.getElementById('solved-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.add('active');
 
   const searchEl = document.getElementById('bookmarks-search');
@@ -1042,7 +1063,7 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
       const remaining = p.companies.length - maxShown;
 
       companyBadgeHTML = shown.map(comp => 
-        `<button class="back-btn" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName('${escapeHtml(comp)}')">🏢 ${escapeHtml(comp)}</button>`
+        `<button class="back-btn" data-comp="${escapeHtml(comp)}" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName(this.dataset.comp)">🏢 ${escapeHtml(comp)}</button>`
       ).join('');
 
       if (remaining > 0) {
@@ -1187,7 +1208,7 @@ function toggleStar(title, event) {
 
 // Random Problem Picker
 function pickRandomProblem() {
-  const pool = currentCompanyObj ? currentCompanyObj.problems : Object.values(LEETCODE_DATA).flat();
+  const pool = currentCompanyObj ? currentCompanyObj.problems : (typeof LEETCODE_DATA !== 'undefined' ? Object.values(LEETCODE_DATA).flat() : []);
   if (!pool || pool.length === 0) return;
 
   const randomProblem = pool[Math.floor(Math.random() * pool.length)];
@@ -1578,6 +1599,7 @@ async function handleSignOut() {
     const content = document.getElementById('app-content');
     if (gate) gate.style.display = 'flex';
     if (content) content.style.display = 'none';
+    if (typeof goHome === 'function') goHome();
 
     showToast("👋 Signed out successfully.", "info");
   } catch (err) {
@@ -1654,21 +1676,65 @@ function updateAuthUserUI(user) {
   }
 }
 
+// Data Script Dynamic Loader (deferred until verified authentication)
+let dataScriptsLoaded = false;
+let dataLoadingPromise = null;
+
+function loadTrackerDataScripts() {
+  if (dataScriptsLoaded) return Promise.resolve();
+  if (dataLoadingPromise) return dataLoadingPromise;
+
+  dataLoadingPromise = new Promise((resolve, reject) => {
+    const scripts = ['data.js?v=2.1.0', 'solvedQuestion.js?v=2.1.0'];
+    let loadedCount = 0;
+    let hasError = false;
+
+    scripts.forEach((src) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false;
+      script.onload = () => {
+        if (hasError) return;
+        loadedCount++;
+        if (loadedCount === scripts.length) {
+          dataScriptsLoaded = true;
+          dataLoadingPromise = null;
+          resolve();
+        }
+      };
+      script.onerror = (err) => {
+        hasError = true;
+        dataLoadingPromise = null;
+        reject(err);
+      };
+      document.body.appendChild(script);
+    });
+  });
+
+  return dataLoadingPromise;
+}
+
 // Global Firebase Event Listeners
 const ALLOWED_EMAIL = 'codedbysandeep@gmail.com';
 
-window.addEventListener('firebase-auth-change', (e) => {
+window.addEventListener('firebase-auth-change', async (e) => {
   const user = e.detail?.user;
   const gate = document.getElementById('auth-gate-screen');
   const content = document.getElementById('app-content');
 
   if (user && user.email === ALLOWED_EMAIL) {
-    // Verified owner — unlock and show the tracker UI
+    try {
+      await loadTrackerDataScripts();
+    } catch (err) {
+      console.error('Failed to load tracker data:', err);
+      return; // keep gate visible if data fails to load
+    }
     if (gate) gate.style.display = 'none';
     if (content) content.style.display = 'block';
     updateAuthUserUI(user);
+    initData();
+    renderCompanies();
   } else {
-    // Not signed in, or signed in as someone else — show gate, lock app
     if (gate) gate.style.display = 'flex';
     if (content) content.style.display = 'none';
     updateAuthUserUI(null);
@@ -1688,7 +1754,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
   // Re-render active view to immediately reflect additions/removals
   if (document.getElementById('solved-view')?.classList.contains('active')) {
-    renderSolvedView();
+    if (typeof renderSolvedView === 'function') renderSolvedView();
   } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
     renderBookmarksView();
   } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
@@ -1696,7 +1762,7 @@ window.addEventListener('cloud-data-received', (e) => {
   } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
     renderCompanyTopics();
   } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
-    filterCompanies();
+    if (companyList && companyList.length > 0) filterCompanies();
   }
 
   const pSolved = document.getElementById('profile-solved-count');
@@ -1737,7 +1803,5 @@ window.addEventListener('cloud-sync-status', (e) => {
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
-  initData();
-  renderCompanies();
   setupDropzone();
 });

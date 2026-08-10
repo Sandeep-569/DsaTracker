@@ -131,7 +131,7 @@ function renderSolvedTableSection(tbodyId, sectionId, problemsList) {
       const remaining = p.companies.length - maxShown;
 
       companyBadgeHTML = shown.map(comp => 
-        `<button class="back-btn" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName('${escapeHtml(comp)}')">🏢 ${escapeHtml(comp)}</button>`
+        `<button class="back-btn" data-comp="${escapeHtml(comp)}" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName(this.dataset.comp)">🏢 ${escapeHtml(comp)}</button>`
       ).join('');
 
       if (remaining > 0) {
