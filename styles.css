@@ -1867,6 +1867,18 @@ td.count {
 /* ============================================================
    AUTH GATE SCREEN (Private App Lock Screen)
    ============================================================ */
+body.auth-locked {
+  overflow: hidden !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
+body.auth-locked #app-content {
+  display: none !important;
+}
+
 #app-content {
   display: none;
 }
@@ -1874,30 +1886,46 @@ td.count {
 #auth-gate-screen {
   display: flex;
   position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: radial-gradient(circle at 50% 15%, rgba(255, 161, 22, 0.09) 0%, rgba(13, 15, 20, 0.98) 55%), #0d0f14;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 999999;
+  background: #0d0f14 !important;
+  background-image: radial-gradient(circle at 50% 15%, #181d26 0%, #0d0f14 70%) !important;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body:not(.auth-locked) #auth-gate-screen {
+  display: none !important;
+}
+
+body:not(.auth-locked) #app-content {
+  display: block;
 }
 
 .gate-card {
-  background: rgba(22, 27, 34, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(255, 161, 22, 0.12);
+  background: rgba(22, 27, 34, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 161, 22, 0.15);
   border-radius: 24px;
   max-width: 440px;
   width: 100%;
-  padding: 44px 36px;
+  padding: 40px 32px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   animation: gateCardFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: auto;
 }
 
 @keyframes gateCardFadeIn {
@@ -1978,4 +2006,34 @@ td.count {
 
 .gate-email-hint strong {
   color: #FFA116;
+}
+
+@media (max-width: 480px) {
+  #auth-gate-screen {
+    padding: 16px;
+  }
+  .gate-card {
+    padding: 32px 20px;
+    border-radius: 20px;
+    gap: 14px;
+  }
+  .gate-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+  }
+  .gate-logo svg {
+    width: 34px;
+    height: 34px;
+  }
+  .gate-title {
+    font-size: 20px;
+  }
+  .gate-desc {
+    font-size: 13px;
+  }
+  .gate-google-btn {
+    height: 48px;
+    font-size: 14px;
+  }
 }

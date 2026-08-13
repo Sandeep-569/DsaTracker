@@ -42,6 +42,20 @@
 
       const isAllowedEmail = (u) => u && u.email && u.email.trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase();
 
+      // Process redirect result if returning from mobile redirect sign-in
+      if (typeof auth.getRedirectResult === 'function') {
+        auth.getRedirectResult().then((result) => {
+          if (result && result.user) {
+            if (!isAllowedEmail(result.user)) {
+              auth.signOut();
+              alert("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
+            }
+          }
+        }).catch((err) => {
+          console.error("Firebase getRedirectResult error:", err);
+        });
+      }
+
       // Listen to Auth State changes
       auth.onAuthStateChanged((user) => {
         if (user && !isAllowedEmail(user)) {
@@ -56,7 +70,7 @@
 
         currentUser = user;
         window.dispatchEvent(new CustomEvent('firebase-auth-change', { 
-          detail: { user } 
+            detail: { user } 
         }));
 
         if (user) {
@@ -76,17 +90,33 @@
     }
   }
 
-  // Auth: Google Sign-In Popup
+  // Auth: Google Sign-In with Popup & Mobile Redirect Fallback
   async function signInWithGoogle() {
     if (!auth) initFirebase();
     if (!auth) throw new Error("Firebase Auth is not available. Please check your internet connection.");
     try {
-      const result = await auth.signInWithPopup(googleProvider);
-      if (!result.user || !result.user.email || result.user.email.trim().toLowerCase() !== ALLOWED_EMAIL.toLowerCase()) {
+      let user = null;
+      try {
+        const result = await auth.signInWithPopup(googleProvider);
+        user = result.user;
+      } catch (popupErr) {
+        // If popup was blocked or failed on mobile device, try redirect method
+        if (popupErr.code === 'auth/popup-blocked' || 
+            popupErr.code === 'auth/popup-closed-by-user' || 
+            popupErr.code === 'auth/cancelled-popup-request' ||
+            /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+          console.warn("Popup blocked or failed, attempting redirect sign-in:", popupErr);
+          await auth.signInWithRedirect(googleProvider);
+          return null;
+        }
+        throw popupErr;
+      }
+
+      if (user && (!user.email || user.email.trim().toLowerCase() !== ALLOWED_EMAIL.toLowerCase())) {
         await auth.signOut();
         throw new Error("This app is private. Access is restricted to codedbysandeep@gmail.com only.");
       }
-      return result.user;
+      return user;
     } catch (error) {
       console.error("Google sign-in error:", error);
       throw error;

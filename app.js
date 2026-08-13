@@ -1608,10 +1608,17 @@ async function handleSignOut() {
     updateStarredStats(true);
     closeAuthModal();
 
+    document.body.classList.add('auth-locked');
     const gate = document.getElementById('auth-gate-screen');
     const content = document.getElementById('app-content');
-    if (gate) gate.style.display = 'flex';
-    if (content) content.style.display = 'none';
+    if (gate) {
+      gate.style.display = 'flex';
+      gate.style.setProperty('display', 'flex', 'important');
+    }
+    if (content) {
+      content.style.display = 'none';
+      content.style.setProperty('display', 'none', 'important');
+    }
     if (typeof goHome === 'function') goHome();
 
     showToast("👋 Signed out successfully.", "info");
@@ -1771,15 +1778,29 @@ async function handleAuthState(user) {
       return; // keep gate visible if data fails to load
     }
     if (loadingEl) loadingEl.style.display = 'none';
-    if (gate) gate.style.display = 'none';
-    if (content) content.style.display = 'block';
+    document.body.classList.remove('auth-locked');
+    if (gate) {
+      gate.style.display = 'none';
+      gate.style.setProperty('display', 'none', 'important');
+    }
+    if (content) {
+      content.style.display = 'block';
+      content.style.setProperty('display', 'block', 'important');
+    }
     updateAuthUserUI(user);
     initData();
     renderCompanies();
   } else {
+    document.body.classList.add('auth-locked');
     if (loadingEl) loadingEl.style.display = 'none';
-    if (gate) gate.style.display = 'flex';
-    if (content) content.style.display = 'none';
+    if (gate) {
+      gate.style.display = 'flex';
+      gate.style.setProperty('display', 'flex', 'important');
+    }
+    if (content) {
+      content.style.display = 'none';
+      content.style.setProperty('display', 'none', 'important');
+    }
     if (gateBtn) {
       gateBtn.innerHTML = `
         <svg width="22" height="22" viewBox="0 0 24 24" style="flex-shrink:0;">
@@ -1867,8 +1888,12 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDropzone();
   if (window.FirebaseService) {
     const user = window.FirebaseService.getCurrentUser();
-    if (user) {
+    if (user && isAllowedUser(user)) {
       handleAuthState(user);
+    } else {
+      document.body.classList.add('auth-locked');
     }
+  } else {
+    document.body.classList.add('auth-locked');
   }
 });
