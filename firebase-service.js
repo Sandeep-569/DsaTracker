@@ -100,9 +100,13 @@
         const result = await auth.signInWithPopup(googleProvider);
         user = result.user;
       } catch (popupErr) {
+        // If popup was explicitly closed by the user, rethrow to allow UI to handle cancellation gracefully
+        if (popupErr.code === 'auth/popup-closed-by-user') {
+          throw popupErr;
+        }
+
         // If popup was blocked or failed on mobile device, try redirect method
         if (popupErr.code === 'auth/popup-blocked' || 
-            popupErr.code === 'auth/popup-closed-by-user' || 
             popupErr.code === 'auth/cancelled-popup-request' ||
             /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
           console.warn("Popup blocked or failed, attempting redirect sign-in:", popupErr);

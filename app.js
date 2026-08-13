@@ -1581,7 +1581,9 @@ function closeAuthModal() {
 async function handleGoogleSignIn() {
   try {
     const user = await window.FirebaseService.signInWithGoogle();
-    showToast(`👋 Welcome back, ${user.displayName || user.email}!`, 'success');
+    if (user) {
+      showToast(`👋 Welcome back, ${user.displayName || user.email}!`, 'success');
+    }
   } catch (err) {
     console.error("Google sign-in error:", err);
     if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
