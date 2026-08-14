@@ -1191,6 +1191,7 @@ function toggleSolved(title, event) {
   }
 
   updateSolvedStats();
+  if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
 
   if (document.getElementById('solved-view')?.classList.contains('active')) {
     renderSolvedView();
@@ -1826,6 +1827,7 @@ async function handleAuthState(user) {
     updateAuthUserUI(user);
     initData();
     renderCompanies();
+    if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
   } else {
     document.body.classList.add('auth-locked');
     if (loadingEl) loadingEl.style.display = 'none';
@@ -1876,6 +1878,7 @@ window.addEventListener('cloud-data-received', (e) => {
   // Update local storage and UI counters without triggering another cloud write
   updateSolvedStats(true);
   updateStarredStats(true);
+  if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
 
   // Re-render active view to immediately reflect additions/removals
   if (document.getElementById('solved-view')?.classList.contains('active')) {
@@ -1943,3 +1946,179 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add('auth-locked');
   }
 });
+
+/* ── Solved Activity Heatmap ─────────────────────────────────────────────── */
+function renderSolvedHeatmap() {
+  const grid       = document.getElementById('heatmap-grid');
+  const monthsEl   = document.getElementById('heatmap-months');
+  const totalEl    = document.getElementById('heatmap-total-count');
+  const activeDaysEl = document.getElementById('heatmap-active-days');
+  const maxStreakEl  = document.getElementById('heatmap-max-streak');
+  if (!grid || !monthsEl) return;
+
+  // ── 1. Build date→count map from solvedDates (UTC calendar day) ───────────
+  const dayCount = new Map(); // 'YYYY-MM-DD' → count
+  if (typeof solvedDates !== 'undefined') {
+    solvedDates.forEach((iso) => {
+      if (!iso) return;
+      try {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return;
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+        dayCount.set(key, (dayCount.get(key) || 0) + 1);
+      } catch {}
+    });
+  }
+
+  // ── 2. Date range: 53 weeks (371 days), Sunday-aligned start ─────────────
+  const todayUTC = new Date();
+  // Snap today to UTC midnight
+  const todayMid = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate()));
+  // Find the most recent Saturday (end of last full week) so the grid
+  // ends on today's column but aligns to Sunday-start rows.
+  // startSunday = Sunday of the week containing (today − 370 days)
+  const endDay = todayMid;
+  const daysToSunday = endDay.getUTCDay(); // days since last Sunday
+  // We want the grid to start on a Sunday 52 full weeks + daysToSunday ago
+  const startDay = new Date(endDay);
+  startDay.setUTCDate(startDay.getUTCDate() - (52 * 7 + daysToSunday));
+  // Total days in grid = 53 cols × 7 rows = 371
+  const TOTAL_DAYS = 53 * 7;
+
+  // ── 3. Compute stats over the window ──────────────────────────────────────
+  let totalSolved = 0;
+  let activeDays  = 0;
+  let maxStreak   = 0;
+  let curStreak   = 0;
+  let prevWasActive = false;
+
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const day = new Date(startDay);
+    day.setUTCDate(day.getUTCDate() + i);
+    if (day > endDay) break;
+    const key = `${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,'0')}-${String(day.getUTCDate()).padStart(2,'0')}`;
+    const cnt = dayCount.get(key) || 0;
+    totalSolved += cnt;
+    if (cnt > 0) {
+      activeDays++;
+      curStreak = prevWasActive ? curStreak + 1 : 1;
+      if (curStreak > maxStreak) maxStreak = curStreak;
+      prevWasActive = true;
+    } else {
+      curStreak = 0;
+      prevWasActive = false;
+    }
+  }
+
+  // Update stat elements
+  if (totalEl)    totalEl.textContent    = totalSolved;
+  if (activeDaysEl) activeDaysEl.textContent = activeDays;
+  if (maxStreakEl)  maxStreakEl.textContent  = maxStreak;
+
+  // ── 4. Render month labels ─────────────────────────────────────────────────
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const CELL = 11; // px
+  const GAP  = 3;  // px
+  const colW  = CELL + GAP; // 14px per column
+
+  monthsEl.innerHTML = '';
+  let lastMonth = -1;
+  for (let col = 0; col < 53; col++) {
+    const day = new Date(startDay);
+    day.setUTCDate(day.getUTCDate() + col * 7);
+    if (day > endDay) break;
+    const m = day.getUTCMonth();
+    if (m !== lastMonth) {
+      // Spacer up to this column
+      if (lastMonth !== -1) {
+        // already placed a label — nothing extra needed, labels flow left
+      }
+      const lbl = document.createElement('span');
+      lbl.className = 'heatmap-month-label';
+      lbl.textContent = MONTH_NAMES[m];
+      // Position: each col is colW px wide; first col has no left spacer
+      lbl.style.width = `${colW}px`; // label takes exactly one col width
+      lbl.style.display = 'inline-block';
+      lbl.style.marginLeft = col === 0 ? '0' : `${(col - (monthsEl.children.length > 0 ? parseInt(monthsEl.dataset.lastCol || 0, 10) : 0) - 1) * colW}px`;
+      // Simpler approach: absolute offset
+      lbl.style.marginLeft = '0';
+      lbl.style.width = 'auto';
+      lbl.style.minWidth = `${colW}px`;
+      monthsEl.dataset.lastCol = col;
+      monthsEl.appendChild(lbl);
+      lastMonth = m;
+    }
+  }
+
+  // Use absolute positioning for month labels for pixel-perfect alignment
+  monthsEl.style.position = 'relative';
+  monthsEl.style.height = '14px';
+  monthsEl.innerHTML = ''; // re-render cleanly
+  lastMonth = -1;
+  for (let col = 0; col < 53; col++) {
+    const day = new Date(startDay);
+    day.setUTCDate(day.getUTCDate() + col * 7);
+    if (day > endDay) break;
+    const m = day.getUTCMonth();
+    if (m !== lastMonth) {
+      const lbl = document.createElement('span');
+      lbl.className = 'heatmap-month-label';
+      lbl.textContent = MONTH_NAMES[m];
+      lbl.style.position = 'absolute';
+      lbl.style.left = `${col * colW}px`;
+      monthsEl.appendChild(lbl);
+      lastMonth = m;
+    }
+  }
+  // Set container width to match grid
+  monthsEl.style.width = `${53 * colW}px`;
+
+  // ── 5. Render grid cells ───────────────────────────────────────────────────
+  grid.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  for (let col = 0; col < 53; col++) {
+    for (let row = 0; row < 7; row++) {
+      const dayOffset = col * 7 + row;
+      const day = new Date(startDay);
+      day.setUTCDate(day.getUTCDate() + dayOffset);
+
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+
+      if (day > endDay) {
+        // Future cell — render as invisible spacer to keep grid shape
+        cell.classList.add('heatmap-empty');
+        frag.appendChild(cell);
+        continue;
+      }
+
+      const key = `${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,'0')}-${String(day.getUTCDate()).padStart(2,'0')}`;
+      const cnt = dayCount.get(key) || 0;
+
+      // Level thresholds: 0 / 1 / 2-3 / 4+
+      let level = 0;
+      if (cnt === 1)      level = 1;
+      else if (cnt <= 3)  level = cnt >= 2 ? 2 : 0;
+      else                level = 3;
+      if (cnt === 1) level = 1;
+      else if (cnt >= 2 && cnt <= 3) level = 2;
+      else if (cnt >= 4) level = 3;
+
+      cell.classList.add(`level-${level}`);
+
+      // Tooltip
+      const dateLabel = `${MONTH_NAMES[day.getUTCMonth()]} ${day.getUTCDate()}, ${day.getUTCFullYear()}`;
+      cell.title = cnt > 0
+        ? `${cnt} solved on ${dateLabel}`
+        : `No submissions on ${dateLabel}`;
+
+      frag.appendChild(cell);
+    }
+  }
+
+  grid.appendChild(frag);
+}
+
+// Expose globally so solvedQuestion.js can call it after date edits
+window.renderSolvedHeatmap = renderSolvedHeatmap;

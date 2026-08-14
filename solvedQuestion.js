@@ -163,6 +163,9 @@ function changeSolvedDate(title) {
     // Sync to cloud if available
     if (typeof syncToCloudDebounced === 'function') syncToCloudDebounced();
 
+    // Update heatmap to reflect the new date
+    if (typeof window.renderSolvedHeatmap === 'function') window.renderSolvedHeatmap();
+
     close();
     renderSolvedView();
   });

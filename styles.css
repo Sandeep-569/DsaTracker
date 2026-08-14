@@ -2124,3 +2124,114 @@ tr.row:hover .solved-date-badge {
     font-size: 11px;
   }
 }
+
+/* ── Solved Activity Heatmap ────────────────────────────────────────────── */
+.heatmap-wrapper {
+  margin-top: 16px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 14px 16px 16px;
+  border-radius: var(--radius-md);
+}
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.heatmap-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.heatmap-title span#heatmap-total-count {
+  color: var(--easy);
+  font-size: 15px;
+}
+
+.heatmap-info-icon {
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.heatmap-stats {
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--mono);
+}
+
+.heatmap-stats strong {
+  color: var(--text-primary);
+}
+
+.heatmap-scroll-container {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.heatmap-months {
+  display: flex;
+  margin-bottom: 4px;
+  min-width: max-content;
+}
+
+.heatmap-month-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column;
+  grid-auto-columns: 11px;
+  gap: 3px;
+  min-width: max-content;
+}
+
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.heatmap-cell:hover {
+  opacity: 0.75;
+  outline: 1px solid rgba(255,255,255,0.2);
+  outline-offset: 1px;
+}
+
+/* Intensity levels — green scale anchored to existing Easy green */
+.heatmap-cell.level-0 { background: var(--border, #2a2a2e); }
+.heatmap-cell.level-1 { background: #0e4429; }
+.heatmap-cell.level-2 { background: #238636; }
+.heatmap-cell.level-3 { background: #3fb950; }
+/* Future day placeholder (transparent) */
+.heatmap-cell.heatmap-empty { background: transparent; cursor: default; }
+
+@media (max-width: 600px) {
+  .heatmap-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .heatmap-stats {
+    gap: 12px;
+  }
+}
+
