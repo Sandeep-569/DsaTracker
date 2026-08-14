@@ -33,12 +33,12 @@ function setSolvedDateFilter(range) {
   renderSolvedView();
 }
 
-/* Returns start-of-day (midnight local) for N days ago */
+/* Returns start-of-day (UTC midnight) for N days ago — matches formatSolvedDate() UTC convention */
 function daysAgoMidnight(n) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - n);
-  return d;
+  const now = new Date();
+  const utcMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  utcMidnight.setUTCDate(utcMidnight.getUTCDate() - n);
+  return utcMidnight;
 }
 
 function formatSolvedDate(isoString) {
