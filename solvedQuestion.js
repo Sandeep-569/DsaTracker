@@ -139,9 +139,9 @@ function changeSolvedDate(title) {
     const val = document.getElementById('__date-picker-input').value; // yyyy-MM-dd
     if (!val) { close(); return; }
 
-    // Convert local date → ISO string (start of day local time)
+    // Convert picked date → UTC midnight ISO string (avoids IST offset shifting day back by 1)
     const [y, m, d] = val.split('-').map(Number);
-    const newDate = new Date(y, m - 1, d);
+    const newDate = new Date(Date.UTC(y, m - 1, d));
     if (isNaN(newDate.getTime())) { close(); return; }
 
     // Update the map
