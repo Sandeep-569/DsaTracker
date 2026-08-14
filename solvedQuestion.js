@@ -137,10 +137,15 @@ function renderSolvedView() {
 
   if (emptyState) emptyState.style.display = 'none';
 
-  // Sort problems topic-wise then alphabetically
-  if (typeof sortProblemsByTopic === 'function') {
-    pool = sortProblemsByTopic(pool);
-  }
+  // Sort by date solved — most recent first; no-date entries go to bottom
+  pool.sort((a, b) => {
+    const da = (typeof solvedDates !== 'undefined') ? solvedDates.get(a.title) : null;
+    const db = (typeof solvedDates !== 'undefined') ? solvedDates.get(b.title) : null;
+    if (da && db) return new Date(db) - new Date(da); // newest first
+    if (da) return -1; // a has date, b doesn't → a goes first
+    if (db) return 1;  // b has date, a doesn't → b goes first
+    return a.title.localeCompare(b.title); // both no date → alphabetical
+  });
 
   const easyProblems = pool.filter(p => p.diff === 'Easy');
   const medProblems  = pool.filter(p => p.diff === 'Medium');
