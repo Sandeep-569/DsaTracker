@@ -8,6 +8,7 @@ let currentTopicFilter = 'All';
 // In-Memory Progress Sets (populates only after authenticated)
 let solvedProblems = new Set();
 let starredProblems = new Set();
+let solvedDates = new Map(); // title → ISO date string of when it was solved
 let totalUniqueCount = 0;
 
 // True once Firestore has delivered authoritative data for this session.
@@ -342,6 +343,13 @@ function initData() {
           if (title && typeof title === 'string') starredProblems.add(title.trim());
         });
       }
+      // Load solved dates
+      const savedDates = JSON.parse(localStorage.getItem('leetcode_solved_dates_v1') || '{}');
+      if (savedDates && typeof savedDates === 'object' && !Array.isArray(savedDates)) {
+        Object.entries(savedDates).forEach(([title, date]) => {
+          if (title && typeof title === 'string' && date) solvedDates.set(title.trim(), date);
+        });
+      }
     } catch (e) {
       console.error("Error loading progress from localStorage:", e);
     }
@@ -363,6 +371,10 @@ function updateSolvedStats(skipCloudSync = false) {
 
   try {
     localStorage.setItem('leetcode_solved_v1', JSON.stringify(Array.from(solvedProblems)));
+    // Persist solved dates map
+    const datesObj = {};
+    solvedDates.forEach((date, title) => { datesObj[title] = date; });
+    localStorage.setItem('leetcode_solved_dates_v1', JSON.stringify(datesObj));
   } catch (e) {
     console.error("Error saving solved problems to localStorage:", e);
   }
@@ -1170,9 +1182,12 @@ function toggleSolved(title, event) {
 
   if (solvedProblems.has(cleanTitle)) {
     solvedProblems.delete(cleanTitle);
+    solvedDates.delete(cleanTitle);
   } else {
     solvedProblems.delete(title);
+    solvedDates.delete(title);
     solvedProblems.add(cleanTitle);
+    solvedDates.set(cleanTitle, new Date().toISOString());
   }
 
   updateSolvedStats();
@@ -1262,8 +1277,10 @@ function closeBackupModal() {
 }
 
 function generateBackupPayload() {
+  const solvedDatesObj = {};
+  solvedDates.forEach((date, title) => { solvedDatesObj[title] = date; });
   return {
-    version: '1.0',
+    version: '1.1',
     app: 'DSA Tracker',
     exportedAt: new Date().toISOString(),
     stats: {
@@ -1271,7 +1288,8 @@ function generateBackupPayload() {
       starredCount: starredProblems.size
     },
     solvedProblems: Array.from(solvedProblems),
-    starredProblems: Array.from(starredProblems)
+    starredProblems: Array.from(starredProblems),
+    solvedDates: solvedDatesObj
   };
 }
 
@@ -1337,6 +1355,7 @@ function parseImportJson(text) {
 
   let solvedList = [];
   let starredList = [];
+  let solvedDatesObj = {};
 
   // Format 1: Standard structured format { solvedProblems: [...], starredProblems: [...] }
   if (Array.isArray(parsed.solvedProblems)) {
@@ -1355,6 +1374,11 @@ function parseImportJson(text) {
     starredList = parsed.leetcode_starred_v1;
   }
 
+  // Extract solved dates if present (v1.1 backup format)
+  if (parsed.solvedDates && typeof parsed.solvedDates === 'object' && !Array.isArray(parsed.solvedDates)) {
+    solvedDatesObj = parsed.solvedDates;
+  }
+
   // Format 2: Raw Array of solved problems
   if (Array.isArray(parsed) && solvedList.length === 0 && starredList.length === 0) {
     solvedList = parsed;
@@ -1368,21 +1392,28 @@ function parseImportJson(text) {
     throw new Error('No valid solved or bookmarked questions found in this backup.');
   }
 
-  return { solvedList, starredList };
+  return { solvedList, starredList, solvedDatesObj };
 }
 
 function processImportJsonString(jsonString) {
   try {
-    const { solvedList, starredList } = parseImportJson(jsonString);
+    const { solvedList, starredList, solvedDatesObj } = parseImportJson(jsonString);
 
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
 
     if (mode === 'overwrite') {
       solvedProblems = new Set(solvedList);
       starredProblems = new Set(starredList);
+      solvedDates = new Map();
+      Object.entries(solvedDatesObj || {}).forEach(([t, d]) => solvedDates.set(t, d));
     } else {
-      // Merge mode
-      solvedList.forEach(p => solvedProblems.add(p));
+      // Merge mode: only set date if not already tracked
+      solvedList.forEach(p => {
+        solvedProblems.add(p);
+        if (!solvedDates.has(p) && solvedDatesObj && solvedDatesObj[p]) {
+          solvedDates.set(p, solvedDatesObj[p]);
+        }
+      });
       starredList.forEach(p => starredProblems.add(p));
     }
 
@@ -1552,9 +1583,12 @@ function syncToCloudDebounced() {
   if (cloudSyncTimeout) clearTimeout(cloudSyncTimeout);
   cloudSyncTimeout = setTimeout(() => {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      const datesObj = {};
+      solvedDates.forEach((date, title) => { datesObj[title] = date; });
       window.FirebaseService.saveProgressToCloud(
         Array.from(solvedProblems),
-        Array.from(starredProblems)
+        Array.from(starredProblems),
+        datesObj
       );
     }
   }, 400);
@@ -1734,8 +1768,8 @@ async function loadTrackerDataScripts() {
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
   dataLoadingPromise = (async () => {
     try {
-      await loadScript('data.js?v=2.3.0');
-      await loadScript('solvedQuestion.js?v=2.3.0');
+      await loadScript('data.js?v=2.5.0');
+      // solvedQuestion.js is loaded statically in index.html
       dataScriptsLoaded = true;
       console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
     } catch (err) {
@@ -1824,13 +1858,20 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
   // Cloud Firestore is the authoritative source of truth for the logged-in user
   solvedProblems = new Set((cloudSolved || []).map(t => (typeof t === 'string' ? t.trim() : t)));
   starredProblems = new Set((cloudStarred || []).map(t => (typeof t === 'string' ? t.trim() : t)));
+  // Restore solved dates from cloud
+  solvedDates = new Map();
+  if (cloudDates && typeof cloudDates === 'object') {
+    Object.entries(cloudDates).forEach(([title, date]) => {
+      if (title && date) solvedDates.set(title.trim(), date);
+    });
+  }
 
   // Update local storage and UI counters without triggering another cloud write
   updateSolvedStats(true);
@@ -1859,9 +1900,12 @@ window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
   if (solvedProblems.size > 0 || starredProblems.size > 0) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      const datesObj = {};
+      solvedDates.forEach((date, title) => { datesObj[title] = date; });
       window.FirebaseService.saveProgressToCloud(
         Array.from(solvedProblems),
-        Array.from(starredProblems)
+        Array.from(starredProblems),
+        datesObj
       );
     }
   }
