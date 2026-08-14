@@ -2056,9 +2056,10 @@ function renderSolvedHeatmap() {
 
       // Level thresholds: 0 → gray, 1 → dim green, 2-3 → mid green, 4+ → bright green
       let level = 0;
-      if (cnt === 1)           level = 1;
-      else if (cnt <= 3)       level = 2;
-      else if (cnt >= 4)       level = 3;
+      if (cnt >= 4) level = 3;
+      else if (cnt >= 2) level = 2;
+      else if (cnt === 1) level = 1;
+      else level = 0;
       cell.classList.add(`level-${level}`);
 
       const dateLabel = `${MONTH_NAMES[day.getUTCMonth()]} ${day.getUTCDate()}, ${day.getUTCFullYear()}`;
