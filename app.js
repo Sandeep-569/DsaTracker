@@ -2008,37 +2008,46 @@ function renderSolvedHeatmap() {
   if (activeDaysEl) activeDaysEl.textContent = activeDays;
   if (maxStreakEl)  maxStreakEl.textContent   = maxStreak;
 
-  // ── 4. Render month labels (absolute-positioned for pixel alignment) ───────
+  // ── 4 & 5. Render month labels and grid columns with month gaps ───────────
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const colW = 14; // 11px cell + 3px gap
+  const CELL_SIZE = 11; // px
+  const COL_GAP   = 3;  // px
+  const MONTH_GAP = 8;  // px extra separation between month clusters
 
   monthsEl.innerHTML = '';
-  monthsEl.style.position = 'relative';
-  monthsEl.style.height   = '14px';
-  monthsEl.style.width    = `${53 * colW}px`;
+  grid.innerHTML = '';
 
+  const frag = document.createDocumentFragment();
+  let currentX = 0;
   let lastMonth = -1;
+
   for (let col = 0; col < 53; col++) {
-    const day = new Date(startDay);
-    day.setUTCDate(day.getUTCDate() + col * 7);
-    if (day > endDay) break;
-    const m = day.getUTCMonth();
+    const colFirstDay = new Date(startDay);
+    colFirstDay.setUTCDate(colFirstDay.getUTCDate() + col * 7);
+    if (colFirstDay > endDay) break;
+
+    const m = colFirstDay.getUTCMonth();
+    let isNewMonth = false;
+
     if (m !== lastMonth) {
+      isNewMonth = true;
+      if (col > 0) {
+        currentX += MONTH_GAP;
+      }
       const lbl = document.createElement('span');
-      lbl.className     = 'heatmap-month-label';
-      lbl.textContent   = MONTH_NAMES[m];
-      lbl.style.position = 'absolute';
-      lbl.style.left     = `${col * colW}px`;
+      lbl.className = 'heatmap-month-label';
+      lbl.textContent = MONTH_NAMES[m];
+      lbl.style.left = `${currentX}px`;
       monthsEl.appendChild(lbl);
       lastMonth = m;
     }
-  }
 
-  // ── 5. Render grid cells ───────────────────────────────────────────────────
-  grid.innerHTML = '';
-  const frag = document.createDocumentFragment();
+    const colEl = document.createElement('div');
+    colEl.className = 'heatmap-col';
+    if (isNewMonth && col > 0) {
+      colEl.style.marginLeft = `${MONTH_GAP}px`;
+    }
 
-  for (let col = 0; col < 53; col++) {
     for (let row = 0; row < 7; row++) {
       const dayOffset = col * 7 + row;
       const day = new Date(startDay);
@@ -2049,7 +2058,7 @@ function renderSolvedHeatmap() {
 
       if (day > endDay) {
         cell.classList.add('heatmap-empty');
-        frag.appendChild(cell);
+        colEl.appendChild(cell);
         continue;
       }
 
@@ -2069,11 +2078,17 @@ function renderSolvedHeatmap() {
         ? `${cnt} solved on ${dateLabel}`
         : `No submissions on ${dateLabel}`;
 
-      frag.appendChild(cell);
+      colEl.appendChild(cell);
     }
+
+    frag.appendChild(colEl);
+    currentX += CELL_SIZE + COL_GAP;
   }
 
   grid.appendChild(frag);
+  const totalWidth = Math.max(0, currentX - COL_GAP);
+  monthsEl.style.width = `${totalWidth}px`;
+  grid.style.width = `${totalWidth}px`;
 }
 
 
