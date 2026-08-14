@@ -160,8 +160,20 @@ function changeSolvedDate(title) {
       console.error('Error saving date to localStorage:', e);
     }
 
-    // Sync to cloud if available
-    if (typeof syncToCloudDebounced === 'function') syncToCloudDebounced();
+    // Write to Firestore immediately with a captured snapshot to avoid the
+    // 400ms debounce race: if cloud-data-received fires before the debounce
+    // timer expires it would overwrite the local change back to the old date.
+    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      const datesObj = {};
+      if (typeof solvedDates !== 'undefined') {
+        solvedDates.forEach((date, t) => { datesObj[t] = date; });
+      }
+      window.FirebaseService.saveProgressToCloud(
+        typeof solvedProblems !== 'undefined' ? Array.from(solvedProblems) : [],
+        typeof starredProblems !== 'undefined' ? Array.from(starredProblems) : [],
+        datesObj
+      );
+    }
 
     // Update heatmap to reflect the new date
     if (typeof window.renderSolvedHeatmap === 'function') window.renderSolvedHeatmap();
