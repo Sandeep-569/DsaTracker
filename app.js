@@ -1958,8 +1958,10 @@ function renderSolvedHeatmap() {
 
   // ── 1. Build date→count map from solvedDates (UTC calendar day) ───────────
   const dayCount = new Map(); // 'YYYY-MM-DD' → count
-  if (typeof solvedDates !== 'undefined') {
-    solvedDates.forEach((iso) => {
+  if (typeof solvedProblems !== 'undefined' && typeof solvedDates !== 'undefined') {
+    solvedProblems.forEach((rawTitle) => {
+      const title = typeof rawTitle === 'string' ? rawTitle.trim() : rawTitle;
+      const iso = solvedDates.get(title) || solvedDates.get(rawTitle);
       if (!iso) return;
       try {
         const d = new Date(iso);
