@@ -46,9 +46,11 @@ function formatSolvedDate(isoString) {
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return '—';
-    const day = d.getDate();
-    const month = d.toLocaleString('en-GB', { month: 'short' });
-    const year = d.getFullYear();
+    // Use UTC so that IST dates before 5:30 AM (= previous UTC day) show correctly
+    const day = d.getUTCDate();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const month = months[d.getUTCMonth()];
+    const year = d.getUTCFullYear();
     return `${day}-${month}-${year}`;
   } catch {
     return '—';
@@ -59,15 +61,15 @@ function formatSolvedDate(isoString) {
 function changeSolvedDate(title) {
   const existing = (typeof solvedDates !== 'undefined') ? solvedDates.get(title) : null;
 
-  // Build a yyyy-MM-dd string for the input default value
+  // Build a yyyy-MM-dd string (UTC) for the input default value
   const toInputVal = (iso) => {
     if (!iso) return '';
     try {
       const d = new Date(iso);
       if (isNaN(d.getTime())) return '';
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
     } catch { return ''; }
   };
