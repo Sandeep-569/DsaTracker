@@ -55,6 +55,120 @@ function formatSolvedDate(isoString) {
   }
 }
 
+/* Open an inline date-picker to change the solved date for a problem */
+function changeSolvedDate(title) {
+  const existing = (typeof solvedDates !== 'undefined') ? solvedDates.get(title) : null;
+
+  // Build a yyyy-MM-dd string for the input default value
+  const toInputVal = (iso) => {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch { return ''; }
+  };
+
+  // Remove any existing picker overlay
+  document.getElementById('__date-picker-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = '__date-picker-overlay';
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background: var(--card-bg, #1e1e2e);
+      border: 1px solid var(--border, #333);
+      border-radius: 14px;
+      padding: 28px 32px;
+      min-width: 300px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; gap: 16px;
+    ">
+      <div style="font-size: 15px; font-weight: 600; color: var(--text-primary, #fff);">
+        📅 Edit Solved Date
+      </div>
+      <div style="font-size: 12px; color: var(--text-secondary, #aaa); word-break: break-word;">
+        ${escapeHtml(title)}
+      </div>
+      <input
+        id="__date-picker-input"
+        type="date"
+        value="${toInputVal(existing)}"
+        max="${toInputVal(new Date().toISOString())}"
+        style="
+          padding: 8px 12px; border-radius: 8px;
+          border: 1px solid var(--border, #444);
+          background: var(--input-bg, #2a2a3e);
+          color: var(--text-primary, #fff);
+          font-size: 14px; width: 100%; box-sizing: border-box;
+        "
+      />
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="__date-picker-cancel" style="
+          padding: 7px 18px; border-radius: 8px; border: 1px solid var(--border,#444);
+          background: transparent; color: var(--text-secondary,#aaa);
+          font-size: 13px; cursor: pointer;
+        ">Cancel</button>
+        <button id="__date-picker-save" style="
+          padding: 7px 18px; border-radius: 8px; border: none;
+          background: var(--accent, #7c6ef7); color: #fff;
+          font-size: 13px; cursor: pointer; font-weight: 600;
+        ">Save</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.getElementById('__date-picker-cancel').addEventListener('click', close);
+
+  document.getElementById('__date-picker-save').addEventListener('click', () => {
+    const val = document.getElementById('__date-picker-input').value; // yyyy-MM-dd
+    if (!val) { close(); return; }
+
+    // Convert local date → ISO string (start of day local time)
+    const [y, m, d] = val.split('-').map(Number);
+    const newDate = new Date(y, m - 1, d);
+    if (isNaN(newDate.getTime())) { close(); return; }
+
+    // Update the map
+    if (typeof solvedDates !== 'undefined') {
+      solvedDates.set(title, newDate.toISOString());
+    }
+
+    // Persist to localStorage
+    try {
+      const datesObj = {};
+      if (typeof solvedDates !== 'undefined') {
+        solvedDates.forEach((date, t) => { datesObj[t] = date; });
+      }
+      localStorage.setItem('leetcode_solved_dates_v1', JSON.stringify(datesObj));
+    } catch (e) {
+      console.error('Error saving date to localStorage:', e);
+    }
+
+    // Sync to cloud if available
+    if (typeof syncToCloudDebounced === 'function') syncToCloudDebounced();
+
+    close();
+    renderSolvedView();
+  });
+
+  // Focus the input
+  setTimeout(() => document.getElementById('__date-picker-input')?.focus(), 50);
+}
+
 function renderSolvedView() {
   const query = (document.getElementById('solved-search')?.value || '').trim().toLowerCase();
 
@@ -228,8 +342,13 @@ function renderSolvedTableSection(tbodyId, sectionId, problemsList) {
       </td>
       <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
       <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
-      <td style="text-align:right; white-space:nowrap;" title="${dateTitleAttr}">
-        <span class="solved-date-badge">${dateDisplay}</span>
+      <td style="text-align:right; white-space:nowrap;">
+        <span
+          class="solved-date-badge"
+          title="Click to change date"
+          style="cursor:pointer; user-select:none;"
+          data-title="${escapeHtml(p.title)}"
+        >${dateDisplay} ✏️</span>
       </td>
     `;
 
@@ -238,6 +357,14 @@ function renderSolvedTableSection(tbodyId, sectionId, problemsList) {
 
     const starBtn = tr.querySelector('.star-btn');
     starBtn.addEventListener('click', (e) => toggleStar(p.title, e));
+
+    const dateBadge = tr.querySelector('.solved-date-badge');
+    if (dateBadge) {
+      dateBadge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        changeSolvedDate(p.title);
+      });
+    }
 
     frag.appendChild(tr);
   });
