@@ -1949,9 +1949,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Solved Activity Heatmap ─────────────────────────────────────────────── */
 function renderSolvedHeatmap() {
-  const grid       = document.getElementById('heatmap-grid');
-  const monthsEl   = document.getElementById('heatmap-months');
-  const totalEl    = document.getElementById('heatmap-total-count');
+  const grid         = document.getElementById('heatmap-grid');
+  const monthsEl     = document.getElementById('heatmap-months');
+  const totalEl      = document.getElementById('heatmap-total-count');
   const activeDaysEl = document.getElementById('heatmap-active-days');
   const maxStreakEl  = document.getElementById('heatmap-max-streak');
   if (!grid || !monthsEl) return;
@@ -1972,24 +1972,16 @@ function renderSolvedHeatmap() {
 
   // ── 2. Date range: 53 weeks (371 days), Sunday-aligned start ─────────────
   const todayUTC = new Date();
-  // Snap today to UTC midnight
-  const todayMid = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate()));
-  // Find the most recent Saturday (end of last full week) so the grid
-  // ends on today's column but aligns to Sunday-start rows.
-  // startSunday = Sunday of the week containing (today − 370 days)
-  const endDay = todayMid;
-  const daysToSunday = endDay.getUTCDay(); // days since last Sunday
-  // We want the grid to start on a Sunday 52 full weeks + daysToSunday ago
+  const endDay   = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate()));
   const startDay = new Date(endDay);
-  startDay.setUTCDate(startDay.getUTCDate() - (52 * 7 + daysToSunday));
-  // Total days in grid = 53 cols × 7 rows = 371
+  startDay.setUTCDate(startDay.getUTCDate() - (52 * 7 + endDay.getUTCDay()));
   const TOTAL_DAYS = 53 * 7;
 
   // ── 3. Compute stats over the window ──────────────────────────────────────
-  let totalSolved = 0;
-  let activeDays  = 0;
-  let maxStreak   = 0;
-  let curStreak   = 0;
+  let totalSolved   = 0;
+  let activeDays    = 0;
+  let maxStreak     = 0;
+  let curStreak     = 0;
   let prevWasActive = false;
 
   for (let i = 0; i < TOTAL_DAYS; i++) {
@@ -2010,18 +2002,19 @@ function renderSolvedHeatmap() {
     }
   }
 
-  // Update stat elements
-  if (totalEl)    totalEl.textContent    = totalSolved;
+  if (totalEl)      totalEl.textContent      = totalSolved;
   if (activeDaysEl) activeDaysEl.textContent = activeDays;
-  if (maxStreakEl)  maxStreakEl.textContent  = maxStreak;
+  if (maxStreakEl)  maxStreakEl.textContent   = maxStreak;
 
-  // ── 4. Render month labels ─────────────────────────────────────────────────
+  // ── 4. Render month labels (absolute-positioned for pixel alignment) ───────
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const CELL = 11; // px
-  const GAP  = 3;  // px
-  const colW  = CELL + GAP; // 14px per column
+  const colW = 14; // 11px cell + 3px gap
 
   monthsEl.innerHTML = '';
+  monthsEl.style.position = 'relative';
+  monthsEl.style.height   = '14px';
+  monthsEl.style.width    = `${53 * colW}px`;
+
   let lastMonth = -1;
   for (let col = 0; col < 53; col++) {
     const day = new Date(startDay);
@@ -2029,49 +2022,15 @@ function renderSolvedHeatmap() {
     if (day > endDay) break;
     const m = day.getUTCMonth();
     if (m !== lastMonth) {
-      // Spacer up to this column
-      if (lastMonth !== -1) {
-        // already placed a label — nothing extra needed, labels flow left
-      }
       const lbl = document.createElement('span');
-      lbl.className = 'heatmap-month-label';
-      lbl.textContent = MONTH_NAMES[m];
-      // Position: each col is colW px wide; first col has no left spacer
-      lbl.style.width = `${colW}px`; // label takes exactly one col width
-      lbl.style.display = 'inline-block';
-      lbl.style.marginLeft = col === 0 ? '0' : `${(col - (monthsEl.children.length > 0 ? parseInt(monthsEl.dataset.lastCol || 0, 10) : 0) - 1) * colW}px`;
-      // Simpler approach: absolute offset
-      lbl.style.marginLeft = '0';
-      lbl.style.width = 'auto';
-      lbl.style.minWidth = `${colW}px`;
-      monthsEl.dataset.lastCol = col;
-      monthsEl.appendChild(lbl);
-      lastMonth = m;
-    }
-  }
-
-  // Use absolute positioning for month labels for pixel-perfect alignment
-  monthsEl.style.position = 'relative';
-  monthsEl.style.height = '14px';
-  monthsEl.innerHTML = ''; // re-render cleanly
-  lastMonth = -1;
-  for (let col = 0; col < 53; col++) {
-    const day = new Date(startDay);
-    day.setUTCDate(day.getUTCDate() + col * 7);
-    if (day > endDay) break;
-    const m = day.getUTCMonth();
-    if (m !== lastMonth) {
-      const lbl = document.createElement('span');
-      lbl.className = 'heatmap-month-label';
-      lbl.textContent = MONTH_NAMES[m];
+      lbl.className     = 'heatmap-month-label';
+      lbl.textContent   = MONTH_NAMES[m];
       lbl.style.position = 'absolute';
-      lbl.style.left = `${col * colW}px`;
+      lbl.style.left     = `${col * colW}px`;
       monthsEl.appendChild(lbl);
       lastMonth = m;
     }
   }
-  // Set container width to match grid
-  monthsEl.style.width = `${53 * colW}px`;
 
   // ── 5. Render grid cells ───────────────────────────────────────────────────
   grid.innerHTML = '';
@@ -2087,7 +2046,6 @@ function renderSolvedHeatmap() {
       cell.className = 'heatmap-cell';
 
       if (day > endDay) {
-        // Future cell — render as invisible spacer to keep grid shape
         cell.classList.add('heatmap-empty');
         frag.appendChild(cell);
         continue;
@@ -2096,18 +2054,13 @@ function renderSolvedHeatmap() {
       const key = `${day.getUTCFullYear()}-${String(day.getUTCMonth()+1).padStart(2,'0')}-${String(day.getUTCDate()).padStart(2,'0')}`;
       const cnt = dayCount.get(key) || 0;
 
-      // Level thresholds: 0 / 1 / 2-3 / 4+
+      // Level thresholds: 0 → gray, 1 → dim green, 2-3 → mid green, 4+ → bright green
       let level = 0;
-      if (cnt === 1)      level = 1;
-      else if (cnt <= 3)  level = cnt >= 2 ? 2 : 0;
-      else                level = 3;
-      if (cnt === 1) level = 1;
-      else if (cnt >= 2 && cnt <= 3) level = 2;
-      else if (cnt >= 4) level = 3;
-
+      if (cnt === 1)           level = 1;
+      else if (cnt <= 3)       level = 2;
+      else if (cnt >= 4)       level = 3;
       cell.classList.add(`level-${level}`);
 
-      // Tooltip
       const dateLabel = `${MONTH_NAMES[day.getUTCMonth()]} ${day.getUTCDate()}, ${day.getUTCFullYear()}`;
       cell.title = cnt > 0
         ? `${cnt} solved on ${dateLabel}`
@@ -2119,6 +2072,7 @@ function renderSolvedHeatmap() {
 
   grid.appendChild(frag);
 }
+
 
 // Expose globally so solvedQuestion.js can call it after date edits
 window.renderSolvedHeatmap = renderSolvedHeatmap;
