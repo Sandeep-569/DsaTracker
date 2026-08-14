@@ -2182,14 +2182,13 @@ tr.row:hover .solved-date-badge {
 }
 
 .heatmap-months {
-  position: relative;
-  height: 14px;
+  display: flex;
+  gap: 10px;
   margin-bottom: 6px;
   min-width: max-content;
 }
 
 .heatmap-month-label {
-  position: absolute;
   font-size: 10px;
   color: var(--text-secondary);
   font-family: var(--mono);
@@ -2198,8 +2197,14 @@ tr.row:hover .solved-date-badge {
 
 .heatmap-grid {
   display: flex;
-  gap: 3px;
+  gap: 10px;
+  align-items: flex-start;
   min-width: max-content;
+}
+
+.heatmap-month-group {
+  display: flex;
+  gap: 3px;
 }
 
 .heatmap-col {
@@ -2227,8 +2232,12 @@ tr.row:hover .solved-date-badge {
 .heatmap-cell.level-1 { background: #0e4429; }
 .heatmap-cell.level-2 { background: #238636; }
 .heatmap-cell.level-3 { background: #3fb950; }
-/* Future day placeholder (transparent) */
-.heatmap-cell.heatmap-empty { background: transparent; cursor: default; }
+/* Empty/spacer cell (transparent) */
+.heatmap-cell.heatmap-empty {
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
 
 @media (max-width: 600px) {
   .heatmap-header {
