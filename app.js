@@ -1769,7 +1769,7 @@ async function loadTrackerDataScripts() {
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
   dataLoadingPromise = (async () => {
     try {
-      await loadScript('data.js?v=2.5.0');
+      await loadScript('data.js?v=2.6.0');
       // solvedQuestion.js is loaded statically in index.html
       dataScriptsLoaded = true;
       console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
