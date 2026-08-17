@@ -189,6 +189,21 @@ function getSlugFromUrl(url) {
   return match ? match[1].toLowerCase() : '';
 }
 
+// Get LeetCode problem number from URL slug using the pre-generated mapping
+function getLeetCodeNumber(url) {
+  if (typeof LEETCODE_NUM_MAP === 'undefined') return null;
+  const slug = getSlugFromUrl(url);
+  return slug ? (LEETCODE_NUM_MAP[slug] || null) : null;
+}
+
+// Parse a search query to detect LeetCode number searches
+// Supports: "1", "#1", "#42", "42", etc.
+function parseLeetCodeNumberQuery(query) {
+  const trimmed = query.trim();
+  const match = trimmed.match(/^#?(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
 function getTopicsForProblem(problem) {
   const slug = getSlugFromUrl(problem.url);
   const lowerTitle = problem.title.toLowerCase();
@@ -292,7 +307,8 @@ function initData() {
       if (!companyEntry.problemsMap.has(p.title)) {
         companyEntry.problemsMap.set(p.title, {
           ...p,
-          tags
+          tags,
+          lcNum: getLeetCodeNumber(p.url)
         });
       }
     });
@@ -507,10 +523,16 @@ function filterCompanies() {
     return;
   }
 
+  // Detect if the query is a LeetCode problem number (e.g. "1", "#42")
+  const lcNumQuery = parseLeetCodeNumberQuery(q);
+
   // 1. Filter Companies
   const filteredCompanies = companyList.filter(c =>
     c.name.toLowerCase().includes(q) ||
-    c.problems.some(p => p.title.toLowerCase().includes(q) || (p.tags && p.tags.some(t => t.toLowerCase().includes(q))))
+    c.problems.some(p => {
+      if (lcNumQuery !== null && p.lcNum === lcNumQuery) return true;
+      return p.title.toLowerCase().includes(q) || (p.tags && p.tags.some(t => t.toLowerCase().includes(q)));
+    })
   );
 
   // 2. Filter & Deduplicate Individual Problems Across All Companies by Title
@@ -519,7 +541,12 @@ function filterCompanies() {
     c.problems.forEach(p => {
       const normTitle = p.title.trim();
       const lowerTitle = normTitle.toLowerCase();
-      const matches = lowerTitle.includes(q) || (p.tags && p.tags.some(t => t.toLowerCase().includes(q)));
+      let matches = lowerTitle.includes(q) || (p.tags && p.tags.some(t => t.toLowerCase().includes(q)));
+
+      // Also match by LeetCode number
+      if (!matches && lcNumQuery !== null && p.lcNum === lcNumQuery) {
+        matches = true;
+      }
 
       if (matches) {
         if (!probMap.has(normTitle)) {
@@ -594,7 +621,7 @@ function renderHomeProblemsResults(problemsList) {
       </td>
       <td>
         <div class="prob-title">
-          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${escapeHtml(p.title)}</a>
+          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${getProblemNumberBadgeHtml(p)}${escapeHtml(p.title)}</a>
           ${tagsHTML}
         </div>
       </td>
@@ -720,10 +747,14 @@ function renderCompanyTopics() {
   const topicsList = Array.from(topicMap.values());
   topicsList.sort((a, b) => getTopicOrder(a.name) - getTopicOrder(b.name));
 
-  // Filter topics by query: match topic name OR any problem title inside the topic!
+  // Filter topics by query: match topic name OR any problem title/number inside the topic!
+  const topicQueryLcNum = query ? parseLeetCodeNumberQuery(query) : null;
   const filteredTopics = query ? topicsList.filter(t => 
     t.name.toLowerCase().includes(query) ||
-    t.problems.some(p => p.title.toLowerCase().includes(query))
+    t.problems.some(p => {
+      if (topicQueryLcNum !== null && p.lcNum === topicQueryLcNum) return true;
+      return p.title.toLowerCase().includes(query);
+    })
   ) : topicsList;
 
   filteredTopics.forEach(t => {
@@ -822,9 +853,11 @@ function renderTopicProblems() {
   // Apply Problem Search Filter
   const query = (document.getElementById('topic-prob-search')?.value || '').trim().toLowerCase();
   if (query) {
+    const topicLcNum = parseLeetCodeNumberQuery(query);
     pool = pool.filter(p =>
       p.title.toLowerCase().includes(query) ||
-      (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) ||
+      (topicLcNum !== null && p.lcNum === topicLcNum)
     );
   }
 
@@ -925,7 +958,7 @@ function renderProblemTableSection(tbodyId, sectionId, problemsList) {
       </td>
       <td>
         <div class="prob-title">
-          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${escapeHtml(p.title)}</a>
+          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${getProblemNumberBadgeHtml(p)}${escapeHtml(p.title)}</a>
           ${tagsHTML}
         </div>
       </td>
@@ -1014,12 +1047,14 @@ function renderBookmarksView() {
     pool = pool.filter(p => solvedProblems.has(p.title));
   }
 
-  // Apply Search Query Filter (title, topic tags, or company names)
+  // Apply Search Query Filter (title, topic tags, company names, or LC number)
   if (query) {
+    const bmLcNum = parseLeetCodeNumberQuery(query);
     pool = pool.filter(p =>
       p.title.toLowerCase().includes(query) ||
       (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) ||
-      (p.companies && p.companies.some(c => c.toLowerCase().includes(query)))
+      (p.companies && p.companies.some(c => c.toLowerCase().includes(query))) ||
+      (bmLcNum !== null && p.lcNum === bmLcNum)
     );
   }
 
@@ -1105,7 +1140,7 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
       </td>
       <td>
         <div class="prob-title">
-          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${escapeHtml(p.title)}</a>
+          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${getProblemNumberBadgeHtml(p)}${escapeHtml(p.title)}</a>
           ${tagsHTML}
         </div>
       </td>

@@ -209,7 +209,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="search" type="text"
-            placeholder="Search by question title or company name (e.g. Two Sum, Google, DP)..."
+            placeholder="Search by question title, company name, or LeetCode number (e.g. Two Sum, Google, #1, 42)..."
             oninput="filterCompanies()">
         </div>
         <select id="company-sort" class="select-sec" onchange="sortCompanies()">
@@ -279,7 +279,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="topic-search" type="text" placeholder="Search by question title or topic name in this company (e.g. Two Sum, Array)..."
+          <input id="topic-search" type="text" placeholder="Search by question title, topic name, or LeetCode number (e.g. Two Sum, Array, #1)..."
             oninput="filterCompanyTopics()">
         </div>
       </div>
@@ -305,7 +305,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="topic-prob-search" type="text" placeholder="Search by question title or tag in this section (e.g. Two Sum, DP)..."
+          <input id="topic-prob-search" type="text" placeholder="Search by title, tag, or LeetCode number (e.g. Two Sum, DP, #42)..."
             oninput="renderTopicProblems()">
         </div>
       </div>
@@ -409,7 +409,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="bookmarks-search" type="text"
-            placeholder="Search bookmarked questions by title, topic, or company (e.g. Two Sum, Google, DP)..."
+            placeholder="Search bookmarked questions by title, topic, company, or LC number (e.g. #1, Two Sum, Google)..."
             oninput="renderBookmarksView()">
         </div>
       </div>
@@ -525,7 +525,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="solved-search" type="text"
-            placeholder="Search solved questions by title, topic, or company (e.g. Two Sum, Google, DP)..."
+            placeholder="Search solved questions by title, topic, company, or LC number (e.g. #1, Two Sum, Google)..."
             oninput="renderSolvedView()">
         </div>
       </div>
@@ -846,6 +846,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="firebase-service.js?v=2.6.0"></script>
+  <script src="leetcode-numbers.js?v=2.6.0"></script>
   <script src="solvedQuestion.js?v=2.6.0"></script>
   <script src="app.js?v=2.6.0"></script>
 </body>

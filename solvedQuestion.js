@@ -243,12 +243,14 @@ function renderSolvedView() {
     pool = pool.filter(p => p.diff === currentSolvedFilter);
   }
 
-  // Apply Search Query Filter (title, topic tags, or company names)
+  // Apply Search Query Filter (title, topic tags, company names, or LC number)
   if (query) {
+    const svLcNum = (typeof parseLeetCodeNumberQuery === 'function') ? parseLeetCodeNumberQuery(query) : null;
     pool = pool.filter(p =>
       p.title.toLowerCase().includes(query) ||
       (p.tags && p.tags.some(t => t.toLowerCase().includes(query))) ||
-      (p.companies && p.companies.some(c => c.toLowerCase().includes(query)))
+      (p.companies && p.companies.some(c => c.toLowerCase().includes(query))) ||
+      (svLcNum !== null && p.lcNum === svLcNum)
     );
   }
 
@@ -348,7 +350,7 @@ function renderSolvedTableSection(tbodyId, sectionId, problemsList) {
       </td>
       <td>
         <div class="prob-title">
-          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${escapeHtml(p.title)}</a>
+          <a href="${p.url}" target="_blank" class="${isSolved ? 'completed' : ''}">${(typeof getProblemNumberBadgeHtml === 'function' ? getProblemNumberBadgeHtml(p) : (p.lcNum ? '<span class="lc-num">#' + p.lcNum + '</span> ' : ''))}${escapeHtml(p.title)}</a>
           ${tagsHTML}
         </div>
       </td>
