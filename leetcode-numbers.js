@@ -34,7 +34,60 @@ function getProblemNumber(p) {
 
 function getProblemNumberBadgeHtml(p) {
   const num = getProblemNumber(p);
-  return num ? `<span class="lc-num">#${num}</span> ` : "";
+  return num ? `<span class="lc-num">${num}</span> ` : "";
+}
+
+function sortSearchResults(problems, query, lcNumQuery) {
+  if (!Array.isArray(problems) || problems.length === 0) return [];
+  if (!query && (lcNumQuery === null || lcNumQuery === undefined)) {
+    return (typeof sortProblemsByTopic === 'function') ? sortProblemsByTopic(problems) : problems;
+  }
+
+  const cleanQuery = (query || '').toLowerCase().trim();
+
+  return problems.slice().sort((a, b) => {
+    // 1. Exact LeetCode number match comes first!
+    if (lcNumQuery !== null && lcNumQuery !== undefined) {
+      const aExact = (a.lcNum === lcNumQuery);
+      const bExact = (b.lcNum === lcNumQuery);
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+
+      // Prefix match for number (e.g. searching "1" matches 1, 10, 11, 12...)
+      const aNumStr = (a.lcNum !== undefined && a.lcNum !== null) ? String(a.lcNum) : '';
+      const bNumStr = (b.lcNum !== undefined && b.lcNum !== null) ? String(b.lcNum) : '';
+      const qNumStr = String(lcNumQuery);
+      const aNumPrefix = aNumStr.startsWith(qNumStr);
+      const bNumPrefix = bNumStr.startsWith(qNumStr);
+      if (aNumPrefix && !bNumPrefix) return -1;
+      if (!aNumPrefix && bNumPrefix) return 1;
+      if (aNumPrefix && bNumPrefix) {
+        return (a.lcNum || 0) - (b.lcNum || 0); // sort numerically ascending
+      }
+    }
+
+    // 2. Exact title match
+    const aTitle = (a.title || '').toLowerCase().trim();
+    const bTitle = (b.title || '').toLowerCase().trim();
+    if (cleanQuery) {
+      if (aTitle === cleanQuery && bTitle !== cleanQuery) return -1;
+      if (aTitle !== cleanQuery && bTitle === cleanQuery) return 1;
+
+      // 3. Title starts with query
+      const aStarts = aTitle.startsWith(cleanQuery);
+      const bStarts = bTitle.startsWith(cleanQuery);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+    }
+
+    // 4. Default to topic order then alphabetical
+    if (typeof getTopicOrder === 'function') {
+      const topicDiff = getTopicOrder(a.tags?.[0] || '') - getTopicOrder(b.tags?.[0] || '');
+      if (topicDiff !== 0) return topicDiff;
+    }
+
+    return (a.title || '').localeCompare(b.title || '');
+  });
 }
 
 if (typeof window !== "undefined") {
@@ -43,4 +96,5 @@ if (typeof window !== "undefined") {
   window.parseLeetCodeNumberQuery = parseLeetCodeNumberQuery;
   window.getProblemNumber = getProblemNumber;
   window.getProblemNumberBadgeHtml = getProblemNumberBadgeHtml;
+  window.sortSearchResults = sortSearchResults;
 }

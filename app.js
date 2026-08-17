@@ -565,7 +565,20 @@ function filterCompanies() {
     });
   });
 
-  const uniqueMatchedProblems = sortProblemsByTopic(Array.from(probMap.values()));
+  // If searching by number, prioritize companies that contain the exact question
+  if (lcNumQuery !== null) {
+    filteredCompanies.sort((a, b) => {
+      const aHasExact = a.problems.some(p => p.lcNum === lcNumQuery);
+      const bHasExact = b.problems.some(p => p.lcNum === lcNumQuery);
+      if (aHasExact && !bHasExact) return -1;
+      if (!aHasExact && bHasExact) return 1;
+      return b.total - a.total;
+    });
+  }
+
+  const uniqueMatchedProblems = (typeof sortSearchResults === 'function')
+    ? sortSearchResults(Array.from(probMap.values()), q, lcNumQuery)
+    : sortProblemsByTopic(Array.from(probMap.values()));
 
   if (uniqueMatchedProblems.length > 0 && resultsDiv) {
     resultsDiv.style.display = 'block';
@@ -861,8 +874,10 @@ function renderTopicProblems() {
     );
   }
 
-  // Sort problems topic-wise (basic→advanced) then alphabetically
-  pool = sortProblemsByTopic(pool);
+  // Sort problems: exact number match first, then topic-wise (basic→advanced)
+  pool = (typeof sortSearchResults === 'function')
+    ? sortSearchResults(pool, query, query ? parseLeetCodeNumberQuery(query) : null)
+    : sortProblemsByTopic(pool);
 
   // Group into Easy, Medium, Hard
   const easyProblems = pool.filter(p => p.diff === 'Easy');
@@ -1069,8 +1084,10 @@ function renderBookmarksView() {
 
   if (emptyState) emptyState.style.display = 'none';
 
-  // Sort problems topic-wise (basic→advanced) then alphabetically
-  pool = sortProblemsByTopic(pool);
+  // Sort problems: exact number match first, then topic-wise (basic→advanced)
+  pool = (typeof sortSearchResults === 'function')
+    ? sortSearchResults(pool, query, query ? parseLeetCodeNumberQuery(query) : null)
+    : sortProblemsByTopic(pool);
 
   const easyProblems = pool.filter(p => p.diff === 'Easy');
   const medProblems = pool.filter(p => p.diff === 'Medium');
@@ -1804,7 +1821,7 @@ async function loadTrackerDataScripts() {
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
   dataLoadingPromise = (async () => {
     try {
-      await loadScript('data.js?v=2.7.0');
+      await loadScript('data.js?v=2.7.1');
       // solvedQuestion.js is loaded statically in index.html
       dataScriptsLoaded = true;
       console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');

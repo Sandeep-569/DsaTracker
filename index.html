@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312151b' stroke='%23FFA116' stroke-width='3' stroke-opacity='0.8'/%3E%3Cg transform='translate(11, 11) scale(1.75)'%3E%3Cpath d='M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z' fill='%23E6EDF3'/%3E%3Cpath d='M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3Cpath d='M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="alternate icon" href="favicon.svg?v=2.1.0">
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
-  <link rel="stylesheet" href="styles.css?v=2.7.0">
+  <link rel="stylesheet" href="styles.css?v=2.7.1">
   <style>
     /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
     body.auth-locked {
@@ -209,7 +209,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="search" type="text"
-            placeholder="Search by question title, company name, or LeetCode number (e.g. Two Sum, Google, #1, 42)..."
+            placeholder="Search by question title, company name, or LeetCode number (e.g. Two Sum, Google, 1, 42)..."
             oninput="filterCompanies()">
         </div>
         <select id="company-sort" class="select-sec" onchange="sortCompanies()">
@@ -279,7 +279,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="topic-search" type="text" placeholder="Search by question title, topic name, or LeetCode number (e.g. Two Sum, Array, #1)..."
+          <input id="topic-search" type="text" placeholder="Search by question title, topic name, or LeetCode number (e.g. Two Sum, Array, 1)..."
             oninput="filterCompanyTopics()">
         </div>
       </div>
@@ -305,7 +305,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input id="topic-prob-search" type="text" placeholder="Search by title, tag, or LeetCode number (e.g. Two Sum, DP, #42)..."
+          <input id="topic-prob-search" type="text" placeholder="Search by title, tag, or LeetCode number (e.g. Two Sum, DP, 42)..."
             oninput="renderTopicProblems()">
         </div>
       </div>
@@ -409,7 +409,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="bookmarks-search" type="text"
-            placeholder="Search bookmarked questions by title, topic, company, or LC number (e.g. #1, Two Sum, Google)..."
+            placeholder="Search bookmarked questions by title, topic, company, or LC number (e.g. 1, Two Sum, Google)..."
             oninput="renderBookmarksView()">
         </div>
       </div>
@@ -525,7 +525,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input id="solved-search" type="text"
-            placeholder="Search solved questions by title, topic, company, or LC number (e.g. #1, Two Sum, Google)..."
+            placeholder="Search solved questions by title, topic, company, or LC number (e.g. 1, Two Sum, Google)..."
             oninput="renderSolvedView()">
         </div>
       </div>
@@ -845,10 +845,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-service.js?v=2.7.0"></script>
-  <script src="leetcode-numbers.js?v=2.7.0"></script>
-  <script src="solvedQuestion.js?v=2.7.0"></script>
-  <script src="app.js?v=2.7.0"></script>
+  <script src="firebase-service.js?v=2.7.1"></script>
+  <script src="leetcode-numbers.js?v=2.7.1"></script>
+  <script src="solvedQuestion.js?v=2.7.1"></script>
+  <script src="app.js?v=2.7.1"></script>
 </body>
 
 </html>
