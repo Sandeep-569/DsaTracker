@@ -1,5 +1,6 @@
 {
   "version": 2,
-  "builds": [],
-  "rewrites": []
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": null
 }
