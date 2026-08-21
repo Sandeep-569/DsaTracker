@@ -1,0 +1,6 @@
+# .vercelignore — only the api/ folder is needed on Vercel; everything else
+# is served by Firebase Hosting instead.
+*
+!api
+!api/**
+!package.json

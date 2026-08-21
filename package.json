@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "DSA Tracker — LeetCode company-tagged problem tracker",
   "private": true,
-  "dependencies": {
+  "devDependencies": {
     "firebase-admin": "^12.0.0"
   }
 }
