@@ -121,35 +121,89 @@ async function main() {
     console.log(`alfa-leetcode-api failed: ${e.message}`);
   }
 
-  // Fallback: LeetCode GraphQL (often blocked from datacenters, but worth trying)
+  // Fallback / Direct: LeetCode GraphQL
   if (solvedList.length === 0) {
-    console.log('Trying LeetCode GraphQL fallback...');
+    console.log('Querying LeetCode GraphQL directly...');
+    const sessionCookie = process.env.LEETCODE_SESSION ? `LEETCODE_SESSION=${process.env.LEETCODE_SESSION.trim()};` : '';
+    const headers = {
+      'Content-Type': 'application/json',
+      'Referer': `https://leetcode.com/u/${LEETCODE_USERNAME}/`,
+      'Origin': 'https://leetcode.com',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36'
+    };
+    if (sessionCookie) {
+      headers['Cookie'] = sessionCookie;
+      console.log('Using provided LEETCODE_SESSION cookie.');
+    }
+
     try {
+      // Try recentAcSubmissionList
       const lcRes = await fetchWithTimeout('https://leetcode.com/graphql', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Referer': `https://leetcode.com/${LEETCODE_USERNAME}/`,
-          'Origin': 'https://leetcode.com',
-          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
-        },
+        headers,
         body: JSON.stringify({
-          query: `query($u:String!,$l:Int!){recentAcSubmissionList(username:$u,limit:$l){title titleSlug timestamp}}`,
-          variables: { u: LEETCODE_USERNAME, l: 20 }
+          query: `query recentAcSubmissions($username: String!, $limit: Int!) {
+            recentAcSubmissionList(username: $username, limit: $limit) {
+              id
+              title
+              titleSlug
+              timestamp
+            }
+          }`,
+          variables: { username: LEETCODE_USERNAME, limit: 20 }
         })
       }, 20000);
+
       if (lcRes.ok) {
         const lcData = await lcRes.json();
         const list = lcData?.data?.recentAcSubmissionList || [];
-        solvedList = list.map(s => ({
-          title: s.title,
-          titleSlug: s.titleSlug,
-          timestamp: s.timestamp ? Number(s.timestamp) : null
-        }));
-        console.log(`LeetCode GraphQL returned ${solvedList.length} submission(s).`);
+        if (list.length > 0) {
+          solvedList = list.map(s => ({
+            title: s.title,
+            titleSlug: s.titleSlug,
+            timestamp: s.timestamp ? Number(s.timestamp) : null
+          }));
+          console.log(`LeetCode GraphQL (recentAcSubmissionList) returned ${solvedList.length} submission(s).`);
+        }
       }
     } catch (e) {
-      console.log(`LeetCode GraphQL failed: ${e.message}`);
+      console.log(`LeetCode GraphQL recentAcSubmissionList failed: ${e.message}`);
+    }
+
+    // Try recentSubmissionList if still empty
+    if (solvedList.length === 0) {
+      try {
+        const subRes = await fetchWithTimeout('https://leetcode.com/graphql', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            query: `query recentSubmissions($username: String!) {
+              recentSubmissionList(username: $username) {
+                title
+                titleSlug
+                timestamp
+                statusDisplay
+              }
+            }`,
+            variables: { username: LEETCODE_USERNAME }
+          })
+        }, 20000);
+
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          const list = (subData?.data?.recentSubmissionList || []).filter(s => s.statusDisplay === 'Accepted');
+          if (list.length > 0) {
+            solvedList = list.map(s => ({
+              title: s.title,
+              titleSlug: s.titleSlug,
+              timestamp: s.timestamp ? Number(s.timestamp) : null
+            }));
+            console.log(`LeetCode GraphQL (recentSubmissionList) returned ${solvedList.length} accepted submission(s).`);
+          }
+        }
+      } catch (e) {
+        console.log(`LeetCode GraphQL recentSubmissionList failed: ${e.message}`);
+      }
     }
   }
 
