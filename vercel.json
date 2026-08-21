@@ -2,8 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "api/sync/leetcode.js",
       "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    { "src": "/api/sync/leetcode", "dest": "/api/sync/leetcode.js" }
   ]
 }
