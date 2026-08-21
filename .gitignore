@@ -69,5 +69,9 @@ package-lock.json
 # dotenv environment variables file
 .env
 
+# Firebase service account keys
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
 # dataconnect generated files
 .dataconnect
