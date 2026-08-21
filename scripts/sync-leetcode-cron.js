@@ -89,55 +89,46 @@ function buildTitleLookup(questionBank) {
 async function main() {
   console.log(`Starting LeetCode sync for ${LEETCODE_USERNAME}...`);
 
-  // ── 1. Fetch recent accepted submissions directly (no proxy, no timeout risk)
-  // Primary: alfa-leetcode-api (Render free tier — allow up to 60s for cold start)
   let solvedList = [];
   let totalSolved = null;
+  const sessionToken = (process.env.LEETCODE_SESSION || '').trim();
 
-  console.log('Calling alfa-leetcode-api (may take up to 60s on cold start)...');
-  try {
-    const acRes = await fetchWithTimeout(
-      `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(LEETCODE_USERNAME)}/acSubmissions?limit=20`,
-      { headers: { 'Accept': 'application/json' } },
-      60000
-    );
-    if (acRes.ok) {
-      const acData = await acRes.json();
-      const list = acData?.submission || acData?.acSubmissionList || [];
-      if (Array.isArray(list) && list.length > 0) {
-        solvedList = list.map(s => ({
-          title: s.title,
-          titleSlug: s.titleSlug,
-          timestamp: s.timestamp ? Number(s.timestamp) : null
-        }));
-        console.log(`alfa-leetcode-api returned ${solvedList.length} submission(s).`);
-      } else {
-        console.log('alfa-leetcode-api returned empty list.');
-      }
-    } else {
-      console.log(`alfa-leetcode-api HTTP ${acRes.status}.`);
-    }
-  } catch (e) {
-    console.log(`alfa-leetcode-api failed: ${e.message}`);
-  }
-
-  // Fallback / Direct: LeetCode GraphQL
-  if (solvedList.length === 0) {
-    console.log('Querying LeetCode GraphQL directly...');
-    const sessionCookie = process.env.LEETCODE_SESSION ? `LEETCODE_SESSION=${process.env.LEETCODE_SESSION.trim()};` : '';
+  // ── 1. If LEETCODE_SESSION is provided, validate and fetch directly ──────────
+  if (sessionToken) {
+    console.log('Validating LEETCODE_SESSION cookie...');
     const headers = {
       'Content-Type': 'application/json',
+      'Cookie': `LEETCODE_SESSION=${sessionToken};`,
       'Referer': `https://leetcode.com/u/${LEETCODE_USERNAME}/`,
       'Origin': 'https://leetcode.com',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36'
     };
-    if (sessionCookie) {
-      headers['Cookie'] = sessionCookie;
-      console.log('Using provided LEETCODE_SESSION cookie.');
-    }
 
     try {
-      // Try recentAcSubmissionList
+      const statusRes = await fetchWithTimeout('https://leetcode.com/graphql', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          query: `query userStatus { userStatus { isSignedIn username } }`
+        })
+      }, 15000);
+
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        const userStatus = statusData?.data?.userStatus;
+        if (!userStatus || !userStatus.isSignedIn) {
+          console.error('\n❌ ERROR: LEETCODE_SESSION has EXPIRED or is invalid!');
+          console.error('👉 Please copy your fresh LEETCODE_SESSION cookie from leetcode.com and update the GitHub secret.');
+          process.exit(1);
+        }
+        console.log(`✓ Session is valid and active for user "${userStatus.username || LEETCODE_USERNAME}".`);
+      }
+    } catch (err) {
+      console.log(`Warning during session check: ${err.message}`);
+    }
+
+    // Fetch accepted submissions using valid session
+    try {
       const lcRes = await fetchWithTimeout('https://leetcode.com/graphql', {
         method: 'POST',
         headers,
@@ -169,43 +160,35 @@ async function main() {
     } catch (e) {
       console.log(`LeetCode GraphQL recentAcSubmissionList failed: ${e.message}`);
     }
+  }
 
-    // Try recentSubmissionList if still empty
-    if (solvedList.length === 0) {
-      try {
-        const subRes = await fetchWithTimeout('https://leetcode.com/graphql', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            query: `query recentSubmissions($username: String!) {
-              recentSubmissionList(username: $username) {
-                title
-                titleSlug
-                timestamp
-                statusDisplay
-              }
-            }`,
-            variables: { username: LEETCODE_USERNAME }
-          })
-        }, 20000);
-
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          const list = (subData?.data?.recentSubmissionList || []).filter(s => s.statusDisplay === 'Accepted');
-          if (list.length > 0) {
-            solvedList = list.map(s => ({
-              title: s.title,
-              titleSlug: s.titleSlug,
-              timestamp: s.timestamp ? Number(s.timestamp) : null
-            }));
-            console.log(`LeetCode GraphQL (recentSubmissionList) returned ${solvedList.length} accepted submission(s).`);
-          }
+  // ── 2. Fallback if no session was provided or if list is still empty ───────
+  if (solvedList.length === 0 && !sessionToken) {
+    console.log('Calling alfa-leetcode-api (may take up to 60s on cold start)...');
+    try {
+      const acRes = await fetchWithTimeout(
+        `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(LEETCODE_USERNAME)}/acSubmissions?limit=20`,
+        { headers: { 'Accept': 'application/json' } },
+        60000
+      );
+      if (acRes.ok) {
+        const acData = await acRes.json();
+        const list = acData?.submission || acData?.acSubmissionList || [];
+        if (Array.isArray(list) && list.length > 0) {
+          solvedList = list.map(s => ({
+            title: s.title,
+            titleSlug: s.titleSlug,
+            timestamp: s.timestamp ? Number(s.timestamp) : null
+          }));
+          console.log(`alfa-leetcode-api returned ${solvedList.length} submission(s).`);
         }
-      } catch (e) {
-        console.log(`LeetCode GraphQL recentSubmissionList failed: ${e.message}`);
       }
+    } catch (e) {
+      console.log(`alfa-leetcode-api failed: ${e.message}`);
     }
   }
+
+
 
   // Get total solved count for logging
   try {
