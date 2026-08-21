@@ -20,14 +20,27 @@ const path = require('path');
 
 // ---- Config from environment (set as GitHub Actions secrets) ----
 const LEETCODE_USERNAME = process.env.LEETCODE_USERNAME;
-const LEETCODE_SYNC_API = process.env.LEETCODE_SYNC_API_URL; // e.g. https://your-proxy.vercel.app/api/sync/leetcode
-const OWNER_EMAIL = process.env.OWNER_EMAIL; // codedbysandeep@gmail.com
-const SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_KEY; // full JSON string
+const OWNER_EMAIL = process.env.OWNER_EMAIL;
+const SERVICE_ACCOUNT_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-if (!LEETCODE_USERNAME || !LEETCODE_SYNC_API || !OWNER_EMAIL || !SERVICE_ACCOUNT_JSON) {
+if (!LEETCODE_USERNAME || !OWNER_EMAIL || !SERVICE_ACCOUNT_JSON) {
   console.error('Missing required environment variables. Check GitHub Actions secrets.');
-  console.error('Required: LEETCODE_USERNAME, LEETCODE_SYNC_API_URL, OWNER_EMAIL, FIREBASE_SERVICE_ACCOUNT_KEY');
+  console.error('Required: LEETCODE_USERNAME, OWNER_EMAIL, FIREBASE_SERVICE_ACCOUNT_KEY');
   process.exit(1);
+}
+
+// Helper: fetch with an explicit timeout (ms)
+async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
 }
 
 // ---- Init Firebase Admin ----
@@ -76,18 +89,82 @@ function buildTitleLookup(questionBank) {
 async function main() {
   console.log(`Starting LeetCode sync for ${LEETCODE_USERNAME}...`);
 
-  // 1. Fetch recent accepted submissions from the existing Vercel proxy
-  const res = await fetch(`${LEETCODE_SYNC_API}?username=${encodeURIComponent(LEETCODE_USERNAME)}`);
-  if (!res.ok) {
-    console.error(`Sync API request failed: ${res.status} ${res.statusText}`);
-    process.exit(1);
+  // ── 1. Fetch recent accepted submissions directly (no proxy, no timeout risk)
+  // Primary: alfa-leetcode-api (Render free tier — allow up to 60s for cold start)
+  let solvedList = [];
+  let totalSolved = null;
+
+  console.log('Calling alfa-leetcode-api (may take up to 60s on cold start)...');
+  try {
+    const acRes = await fetchWithTimeout(
+      `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(LEETCODE_USERNAME)}/acSubmissions?limit=20`,
+      { headers: { 'Accept': 'application/json' } },
+      60000
+    );
+    if (acRes.ok) {
+      const acData = await acRes.json();
+      const list = acData?.submission || acData?.acSubmissionList || [];
+      if (Array.isArray(list) && list.length > 0) {
+        solvedList = list.map(s => ({
+          title: s.title,
+          titleSlug: s.titleSlug,
+          timestamp: s.timestamp ? Number(s.timestamp) : null
+        }));
+        console.log(`alfa-leetcode-api returned ${solvedList.length} submission(s).`);
+      } else {
+        console.log('alfa-leetcode-api returned empty list.');
+      }
+    } else {
+      console.log(`alfa-leetcode-api HTTP ${acRes.status}.`);
+    }
+  } catch (e) {
+    console.log(`alfa-leetcode-api failed: ${e.message}`);
   }
-  const data = await res.json();
-  const solvedList = data.solved || [];
+
+  // Fallback: LeetCode GraphQL (often blocked from datacenters, but worth trying)
+  if (solvedList.length === 0) {
+    console.log('Trying LeetCode GraphQL fallback...');
+    try {
+      const lcRes = await fetchWithTimeout('https://leetcode.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Referer': `https://leetcode.com/${LEETCODE_USERNAME}/`,
+          'Origin': 'https://leetcode.com',
+          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
+        },
+        body: JSON.stringify({
+          query: `query($u:String!,$l:Int!){recentAcSubmissionList(username:$u,limit:$l){title titleSlug timestamp}}`,
+          variables: { u: LEETCODE_USERNAME, l: 20 }
+        })
+      }, 20000);
+      if (lcRes.ok) {
+        const lcData = await lcRes.json();
+        const list = lcData?.data?.recentAcSubmissionList || [];
+        solvedList = list.map(s => ({
+          title: s.title,
+          titleSlug: s.titleSlug,
+          timestamp: s.timestamp ? Number(s.timestamp) : null
+        }));
+        console.log(`LeetCode GraphQL returned ${solvedList.length} submission(s).`);
+      }
+    } catch (e) {
+      console.log(`LeetCode GraphQL failed: ${e.message}`);
+    }
+  }
+
+  // Get total solved count for logging
+  try {
+    const statsRes = await fetchWithTimeout(`https://leetcode-stats-api.herokuapp.com/${LEETCODE_USERNAME}`,
+      { headers: { 'Accept': 'application/json' } }, 15000);
+    if (statsRes.ok) {
+      const sd = await statsRes.json();
+      if (sd?.status === 'success') totalSolved = sd.totalSolved ?? null;
+    }
+  } catch (_) {}
+
   console.log(`Fetched ${solvedList.length} recent accepted submission(s) from LeetCode.`);
-  if (data.solvedCount !== null && data.solvedCount !== undefined) {
-    console.log(`LeetCode reports total solved: ${data.solvedCount}`);
-  }
+  if (totalSolved !== null) console.log(`LeetCode reports total solved: ${totalSolved}`);
 
   if (solvedList.length === 0) {
     console.log('Nothing to sync. Exiting.');
