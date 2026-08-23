@@ -1,75 +1,76 @@
-/**
- * Script to add a question to specific companies in data.js
- * Usage: node scripts/add-question.js
- */
-
 const fs = require('fs');
-const path = require('path');
+let content = fs.readFileSync('./data.js', 'utf8');
 
-const dataFilePath = path.join(__dirname, '..', 'data.js');
-const content = fs.readFileSync(dataFilePath, 'utf8');
+const QUESTION_TITLE = "Check Divisibility by Digit Sum and Product";
+const QUESTION_DIFF = "Easy";
+const QUESTION_URL = "https://leetcode.com/problems/check-divisibility-by-digit-sum-and-product";
+const QUESTION_TYPE = "L+S";
 
-// The new question to add: [Title, Difficulty, URL, Type]
-const NEW_QUESTION = [
-  "Check Divisibility by Digit Sum and Product",
-  "Easy",
-  "https://leetcode.com/problems/check-divisibility-by-digit-sum-and-product",
-  "L+S"
+const newEntry = `["${QUESTION_TITLE}", "${QUESTION_DIFF}", "${QUESTION_URL}", "${QUESTION_TYPE}"]`;
+
+// Companies to add the question to, with their anchor (a question that comes right AFTER alphabetically)
+const targets = [
+  {
+    company: 'tcs',
+    // In tcs, next Easy question alphabetically after "Check Divisibility..." is "Check If a Word Occurs..."
+    anchorBefore: '"Check If a Word Occurs As a Prefix of Any Word in a Sentence"'
+  },
+  {
+    company: 'Infosys',
+    // In Infosys, next Easy question alphabetically after "Check Divisibility..." is "Climbing Stairs"
+    anchorBefore: '"Climbing Stairs"'
+  }
 ];
 
-// Companies to add the question to
-const TARGET_COMPANIES = ['tcs', 'Infosys'];
+let changesMade = 0;
 
-// Parse the RAW_DATA object
-eval(content); // loads RAW_DATA into scope
-
-let modified = false;
-
-TARGET_COMPANIES.forEach(company => {
-  const list = RAW_DATA[company];
-  if (!list) {
-    console.log(`⚠️  Company "${company}" not found in data.js`);
-    return;
+for (const target of targets) {
+  if (content.includes(`"${QUESTION_TITLE}"`)) {
+    // If the title already exists anywhere, it might already be in this company
+    // Do a more specific check
   }
 
-  // Check if already exists
-  if (list.find(q => q[0] === NEW_QUESTION[0])) {
-    console.log(`ℹ️  "${NEW_QUESTION[0]}" already exists in ${company}`);
-    return;
+  // Find the company's section and the anchor question within it
+  // The company key looks like: "tcs": [[ or "Infosys": [[
+  const companyKeyPattern = `"${target.company}": [[`;
+  const companyIdx = content.indexOf(companyKeyPattern);
+  
+  if (companyIdx === -1) {
+    console.log(`Company "${target.company}" not found!`);
+    continue;
   }
 
-  // Find the correct alphabetical insertion index among Easy questions
-  let insertIndex = -1;
-  for (let i = 0; i < list.length; i++) {
-    const q = list[i];
-    if (q[1] === 'Easy') {
-      if (NEW_QUESTION[0] < q[0]) {
-        insertIndex = i;
-        break;
-      }
-    } else if (q[1] === 'Medium' || q[1] === 'Hard') {
-      // We've passed all Easy questions, insert before Medium/Hard if not placed yet
-      if (insertIndex === -1) {
-        insertIndex = i;
-      }
-      break;
-    }
+  // Find the anchor question AFTER the company key position
+  const anchorIdx = content.indexOf(target.anchorBefore, companyIdx);
+  
+  if (anchorIdx === -1) {
+    console.log(`Anchor question ${target.anchorBefore} not found for ${target.company}!`);
+    continue;
   }
 
-  // If no insertion point found (e.g., all Easy and ours comes last), push to end of Easy
-  if (insertIndex === -1) insertIndex = list.length;
+  // Find the start of the array entry containing the anchor (go back to find the "[")
+  let entryStart = anchorIdx;
+  while (entryStart > 0 && content[entryStart] !== '[') {
+    entryStart--;
+  }
 
-  list.splice(insertIndex, 0, NEW_QUESTION);
-  console.log(`✅  Added "${NEW_QUESTION[0]}" to ${company} at index ${insertIndex}`);
-  modified = true;
-});
+  // Check if our question already exists between companyIdx and anchorIdx
+  const section = content.slice(companyIdx, anchorIdx);
+  if (section.includes(QUESTION_TITLE)) {
+    console.log(`Question already exists in ${target.company}, skipping.`);
+    continue;
+  }
 
-if (!modified) {
-  console.log('No changes made.');
-  process.exit(0);
+  // Insert our new entry before the anchor entry
+  const insertion = newEntry + ', ';
+  content = content.slice(0, entryStart) + insertion + content.slice(entryStart);
+  console.log(`Added to ${target.company}!`);
+  changesMade++;
 }
 
-// Serialize back to data.js format
-const newContent = 'const RAW_DATA = ' + JSON.stringify(RAW_DATA) + ';';
-fs.writeFileSync(dataFilePath, newContent, 'utf8');
-console.log('\n✅  data.js updated successfully!');
+if (changesMade > 0) {
+  fs.writeFileSync('./data.js', content, 'utf8');
+  console.log(`\nDone! ${changesMade} insertion(s) made. File saved.`);
+} else {
+  console.log('\nNo changes needed.');
+}
