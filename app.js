@@ -24,7 +24,7 @@ let cloudAuthoritativeDataLoaded = false;
 const TOPIC_RULES = [
   {
     name: 'Math & Geometry', icon: '🧮', order: 1,
-    slugs: ['add-two-integers','palindrome-number','roman-to-integer','integer-to-roman','plus-one','add-binary','add-strings','add-digits','happy-number','fizz-buzz','count-primes','power-of-two','power-of-three','power-of-four','excel-sheet-column-number','excel-sheet-column-title','factorial-trailing-zeroes','sqrtx','powx-n','reverse-integer','integer-break','ugly-number','ugly-number-ii','super-ugly-number','perfect-number','nth-digit','self-dividing-numbers','water-bottles','nim-game','bulb-switcher','maximum-swap','gcd-of-strings','greatest-common-divisor-of-strings','count-partitions-with-even-sum-difference','smallest-divisible-digit-product-i','smallest-divisible-digit-product-ii','maximum-number-of-balls-in-a-box','maximum-area-of-longest-diagonal-rectangle','preimage-size-of-factorial-zeroes-function','consecutive-numbers-sum','multiply-strings','rotate-function','find-polygon-with-the-largest-perimeter','sum-of-all-subset-xor-totals','smallest-range-i','smallest-range-ii','ant-on-the-boundary','find-the-child-who-has-the-ball-after-k-seconds','count-tested-devices-after-test-operations','permutation-difference-between-two-strings','find-the-winner-of-the-circular-game'],
+    slugs: ['add-two-integers','palindrome-number','roman-to-integer','integer-to-roman','plus-one','add-binary','add-strings','add-digits','happy-number','fizz-buzz','count-primes','power-of-two','power-of-three','power-of-four','excel-sheet-column-number','excel-sheet-column-title','factorial-trailing-zeroes','sqrtx','powx-n','reverse-integer','integer-break','ugly-number','ugly-number-ii','super-ugly-number','perfect-number','nth-digit','self-dividing-numbers','water-bottles','nim-game','bulb-switcher','maximum-swap','gcd-of-strings','greatest-common-divisor-of-strings','count-partitions-with-even-sum-difference','smallest-divisible-digit-product-i','smallest-divisible-digit-product-ii','maximum-number-of-balls-in-a-box','maximum-area-of-longest-diagonal-rectangle','preimage-size-of-factorial-zeroes-function','consecutive-numbers-sum','multiply-strings','rotate-function','find-polygon-with-the-largest-perimeter','sum-of-all-subset-xor-totals','smallest-range-i','smallest-range-ii','ant-on-the-boundary','find-the-child-who-has-the-ball-after-k-seconds','count-tested-devices-after-test-operations','permutation-difference-between-two-strings','find-the-winner-of-the-circular-game','check-divisibility-by-digit-sum-and-product'],
     keywords: ['math','prime','gcd','roman','sqrt','pow','factorial','geometry','rectangle','area','circle','angle','polygon','divisor','divisible','modulo']
   },
   {
@@ -241,7 +241,7 @@ function getTopicIcon(topicName) {
   return found ? found.icon : '📝';
 }
 
-const knownAcronyms = new Set(['AI', 'DB', 'DP', 'UI', 'IT', 'QA', 'ML', 'FE', 'BE', 'HR', 'US', 'UK', 'ADP', 'BCG', 'DSI', 'DHI', 'GE', 'GS', 'EPAM', 'DE', 'AQR', 'CME', 'C3', 'IIT', 'MAQ', 'BNY', 'DJA', 'ZS']);
+const knownAcronyms = new Set(['AI', 'DB', 'DP', 'UI', 'IT', 'QA', 'ML', 'FE', 'BE', 'HR', 'US', 'UK', 'ADP', 'BCG', 'DSI', 'DHI', 'GE', 'GS', 'EPAM', 'DE', 'AQR', 'CME', 'C3', 'IIT', 'MAQ', 'BNY', 'DJA', 'ZS', 'TCS']);
 
 function normalizeCompanyNameKey(name) {
   return name.toLowerCase()
@@ -1821,7 +1821,7 @@ async function loadTrackerDataScripts() {
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
   dataLoadingPromise = (async () => {
     try {
-      await loadScript('data.js?v=2.7.1');
+      await loadScript('data.js?v=2.8.0');
       // solvedQuestion.js is loaded statically in index.html
       dataScriptsLoaded = true;
       console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
