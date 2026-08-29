@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312151b' stroke='%23FFA116' stroke-width='3' stroke-opacity='0.8'/%3E%3Cg transform='translate(11, 11) scale(1.75)'%3E%3Cpath d='M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z' fill='%23E6EDF3'/%3E%3Cpath d='M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3Cpath d='M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="alternate icon" href="favicon.svg?v=2.1.0">
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
-  <link rel="stylesheet" href="styles.css?v=2.8.0">
+  <link rel="stylesheet" href="styles.css?v=2.9.0">
   <style>
     /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
     body.auth-locked {
@@ -177,8 +177,16 @@
             <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
           </div>
           <div class="heatmap-stats">
-            <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
-            <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
+            <div class="heatmap-stats-row">
+              <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
+              <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
+            </div>
+            <div class="heatmap-stats-row">
+              <span title="Number of questions solved in the past 7 days">Past 7 days: <strong id="heatmap-past-7-days">0</strong></span>
+            </div>
+            <div class="heatmap-stats-row">
+              <span title="Number of questions solved in the current calendar month">Current month: <strong id="heatmap-current-month">0</strong></span>
+            </div>
           </div>
         </div>
         <div class="heatmap-scroll-container">

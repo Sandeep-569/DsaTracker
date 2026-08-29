@@ -2006,6 +2006,8 @@ function renderSolvedHeatmap() {
   const totalEl      = document.getElementById('heatmap-total-count');
   const activeDaysEl = document.getElementById('heatmap-active-days');
   const maxStreakEl  = document.getElementById('heatmap-max-streak');
+  const past7DaysEl  = document.getElementById('heatmap-past-7-days');
+  const curMonthEl   = document.getElementById('heatmap-current-month');
   if (!grid || !monthsEl) return;
 
   // ── 1. Build date→count map from solvedDates (UTC calendar day) ───────────
@@ -2051,9 +2053,28 @@ function renderSolvedHeatmap() {
     }
   }
 
+  // ── 3b. Past 7 days and Current month calculations ────────────────────────
+  let past7DaysSolved = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(Date.UTC(endDay.getUTCFullYear(), endDay.getUTCMonth(), endDay.getUTCDate() - i));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    past7DaysSolved += (dayCount.get(key) || 0);
+  }
+
+  let currentMonthSolved = 0;
+  const curYearNum = endDay.getUTCFullYear();
+  const curMonthNum = endDay.getUTCMonth();
+  const daysInCurMonth = new Date(Date.UTC(curYearNum, curMonthNum + 1, 0)).getUTCDate();
+  for (let day = 1; day <= daysInCurMonth; day++) {
+    const key = `${curYearNum}-${String(curMonthNum + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    currentMonthSolved += (dayCount.get(key) || 0);
+  }
+
   if (totalEl)      totalEl.textContent      = totalSolved;
   if (activeDaysEl) activeDaysEl.textContent = activeDays;
   if (maxStreakEl)  maxStreakEl.textContent   = maxStreak;
+  if (past7DaysEl)  past7DaysEl.textContent  = past7DaysSolved;
+  if (curMonthEl)   curMonthEl.textContent   = currentMonthSolved;
 
   // ── 4 & 5. Render month blocks matching LeetCode structure ────────────────
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
