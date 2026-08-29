@@ -677,7 +677,6 @@ function openCompany(companyObj) {
   document.getElementById('home-view').classList.add('hidden');
   document.getElementById('bookmarks-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('daily-tracker-view')?.classList.remove('active');
   document.getElementById('company-topics-view').classList.add('active');
   document.getElementById('topic-problems-view').classList.remove('active');
 
@@ -1012,7 +1011,6 @@ function openBookmarksView() {
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('daily-tracker-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.add('active');
 
   const searchEl = document.getElementById('bookmarks-search');
@@ -1214,12 +1212,10 @@ function goHome() {
   document.getElementById('topic-problems-view').classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('daily-tracker-view')?.classList.remove('active');
   document.getElementById('home-view').classList.remove('hidden');
   currentCompanyObj = null;
   currentTopicName = null;
   renderCompanies();
-  if (typeof renderTodaysTaskCard === 'function') renderTodaysTaskCard();
 }
 
 function escapeHtml(str) {
@@ -1337,18 +1333,16 @@ function generateBackupPayload() {
   const solvedDatesObj = {};
   solvedDates.forEach((date, title) => { solvedDatesObj[title] = date; });
   return {
-    version: '1.2',
+    version: '1.1',
     app: 'DSA Tracker',
     exportedAt: new Date().toISOString(),
     stats: {
       solvedCount: solvedProblems.size,
-      starredCount: starredProblems.size,
-      dailyTasksCount: typeof dailyTasksData !== 'undefined' && dailyTasksData.entries ? Object.keys(dailyTasksData.entries).length : 0
+      starredCount: starredProblems.size
     },
     solvedProblems: Array.from(solvedProblems),
     starredProblems: Array.from(starredProblems),
-    solvedDates: solvedDatesObj,
-    dailyTasks: typeof dailyTasksData !== 'undefined' ? dailyTasksData : null
+    solvedDates: solvedDatesObj
   };
 }
 
@@ -1415,7 +1409,6 @@ function parseImportJson(text) {
   let solvedList = [];
   let starredList = [];
   let solvedDatesObj = {};
-  let dailyTasksImport = null;
 
   // Format 1: Standard structured format { solvedProblems: [...], starredProblems: [...] }
   if (Array.isArray(parsed.solvedProblems)) {
@@ -1439,11 +1432,6 @@ function parseImportJson(text) {
     solvedDatesObj = parsed.solvedDates;
   }
 
-  // Extract daily tasks if present (v1.2 backup format)
-  if (parsed.dailyTasks && typeof parsed.dailyTasks === 'object' && parsed.dailyTasks.categories) {
-    dailyTasksImport = parsed.dailyTasks;
-  }
-
   // Format 2: Raw Array of solved problems
   if (Array.isArray(parsed) && solvedList.length === 0 && starredList.length === 0) {
     solvedList = parsed;
@@ -1453,16 +1441,16 @@ function parseImportJson(text) {
   solvedList = solvedList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
   starredList = starredList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
 
-  if (solvedList.length === 0 && starredList.length === 0 && !dailyTasksImport) {
-    throw new Error('No valid tracker data found in this backup.');
+  if (solvedList.length === 0 && starredList.length === 0) {
+    throw new Error('No valid solved or bookmarked questions found in this backup.');
   }
 
-  return { solvedList, starredList, solvedDatesObj, dailyTasksImport };
+  return { solvedList, starredList, solvedDatesObj };
 }
 
 function processImportJsonString(jsonString) {
   try {
-    const { solvedList, starredList, solvedDatesObj, dailyTasksImport } = parseImportJson(jsonString);
+    const { solvedList, starredList, solvedDatesObj } = parseImportJson(jsonString);
 
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
 
@@ -1471,12 +1459,6 @@ function processImportJsonString(jsonString) {
       starredProblems = new Set(starredList);
       solvedDates = new Map();
       Object.entries(solvedDatesObj || {}).forEach(([t, d]) => solvedDates.set(t, d));
-
-      if (dailyTasksImport) {
-        dailyTasksData = dailyTasksImport;
-        if (typeof saveDailyTasksToLocal === 'function') saveDailyTasksToLocal();
-        if (typeof syncDailyTasksToCloud === 'function') syncDailyTasksToCloud();
-      }
     } else {
       // Merge mode: only set date if not already tracked
       solvedList.forEach(p => {
@@ -1486,38 +1468,11 @@ function processImportJsonString(jsonString) {
         }
       });
       starredList.forEach(p => starredProblems.add(p));
-
-      if (dailyTasksImport && dailyTasksImport.categories) {
-        // Merge categories
-        dailyTasksImport.categories.forEach(c => {
-          if (!dailyTasksData.categories.includes(c)) {
-            dailyTasksData.categories.push(c);
-          }
-        });
-        // Merge entries
-        if (dailyTasksImport.entries) {
-          Object.entries(dailyTasksImport.entries).forEach(([dKey, dayData]) => {
-            if (!dailyTasksData.entries[dKey]) {
-              dailyTasksData.entries[dKey] = dayData;
-            } else {
-              Object.entries(dayData).forEach(([cKey, valObj]) => {
-                if (!dailyTasksData.entries[dKey][cKey]) {
-                  dailyTasksData.entries[dKey][cKey] = valObj;
-                }
-              });
-            }
-          });
-        }
-        if (typeof saveDailyTasksToLocal === 'function') saveDailyTasksToLocal();
-        if (typeof syncDailyTasksToCloud === 'function') syncDailyTasksToCloud();
-      }
     }
 
     // Persist to localStorage using existing storage keys & update UI
     updateSolvedStats();
     updateStarredStats();
-    if (typeof renderTodaysTaskCard === 'function') renderTodaysTaskCard();
-    if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
 
     // Re-render currently active view
     if (document.getElementById('solved-view')?.classList.contains('active')) {
@@ -1925,7 +1880,6 @@ async function handleAuthState(user) {
     initData();
     renderCompanies();
     if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
-    if (typeof renderTodaysTaskCard === 'function') renderTodaysTaskCard();
   } else {
     document.body.classList.add('auth-locked');
     if (loadingEl) loadingEl.style.display = 'none';
@@ -1958,7 +1912,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, dailyTasks: cloudDailyTasks } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -1971,16 +1925,6 @@ window.addEventListener('cloud-data-received', (e) => {
     Object.entries(cloudDates).forEach(([title, date]) => {
       if (title && date) solvedDates.set(title.trim(), date);
     });
-  }
-
-  // Restore daily tasks from cloud
-  if (cloudDailyTasks && typeof cloudDailyTasks === 'object' && cloudDailyTasks.categories) {
-    dailyTasksData = cloudDailyTasks;
-    saveDailyTasksToLocal();
-    if (typeof renderTodaysTaskCard === 'function') renderTodaysTaskCard();
-    if (document.getElementById('daily-tracker-view')?.classList.contains('active')) {
-      if (typeof renderDailyTrackerTable === 'function') renderDailyTrackerTable();
-    }
   }
 
   // Update local storage and UI counters without triggering another cloud write
@@ -2009,7 +1953,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
 window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
-  if (solvedProblems.size > 0 || starredProblems.size > 0 || (typeof dailyTasksData !== 'undefined' && dailyTasksData.entries && Object.keys(dailyTasksData.entries).length > 0)) {
+  if (solvedProblems.size > 0 || starredProblems.size > 0) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
@@ -2018,9 +1962,6 @@ window.addEventListener('cloud-new-user-init', () => {
         Array.from(starredProblems),
         datesObj
       );
-      if (typeof dailyTasksData !== 'undefined') {
-        window.FirebaseService.saveDailyTasksToCloud(dailyTasksData);
-      }
     }
   }
 });
@@ -2209,311 +2150,3 @@ function renderSolvedHeatmap() {
 
 // Expose globally so solvedQuestion.js can call it after date edits
 window.renderSolvedHeatmap = renderSolvedHeatmap;
-
-/* ══════════════════════════════════════════════════════════════════════════
-   DAILY TASK TRACKER MODULE
-   ══════════════════════════════════════════════════════════════════════════ */
-
-// ── Data Model ─────────────────────────────────────────────────────────────
-const DAILY_TASKS_LS_KEY = 'dsa_daily_tasks_v1';
-const DEFAULT_CATEGORIES = ['DSA Lecture Video', '3 DSA Questions', 'MernStack'];
-
-let dailyTasksData = {
-  categories: [...DEFAULT_CATEGORIES],
-  entries: {} // { '2026-08-26': { 'DSA Lecture Video': { value: '...', remarks: '' }, ... } }
-};
-
-// Track which month the tracker view is showing
-let trackerViewYear = new Date().getFullYear();
-let trackerViewMonth = new Date().getMonth(); // 0-indexed
-
-// ── Load / Save (localStorage) ─────────────────────────────────────────────
-function loadDailyTasksFromLocal() {
-  try {
-    const raw = localStorage.getItem(DAILY_TASKS_LS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && parsed.categories && Array.isArray(parsed.categories)) {
-        dailyTasksData = parsed;
-      }
-    }
-  } catch (e) {
-    console.error('Error loading daily tasks from localStorage:', e);
-  }
-}
-
-function saveDailyTasksToLocal() {
-  try {
-    localStorage.setItem(DAILY_TASKS_LS_KEY, JSON.stringify(dailyTasksData));
-  } catch (e) {
-    console.error('Error saving daily tasks to localStorage:', e);
-  }
-}
-
-// ── Cloud Sync (debounced) ─────────────────────────────────────────────────
-let dailyTasksSyncTimeout = null;
-function syncDailyTasksToCloud() {
-  saveDailyTasksToLocal();
-  if (dailyTasksSyncTimeout) clearTimeout(dailyTasksSyncTimeout);
-  dailyTasksSyncTimeout = setTimeout(() => {
-    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
-      window.FirebaseService.saveDailyTasksToCloud(dailyTasksData);
-    }
-  }, 500);
-}
-
-// ── Date Helpers ───────────────────────────────────────────────────────────
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function getTodayKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
-function formatDateDisplay(dateKey) {
-  const [y, m, d] = dateKey.split('-').map(Number);
-  return `${String(d).padStart(2, '0')} ${MONTH_NAMES_SHORT[m - 1]} ${y}`;
-}
-
-function getDayName(dateKey) {
-  const [y, m, d] = dateKey.split('-').map(Number);
-  return DAY_NAMES[new Date(y, m - 1, d).getDay()];
-}
-
-// ── Today's Task Card ──────────────────────────────────────────────────────
-function renderTodaysTaskCard() {
-  const dateTextEl = document.getElementById('todays-date-text');
-  const dayTextEl = document.getElementById('todays-day-text');
-  const badgeEl = document.getElementById('todays-task-badge');
-  const listEl = document.getElementById('todays-task-list');
-  if (!listEl) return;
-
-  const todayKey = getTodayKey();
-  const now = new Date();
-  if (dateTextEl) dateTextEl.textContent = formatDateDisplay(todayKey);
-  if (dayTextEl) dayTextEl.textContent = DAY_NAMES[now.getDay()];
-
-  const todayEntry = dailyTasksData.entries[todayKey] || {};
-  const cats = dailyTasksData.categories;
-  let doneCount = 0;
-
-  listEl.innerHTML = '';
-  cats.forEach(cat => {
-    const catData = todayEntry[cat] || { value: '', remarks: '' };
-    const hasSomething = catData.value && catData.value.trim().length > 0;
-    if (hasSomething) doneCount++;
-
-    const item = document.createElement('div');
-    item.className = 'task-status-item';
-    item.innerHTML = `
-      <span class="task-status-icon">${hasSomething ? '✅' : '❌'}</span>
-      <span class="task-status-name">${escapeHtml(cat)}</span>
-      <span class="task-status-value">${hasSomething ? escapeHtml(catData.value) : '—'}</span>
-    `;
-    listEl.appendChild(item);
-  });
-
-  if (badgeEl) badgeEl.textContent = `${doneCount}/${cats.length}`;
-}
-
-// ── Open Daily Tracker View ────────────────────────────────────────────────
-function openDailyTrackerView() {
-  document.getElementById('home-view')?.classList.add('hidden');
-  document.getElementById('company-topics-view')?.classList.remove('active');
-  document.getElementById('topic-problems-view')?.classList.remove('active');
-  document.getElementById('bookmarks-view')?.classList.remove('active');
-  document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('daily-tracker-view')?.classList.add('active');
-
-  // Set to current month
-  const now = new Date();
-  trackerViewYear = now.getFullYear();
-  trackerViewMonth = now.getMonth();
-
-  renderDailyTrackerTable();
-  window.scrollTo(0, 0);
-}
-
-// ── Month Navigation ───────────────────────────────────────────────────────
-function trackerPrevMonth() {
-  trackerViewMonth--;
-  if (trackerViewMonth < 0) {
-    trackerViewMonth = 11;
-    trackerViewYear--;
-  }
-  renderDailyTrackerTable();
-}
-
-function trackerNextMonth() {
-  trackerViewMonth++;
-  if (trackerViewMonth > 11) {
-    trackerViewMonth = 0;
-    trackerViewYear++;
-  }
-  renderDailyTrackerTable();
-}
-
-function trackerGoToday() {
-  const now = new Date();
-  trackerViewYear = now.getFullYear();
-  trackerViewMonth = now.getMonth();
-  renderDailyTrackerTable();
-
-  // Scroll to today's row after a short delay
-  setTimeout(() => {
-    const todayRow = document.querySelector('.tracker-today-row');
-    if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 100);
-}
-
-// ── Render Full Spreadsheet Table ──────────────────────────────────────────
-function renderDailyTrackerTable() {
-  const thead = document.getElementById('tracker-thead');
-  const tbody = document.getElementById('tracker-tbody');
-  const monthLabel = document.getElementById('tracker-month-label');
-  if (!thead || !tbody) return;
-
-  const cats = dailyTasksData.categories;
-  if (monthLabel) monthLabel.textContent = `${MONTH_NAMES_FULL[trackerViewMonth]} ${trackerViewYear}`;
-
-  // ── Build Header ──
-  let headerHTML = '<tr>';
-  headerHTML += '<th>Date</th>';
-  headerHTML += '<th>Day</th>';
-  cats.forEach((cat, idx) => {
-    headerHTML += `<th class="tracker-cat-header">${escapeHtml(cat)}<button class="tracker-cat-remove-btn" onclick="event.stopPropagation(); removeTaskCategory(${idx})" title="Remove category">✕</button></th>`;
-    headerHTML += `<th class="tracker-remarks-header">Remarks</th>`;
-  });
-  headerHTML += '</tr>';
-  thead.innerHTML = headerHTML;
-
-  // ── Build Rows for each day of the month ──
-  const daysInMonth = new Date(trackerViewYear, trackerViewMonth + 1, 0).getDate();
-  const todayKey = getTodayKey();
-  let rowsHTML = '';
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateKey = `${trackerViewYear}-${String(trackerViewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayName = getDayName(dateKey);
-    const isToday = dateKey === todayKey;
-    const entry = dailyTasksData.entries[dateKey] || {};
-
-    rowsHTML += `<tr class="${isToday ? 'tracker-today-row' : ''}">`;
-    rowsHTML += `<td class="tracker-date-cell">${formatDateDisplay(dateKey)}</td>`;
-    rowsHTML += `<td class="tracker-day-cell">${dayName}</td>`;
-
-    cats.forEach(cat => {
-      const catData = entry[cat] || { value: '', remarks: '' };
-      const valEscaped = escapeHtml(catData.value || '');
-      const remEscaped = escapeHtml(catData.remarks || '');
-
-      rowsHTML += `<td><input class="tracker-cell-input" type="text" value="${valEscaped}" 
-        data-date="${dateKey}" data-cat="${escapeHtml(cat)}" data-field="value"
-        placeholder="..." onchange="handleTrackerCellChange(this)" onblur="handleTrackerCellChange(this)"></td>`;
-      rowsHTML += `<td><input class="tracker-cell-input remarks-input" type="text" value="${remEscaped}" 
-        data-date="${dateKey}" data-cat="${escapeHtml(cat)}" data-field="remarks"
-        placeholder="..." onchange="handleTrackerCellChange(this)" onblur="handleTrackerCellChange(this)"></td>`;
-    });
-
-    rowsHTML += '</tr>';
-  }
-
-  tbody.innerHTML = rowsHTML;
-
-  // Scroll to today if visible
-  setTimeout(() => {
-    const todayRow = document.querySelector('.tracker-today-row');
-    if (todayRow) todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 50);
-}
-
-// ── Handle Cell Edits ──────────────────────────────────────────────────────
-function handleTrackerCellChange(inputEl) {
-  const dateKey = inputEl.dataset.date;
-  const cat = inputEl.dataset.cat;
-  const field = inputEl.dataset.field;
-  const value = inputEl.value.trim();
-
-  if (!dailyTasksData.entries[dateKey]) {
-    dailyTasksData.entries[dateKey] = {};
-  }
-  if (!dailyTasksData.entries[dateKey][cat]) {
-    dailyTasksData.entries[dateKey][cat] = { value: '', remarks: '' };
-  }
-
-  dailyTasksData.entries[dateKey][cat][field] = value;
-  syncDailyTasksToCloud();
-
-  // Update today's card if the edited date is today
-  if (dateKey === getTodayKey()) {
-    renderTodaysTaskCard();
-  }
-}
-
-// ── Add / Remove Categories ────────────────────────────────────────────────
-function openAddCategoryModal() {
-  const modal = document.getElementById('add-category-modal');
-  const input = document.getElementById('new-category-input');
-  if (modal) modal.classList.add('active');
-  if (input) {
-    input.value = '';
-    setTimeout(() => input.focus(), 100);
-  }
-}
-
-function closeAddCategoryModal() {
-  const modal = document.getElementById('add-category-modal');
-  if (modal) modal.classList.remove('active');
-}
-
-function confirmAddCategory() {
-  const input = document.getElementById('new-category-input');
-  const name = input ? input.value.trim() : '';
-  if (!name) {
-    if (typeof showToast === 'function') showToast('Please enter a category name', 'warn');
-    return;
-  }
-
-  if (dailyTasksData.categories.includes(name)) {
-    if (typeof showToast === 'function') showToast('Category already exists', 'warn');
-    return;
-  }
-
-  dailyTasksData.categories.push(name);
-  syncDailyTasksToCloud();
-  closeAddCategoryModal();
-  renderDailyTrackerTable();
-  renderTodaysTaskCard();
-  if (typeof showToast === 'function') showToast(`Added category: ${name}`, 'success');
-}
-
-function removeTaskCategory(index) {
-  const cat = dailyTasksData.categories[index];
-  if (!cat) return;
-
-  if (!confirm(`Remove category "${cat}"? This won't delete existing data.`)) return;
-
-  dailyTasksData.categories.splice(index, 1);
-  syncDailyTasksToCloud();
-  renderDailyTrackerTable();
-  renderTodaysTaskCard();
-  if (typeof showToast === 'function') showToast(`Removed category: ${cat}`, 'info');
-}
-
-// ── Initialize on load ─────────────────────────────────────────────────────
-loadDailyTasksFromLocal();
-renderTodaysTaskCard();
-
-// Expose functions globally
-window.openDailyTrackerView = openDailyTrackerView;
-window.renderTodaysTaskCard = renderTodaysTaskCard;
-window.trackerPrevMonth = trackerPrevMonth;
-window.trackerNextMonth = trackerNextMonth;
-window.trackerGoToday = trackerGoToday;
-window.handleTrackerCellChange = handleTrackerCellChange;
-window.openAddCategoryModal = openAddCategoryModal;
-window.closeAddCategoryModal = closeAddCategoryModal;
-window.confirmAddCategory = confirmAddCategory;
-window.removeTaskCategory = removeTaskCategory;

@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312151b' stroke='%23FFA116' stroke-width='3' stroke-opacity='0.8'/%3E%3Cg transform='translate(11, 11) scale(1.75)'%3E%3Cpath d='M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z' fill='%23E6EDF3'/%3E%3Cpath d='M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3Cpath d='M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="alternate icon" href="favicon.svg?v=2.1.0">
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
-  <link rel="stylesheet" href="styles.css?v=2.9.0">
+  <link rel="stylesheet" href="styles.css?v=2.8.0">
   <style>
     /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
     body.auth-locked {
@@ -169,44 +169,21 @@
         </div>
       </div>
 
-      <!-- Heatmap + Today's Task Row -->
-      <div class="heatmap-tasks-row">
-        <!-- Solved Activity Heatmap (shrunk) -->
-        <div class="heatmap-wrapper" id="heatmap-wrapper">
-          <div class="heatmap-header">
-            <div class="heatmap-title">
-              <span id="heatmap-total-count">0</span> questions solved in the past one year
-              <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
-            </div>
-            <div class="heatmap-stats">
-              <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
-              <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
-            </div>
+      <!-- Solved Activity Heatmap -->
+      <div class="heatmap-wrapper" id="heatmap-wrapper">
+        <div class="heatmap-header">
+          <div class="heatmap-title">
+            <span id="heatmap-total-count">0</span> questions solved in the past one year
+            <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
           </div>
-          <div class="heatmap-scroll-container">
-            <div class="heatmap-months" id="heatmap-months"></div>
-            <div class="heatmap-grid" id="heatmap-grid"></div>
+          <div class="heatmap-stats">
+            <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
+            <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
           </div>
         </div>
-
-        <!-- Today's Task Summary Card -->
-        <div class="todays-task-card" id="todays-task-card" onclick="openDailyTrackerView()" title="Click to open full daily tracker">
-          <div class="todays-task-header">
-            <div class="todays-task-date">
-              <span class="todays-task-icon">📋</span>
-              <div>
-                <div class="todays-date-text" id="todays-date-text">Today</div>
-                <div class="todays-day-text" id="todays-day-text">Loading...</div>
-              </div>
-            </div>
-            <div class="todays-task-badge" id="todays-task-badge">0/0</div>
-          </div>
-          <div class="todays-task-list" id="todays-task-list">
-            <!-- Populated by JS -->
-          </div>
-          <div class="todays-task-footer">
-            <span>Click to open full tracker →</span>
-          </div>
+        <div class="heatmap-scroll-container">
+          <div class="heatmap-months" id="heatmap-months"></div>
+          <div class="heatmap-grid" id="heatmap-grid"></div>
         </div>
       </div>
 
@@ -651,79 +628,7 @@
         </div>
       </div>
     </div>
-
-    <!-- 6. DAILY TRACKER VIEW: Full Spreadsheet-Style Task Tracker -->
-    <div id="daily-tracker-view">
-      <div class="header-row">
-        <button class="back-btn" onclick="goHome()">← Back to Companies</button>
-        <div>
-          <div style="font-size:12px; font-family:var(--mono); color:var(--accent); margin-bottom:2px;">
-            Tracker > Daily Tasks
-          </div>
-          <h1 style="margin:0;">📋 Daily Task Tracker</h1>
-          <p style="color:var(--text-secondary); font-size:13.5px; margin-top:4px;">
-            Track your daily DSA, development, and learning progress
-          </p>
-        </div>
-      </div>
-
-      <div class="tracker-toolbar">
-        <div class="tracker-toolbar-left">
-          <button class="action-btn btn-secondary tracker-add-cat-btn" onclick="openAddCategoryModal()" title="Add a new task category">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Add Category</span>
-          </button>
-        </div>
-        <div class="tracker-toolbar-right">
-          <div class="tracker-date-nav">
-            <button class="tracker-nav-btn" onclick="trackerPrevMonth()" title="Previous month">◀</button>
-            <span class="tracker-month-label" id="tracker-month-label">August 2026</span>
-            <button class="tracker-nav-btn" onclick="trackerNextMonth()" title="Next month">▶</button>
-            <button class="tracker-nav-btn tracker-today-btn" onclick="trackerGoToday()" title="Go to today">Today</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="tracker-table-scroll">
-        <table class="daily-tracker-table" id="daily-tracker-table">
-          <thead id="tracker-thead">
-            <!-- Populated by JS -->
-          </thead>
-          <tbody id="tracker-tbody">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
-      </div>
-    </div>
   </main>
-
-  <!-- Add Category Modal -->
-  <div class="modal-overlay" id="add-category-modal" onclick="if(event.target === this) closeAddCategoryModal()">
-    <div class="modal-box" style="max-width: 420px;">
-      <div class="backup-modal-header">
-        <div class="modal-title-group">
-          <div class="modal-badge-icon">➕</div>
-          <div>
-            <h2>Add Task Category</h2>
-            <p class="modal-subtitle">Create a new column in your daily tracker</p>
-          </div>
-        </div>
-        <button class="modal-close-btn" onclick="closeAddCategoryModal()" title="Close">&times;</button>
-      </div>
-      <div style="padding: 16px 0;">
-        <label style="font-size: 13px; color: var(--text-secondary); display:block; margin-bottom: 6px;">Category Name</label>
-        <input type="text" id="new-category-input" class="tracker-input-field" placeholder="e.g. System Design, React Practice..." maxlength="40"
-          onkeydown="if(event.key==='Enter') confirmAddCategory()">
-        <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-          <button class="action-btn btn-secondary" onclick="closeAddCategoryModal()">Cancel</button>
-          <button class="action-btn btn-primary" onclick="confirmAddCategory()">Add Category</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal for Backup & Restore (Export / Import) -->
   <div class="modal-overlay" id="backup-modal" onclick="if(event.target === this) closeBackupModal()">
@@ -940,10 +845,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-service.js?v=2.9.0"></script>
-  <script src="leetcode-numbers.js?v=2.9.0"></script>
-  <script src="solvedQuestion.js?v=2.9.0"></script>
-  <script src="app.js?v=2.9.0"></script>
+  <script src="firebase-service.js?v=2.8.0"></script>
+  <script src="leetcode-numbers.js?v=2.8.0"></script>
+  <script src="solvedQuestion.js?v=2.8.0"></script>
+  <script src="app.js?v=2.8.0"></script>
 </body>
 
 </html>
