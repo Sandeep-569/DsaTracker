@@ -7,6 +7,7 @@ function openSolvedView() {
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.remove('active');
+  document.getElementById('daily-tracker-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.add('active');
 
   const searchEl = document.getElementById('solved-search');

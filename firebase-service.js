@@ -166,6 +166,21 @@
     }
   }
 
+  // Firestore: Save Daily Tasks to Cloud
+  async function saveDailyTasksToCloud(dailyTasksObj) {
+    if (!db || !currentUser) return false;
+    try {
+      await db.collection('users').doc(currentUser.uid).set({
+        dailyTasks: dailyTasksObj,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      return true;
+    } catch (err) {
+      console.error("Error saving daily tasks to Firestore:", err);
+      return false;
+    }
+  }
+
   // Firestore: Real-time Sync Listener
   function startFirestoreSync(uid) {
     if (!db) return;
@@ -187,6 +202,7 @@
             solvedProblems: data.solvedProblems || [],
             starredProblems: data.starredProblems || [],
             solvedDates: data.solvedDates || {},
+            dailyTasks: data.dailyTasks || null,
             updatedAt: data.updatedAt
           } 
         }));
@@ -212,6 +228,7 @@
     signInWithGoogle,
     logoutUser,
     saveProgressToCloud,
+    saveDailyTasksToCloud,
     getCurrentUser: () => currentUser
   };
 
