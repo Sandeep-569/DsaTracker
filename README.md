@@ -1,6 +1,8 @@
 # 🚀 DSA Tracker — Company-Tagged DSA & Spaced Repetition Platform
 
-A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, a spaced repetition review engine for long-term retention, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions and serverless endpoints.
+> 🌐 **Live Website**: [**https://dsatracker-6e8d0.web.app**](https://dsatracker-6e8d0.web.app)
+
+A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, a spaced repetition review engine for long-term retention, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions.
 
 [![Live App](https://img.shields.io/badge/Live_App-Firebase_Hosting-orange?style=flat-square&logo=firebase)](https://dsatracker-6e8d0.web.app)
 [![Database](https://img.shields.io/badge/Database-Cloud_Firestore-blue?style=flat-square&logo=firebase)](https://firebase.google.com/)
