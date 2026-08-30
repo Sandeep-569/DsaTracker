@@ -138,7 +138,7 @@
   }
 
   // Firestore: Save Progress to Cloud
-  async function saveProgressToCloud(solvedArray, starredArray, datesObj) {
+  async function saveProgressToCloud(solvedArray, starredArray, datesObj, reviewArray) {
     if (!db || !currentUser) return false;
     try {
       const payload = {
@@ -150,6 +150,9 @@
       };
       if (datesObj && typeof datesObj === 'object') {
         payload.solvedDates = datesObj;
+      }
+      if (Array.isArray(reviewArray)) {
+        payload.reviewProblems = reviewArray;
       }
       await db.collection('users').doc(currentUser.uid).set(payload, { merge: true });
 
@@ -187,6 +190,7 @@
             solvedProblems: data.solvedProblems || [],
             starredProblems: data.starredProblems || [],
             solvedDates: data.solvedDates || {},
+            reviewProblems: data.reviewProblems || [],
             updatedAt: data.updatedAt
           } 
         }));
