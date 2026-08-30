@@ -2,8 +2,8 @@
 
 A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, a spaced repetition review engine for long-term retention, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions and serverless endpoints.
 
-[![Live App (Firebase)](https://img.shields.io/badge/Live_App-Firebase_Hosting-orange?style=flat-square&logo=firebase)](https://dsatracker-6e8d0.web.app)
-[![Live Demo (Vercel)](https://img.shields.io/badge/Live_Demo-Vercel-black?style=flat-square&logo=vercel)](https://dsa-tracker-kappa-five.vercel.app)
+[![Live App](https://img.shields.io/badge/Live_App-Firebase_Hosting-orange?style=flat-square&logo=firebase)](https://dsatracker-6e8d0.web.app)
+[![Serverless Sync](https://img.shields.io/badge/Sync_API-Vercel_Serverless-black?style=flat-square&logo=vercel)](https://github.com/Sandeep-569/DsaTracker)
 [![JavaScript](https://img.shields.io/badge/Language-Vanilla_JavaScript_ES6+-yellow?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
