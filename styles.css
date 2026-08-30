@@ -2346,13 +2346,13 @@ tr.row:hover .solved-date-badge {
 
 /* Add Problem Form Card */
 .review-form-card {
-  background: rgba(20, 20, 25, 0.95);
+  background: rgba(20, 21, 26, 0.95);
   border: 1px solid rgba(255, 161, 22, 0.35);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 8px 10px;
   margin-bottom: 10px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-  animation: reviewFadeIn 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  animation: reviewFadeIn 0.18s ease;
 }
 
 @keyframes reviewFadeIn {
@@ -2360,39 +2360,119 @@ tr.row:hover .solved-date-badge {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.review-form-inputs {
+.review-input-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
-.review-input,
-.review-textarea {
-  width: 100%;
-  background: #101014;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.review-input-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  background: #0d0e12;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-sm);
-  padding: 6px 9px;
-  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.review-input-box:focus-within {
+  border-color: #ffa116;
+  box-shadow: 0 0 0 2px rgba(255, 161, 22, 0.25);
+  background: #111218;
+}
+
+.review-input-prefix {
+  padding-left: 9px;
+  color: #ffa116;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  user-select: none;
+}
+
+.review-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 6px 8px 6px 4px;
+  color: #fcfcfc;
   font-size: 12px;
   font-family: var(--sans);
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  line-height: 1.4;
 }
 
-.review-input:focus,
-.review-textarea:focus {
-  border-color: #ffa116;
-  box-shadow: 0 0 6px rgba(255, 161, 22, 0.3);
+.review-input::placeholder {
+  color: #80808a;
+  font-size: 11.5px;
 }
 
-.review-textarea {
-  resize: none;
+.review-input:-webkit-autofill,
+.review-input:-webkit-autofill:hover, 
+.review-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fcfcfc;
+  -webkit-box-shadow: 0 0 0px 1000px #0d0e12 inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.review-btn-submit {
+  background: linear-gradient(135deg, #ffa116 0%, #ff8c00 100%);
+  border: none;
+  color: #000000;
+  font-weight: 700;
+  padding: 0 12px;
+  height: 29px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(255, 161, 22, 0.25);
+}
+
+.review-btn-submit:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(255, 161, 22, 0.4);
+}
+
+.review-btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.review-btn-cancel:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .review-input-preview {
-  margin-top: 4px;
-  padding: 6px 10px;
+  margin-top: 6px;
+  padding: 5px 8px;
   background: rgba(63, 185, 80, 0.12);
   border: 1px solid rgba(63, 185, 80, 0.3);
   border-radius: var(--radius-sm);
@@ -2408,45 +2488,6 @@ tr.row:hover .solved-date-badge {
 .review-input-preview strong {
   color: var(--text);
   font-weight: 600;
-}
-
-.review-form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.review-btn-cancel {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.review-btn-cancel:hover {
-  color: var(--text);
-  border-color: var(--text-secondary);
-}
-
-.review-btn-submit {
-  background: #ffa116;
-  border: none;
-  color: #000;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.review-btn-submit:hover {
-  background: #ffb800;
 }
 
 /* Review Lists Container */
