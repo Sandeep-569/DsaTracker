@@ -2218,17 +2218,6 @@ function renderSolvedHeatmap() {
 // Expose globally so solvedQuestion.js can call it after date edits
 window.renderSolvedHeatmap = renderSolvedHeatmap;
 
-/* ── HTML Escape Helper ─────────────────────────────────────────────────── */
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 /* ── DSA Spaced Repetition Review Tracker ───────────────────────────────── */
 const REVIEW_INTERVALS = [3, 7, 14, 30, 60]; // Days between successive review stages
 
