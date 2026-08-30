@@ -2257,6 +2257,143 @@ function saveReviewProblems() {
   syncToCloudDebounced();
 }
 
+/**
+ * Look up a LeetCode problem by its question number (e.g. 1, 42, #206) or title
+ */
+function lookupProblemByNumberOrTitle(query) {
+  if (!query) return null;
+  const trimmed = String(query).trim();
+  if (!trimmed) return null;
+
+  const numQuery = parseLeetCodeNumberQuery(trimmed);
+
+  // Search 1: Search in loaded companyList
+  if (typeof companyList !== 'undefined' && Array.isArray(companyList)) {
+    for (const comp of companyList) {
+      if (!comp.problems) continue;
+      for (const p of comp.problems) {
+        if (numQuery !== null && p.lcNum === numQuery) {
+          const tags = (p.tags && p.tags.length > 0 && p.tags[0] !== 'General DSA')
+            ? p.tags
+            : getTopicsForProblem(p);
+          return {
+            title: p.title,
+            url: p.url || '',
+            diff: p.diff || '',
+            lcNum: p.lcNum,
+            pattern: tags[0] || 'General DSA'
+          };
+        }
+        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
+          const tags = (p.tags && p.tags.length > 0 && p.tags[0] !== 'General DSA')
+            ? p.tags
+            : getTopicsForProblem(p);
+          return {
+            title: p.title,
+            url: p.url || '',
+            diff: p.diff || '',
+            lcNum: p.lcNum || getLeetCodeNumber(p.url),
+            pattern: tags[0] || 'General DSA'
+          };
+        }
+      }
+    }
+  }
+
+  // Search 2: Search in global LEETCODE_DATA
+  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : null);
+  if (dataObj) {
+    for (const rawProblems of Object.values(dataObj)) {
+      if (!Array.isArray(rawProblems)) continue;
+      for (const p of rawProblems) {
+        const pNum = getLeetCodeNumber(p.url);
+        if (numQuery !== null && pNum === numQuery) {
+          const tags = getTopicsForProblem(p);
+          return {
+            title: p.title,
+            url: p.url || '',
+            diff: p.diff || '',
+            lcNum: pNum,
+            pattern: tags[0] || 'General DSA'
+          };
+        }
+        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
+          const tags = getTopicsForProblem(p);
+          return {
+            title: p.title,
+            url: p.url || '',
+            diff: p.diff || '',
+            lcNum: pNum,
+            pattern: tags[0] || 'General DSA'
+          };
+        }
+      }
+    }
+  }
+
+  // Search 3: Search in LEETCODE_NUM_MAP (slug mapping)
+  if (numQuery !== null && typeof LEETCODE_NUM_MAP !== 'undefined') {
+    for (const [slug, num] of Object.entries(LEETCODE_NUM_MAP)) {
+      if (num === numQuery) {
+        const formattedTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const dummyProb = { title: formattedTitle, url: `https://leetcode.com/problems/${slug}` };
+        const tags = getTopicsForProblem(dummyProb);
+        return {
+          title: formattedTitle,
+          url: `https://leetcode.com/problems/${slug}`,
+          diff: '',
+          lcNum: num,
+          pattern: tags[0] || 'General DSA'
+        };
+      }
+    }
+  }
+
+  // Fallback: If a number was entered, create a generic problem entry
+  if (numQuery !== null) {
+    return {
+      title: `Problem #${numQuery}`,
+      url: `https://leetcode.com/problemset/all/?search=${numQuery}`,
+      diff: '',
+      lcNum: numQuery,
+      pattern: 'General DSA'
+    };
+  }
+
+  // If a text string was entered, use it as problem title
+  return {
+    title: trimmed,
+    url: '',
+    diff: '',
+    lcNum: null,
+    pattern: 'General DSA'
+  };
+}
+
+function handleReviewNumInput() {
+  const numInput = document.getElementById('review-input-num');
+  const preview = document.getElementById('review-input-preview');
+  if (!numInput || !preview) return;
+
+  const val = (numInput.value || '').trim();
+  if (!val) {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+    return;
+  }
+
+  const found = lookupProblemByNumberOrTitle(val);
+  if (found && found.title) {
+    const numStr = found.lcNum ? `#${found.lcNum} ` : '';
+    const diffBadge = found.diff ? `<span class="diff-tag ${found.diff.toLowerCase()}" style="font-size: 9px; padding: 1px 5px; border-radius: 3px;">${found.diff}</span>` : '';
+    preview.style.display = 'flex';
+    preview.innerHTML = `<span>✓</span> <strong>${numStr}${escapeHtml(found.title)}</strong> <span class="review-pattern-pill">${escapeHtml(found.pattern)}</span> ${diffBadge}`;
+  } else {
+    preview.style.display = 'none';
+    preview.innerHTML = '';
+  }
+}
+
 function toggleReviewForm(force) {
   const form = document.getElementById('review-form-card');
   const btn = document.getElementById('review-toggle-form-btn');
@@ -2271,42 +2408,58 @@ function toggleReviewForm(force) {
   }
   
   if (show) {
-    // Populate datalist with solved problems for autocomplete
-    const dl = document.getElementById('review-problems-datalist');
-    if (dl && typeof solvedProblems !== 'undefined') {
-      dl.innerHTML = '';
-      Array.from(solvedProblems).slice(0, 80).forEach(title => {
-        const opt = document.createElement('option');
-        opt.value = title;
-        dl.appendChild(opt);
-      });
+    const numInput = document.getElementById('review-input-num');
+    const preview = document.getElementById('review-input-preview');
+    if (preview) {
+      preview.style.display = 'none';
+      preview.innerHTML = '';
     }
-    const nameInput = document.getElementById('review-input-name');
-    if (nameInput) setTimeout(() => nameInput.focus(), 50);
+    if (numInput) {
+      numInput.value = '';
+      setTimeout(() => numInput.focus(), 50);
+    }
   }
 }
 
 function addReviewProblem() {
-  const nameInput = document.getElementById('review-input-name');
-  const patternInput = document.getElementById('review-input-pattern');
-  const notesInput = document.getElementById('review-input-notes');
-  if (!nameInput) return;
+  const numInput = document.getElementById('review-input-num');
+  if (!numInput) return;
 
-  const name = (nameInput.value || '').trim();
-  const pattern = (patternInput?.value || '').trim();
-  const notes = (notesInput?.value || '').trim();
+  const rawVal = (numInput.value || '').trim();
+  if (!rawVal) {
+    showToast('⚠️ Please enter a question number.', 'warning');
+    numInput.focus();
+    return;
+  }
 
-  if (!name) {
-    showToast('⚠️ Please enter a problem name.', 'warning');
-    nameInput.focus();
+  const problem = lookupProblemByNumberOrTitle(rawVal);
+  if (!problem) {
+    showToast('⚠️ Problem not found. Please enter a valid question number.', 'warning');
+    return;
+  }
+
+  // Check if problem already exists in review schedule
+  const exists = reviewProblems.some(p => 
+    p.name.toLowerCase() === problem.title.toLowerCase() || 
+    (problem.lcNum && p.lcNum === problem.lcNum)
+  );
+
+  if (exists) {
+    showToast(`ℹ️ "${problem.title}" is already in your review schedule.`, 'info');
+    numInput.value = '';
+    const preview = document.getElementById('review-input-preview');
+    if (preview) preview.style.display = 'none';
+    toggleReviewForm(false);
     return;
   }
 
   const p = {
     id: Date.now().toString(),
-    name: name,
-    pattern: pattern,
-    notes: notes,
+    name: problem.title,
+    lcNum: problem.lcNum,
+    url: problem.url || '',
+    pattern: problem.pattern || 'General DSA',
+    notes: '',
     solvedDate: getReviewTodayStr(),
     stage: 0,
     nextReview: getReviewDaysFromNow(REVIEW_INTERVALS[0]),
@@ -2317,11 +2470,13 @@ function addReviewProblem() {
   saveReviewProblems();
   renderReviewTracker();
 
-  nameInput.value = '';
-  if (patternInput) patternInput.value = '';
-  if (notesInput) notesInput.value = '';
+  numInput.value = '';
+  const preview = document.getElementById('review-input-preview');
+  if (preview) preview.style.display = 'none';
   toggleReviewForm(false);
-  showToast(`🔥 Added "${name}" to Spaced Review! Due in 3 days.`, 'success');
+  
+  const numLabel = problem.lcNum ? `#${problem.lcNum} ` : '';
+  showToast(`🔥 Added ${numLabel}"${problem.title}" (${problem.pattern}) to Spaced Review! First review in 3 days.`, 'success');
 }
 
 function markReviewResult(id, passed) {
@@ -2395,11 +2550,15 @@ function renderReviewTracker() {
       const stageNum = (p.stage || 0) + 1;
       const notesHtml = p.notes ? `<div class="review-item-notes" title="${escapeHtml(p.notes)}">💡 ${escapeHtml(p.notes)}</div>` : '';
       const patternHtml = p.pattern ? `<span class="review-pattern-pill">${escapeHtml(p.pattern)}</span>` : '';
+      const lcNumBadge = p.lcNum ? `<span class="review-num-pill">#${p.lcNum}</span>` : '';
+      const nameHtml = p.url
+        ? `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer" class="review-item-name" title="${escapeHtml(p.name)} (Open on LeetCode)">${lcNumBadge}${escapeHtml(p.name)}</a>`
+        : `<span class="review-item-name" title="${escapeHtml(p.name)}">${lcNumBadge}${escapeHtml(p.name)}</span>`;
 
       return `
         <div class="review-item-card is-due" id="review-card-${escapeHtml(p.id)}">
           <div class="review-item-info">
-            <div class="review-item-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+            ${nameHtml}
             <div class="review-item-meta">
               ${patternHtml}
               <span class="review-stage-pill">Stage ${stageNum}/5</span>
@@ -2439,11 +2598,15 @@ function renderReviewTracker() {
       const days = getReviewDaysBetween(today, p.nextReview);
       const stageNum = (p.stage || 0) + 1;
       const patternHtml = p.pattern ? `<span class="review-pattern-pill">${escapeHtml(p.pattern)}</span>` : '';
+      const lcNumBadge = p.lcNum ? `<span class="review-num-pill">#${p.lcNum}</span>` : '';
+      const nameHtml = p.url
+        ? `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer" class="review-item-name" title="${escapeHtml(p.name)} (Open on LeetCode)">${lcNumBadge}${escapeHtml(p.name)}</a>`
+        : `<span class="review-item-name" title="${escapeHtml(p.name)}">${lcNumBadge}${escapeHtml(p.name)}</span>`;
 
       return `
         <div class="review-item-card" id="review-card-${escapeHtml(p.id)}">
           <div class="review-item-info">
-            <div class="review-item-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
+            ${nameHtml}
             <div class="review-item-meta">
               ${patternHtml}
               <span class="review-stage-pill">Stage ${stageNum}/5</span>
@@ -2466,8 +2629,10 @@ function renderReviewTracker() {
 
 // Expose review tracker functions globally
 window.toggleReviewForm = toggleReviewForm;
+window.handleReviewNumInput = handleReviewNumInput;
 window.addReviewProblem = addReviewProblem;
 window.markReviewResult = markReviewResult;
 window.removeReviewProblem = removeReviewProblem;
 window.renderReviewTracker = renderReviewTracker;
+
 

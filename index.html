@@ -216,19 +216,17 @@
             </button>
           </div>
 
-          <!-- Add Problem Collapsible Form -->
-          <div class="review-form-card" id="review-form-card" style="display: none;">
+          <!-- Add Problem Form: Single Question Number Input -->
+          <form class="review-form-card" id="review-form-card" style="display: none;" onsubmit="event.preventDefault(); addReviewProblem();">
             <div class="review-form-inputs">
-              <input type="text" id="review-input-name" list="review-problems-datalist" placeholder="Problem name (e.g. Longest Substring Without Repeating Characters)" class="review-input" />
-              <datalist id="review-problems-datalist"></datalist>
-              <input type="text" id="review-input-pattern" placeholder="Pattern (e.g. Sliding Window, Two Pointers, DP)" class="review-input" />
-              <textarea id="review-input-notes" rows="2" placeholder="Key trick / aha moment notes" class="review-textarea"></textarea>
+              <input type="text" id="review-input-num" placeholder="Enter question number (e.g. 1, 42, 206)..." class="review-input" autocomplete="off" oninput="handleReviewNumInput()" />
+              <div id="review-input-preview" class="review-input-preview" style="display: none;"></div>
             </div>
             <div class="review-form-actions">
               <button type="button" class="review-btn-cancel" onclick="toggleReviewForm(false)">Cancel</button>
-              <button type="button" class="review-btn-submit" onclick="addReviewProblem()">Add Problem</button>
+              <button type="submit" class="review-btn-submit">Add to Review</button>
             </div>
-          </div>
+          </form>
 
           <!-- Review Items Content Container -->
           <div class="review-tracker-content">
