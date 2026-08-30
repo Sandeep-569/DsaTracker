@@ -2147,6 +2147,7 @@ tr.row:hover .solved-date-badge {
   display: flex;
   gap: 16px;
   margin-top: 16px;
+  margin-bottom: 24px;
   align-items: stretch;
 }
 
@@ -2346,12 +2347,12 @@ tr.row:hover .solved-date-badge {
 
 /* Add Problem Form Card */
 .review-form-card {
-  background: rgba(20, 21, 26, 0.95);
-  border: 1px solid rgba(255, 161, 22, 0.35);
+  background: rgba(18, 19, 24, 0.95);
+  border: 1px solid rgba(255, 161, 22, 0.3);
   border-radius: var(--radius-sm);
-  padding: 8px 10px;
+  padding: 8px;
   margin-bottom: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   animation: reviewFadeIn 0.18s ease;
 }
 
@@ -2367,92 +2368,69 @@ tr.row:hover .solved-date-badge {
   width: 100%;
 }
 
-.review-input-box {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  background: #0d0e12;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-sm);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.review-input-box:focus-within {
-  border-color: #ffa116;
-  box-shadow: 0 0 0 2px rgba(255, 161, 22, 0.25);
-  background: #111218;
-}
-
-.review-input-prefix {
-  padding-left: 9px;
-  color: #ffa116;
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 13px;
-  user-select: none;
-}
-
 .review-input {
   flex: 1;
   min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 6px 8px 6px 4px;
-  color: #fcfcfc;
+  height: 32px;
+  background: #0e0f13;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  color: var(--text);
   font-size: 12px;
   font-family: var(--sans);
-  line-height: 1.4;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.review-input:focus {
+  border-color: #ffa116;
+  box-shadow: 0 0 0 2px rgba(255, 161, 22, 0.2);
+  background: #121318;
 }
 
 .review-input::placeholder {
-  color: #80808a;
+  color: var(--dim);
   font-size: 11.5px;
 }
 
 .review-input:-webkit-autofill,
 .review-input:-webkit-autofill:hover, 
 .review-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #fcfcfc;
-  -webkit-box-shadow: 0 0 0px 1000px #0d0e12 inset;
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0px 1000px #0e0f13 inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
 .review-btn-submit {
-  background: linear-gradient(135deg, #ffa116 0%, #ff8c00 100%);
+  background: #ffa116;
   border: none;
   color: #000000;
   font-weight: 700;
   padding: 0 12px;
-  height: 29px;
+  height: 32px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: 11.5px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(255, 161, 22, 0.25);
 }
 
 .review-btn-submit:hover {
-  filter: brightness(1.1);
+  background: #ffb800;
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(255, 161, 22, 0.4);
 }
 
 .review-btn-cancel {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
-  width: 29px;
-  height: 29px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border-radius: var(--radius-sm);
   font-size: 12px;
@@ -2465,9 +2443,9 @@ tr.row:hover .solved-date-badge {
 }
 
 .review-btn-cancel:hover {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .review-input-preview {
