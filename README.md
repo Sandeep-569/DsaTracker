@@ -175,10 +175,10 @@ npx firebase deploy --only hosting
 
 ## 👤 Author & Links
 
-- **Author**: Sandeep
+- **Author**: Sandeep Kumar Saha
 - **GitHub**: [@Sandeep-569](https://github.com/Sandeep-569)
 - **LeetCode**: [codedbysandeep](https://leetcode.com/u/codedbysandeep/)
-- **LinkedIn**: [Sandeep](https://www.linkedin.com/)
+- **LinkedIn**: [Sandeep Kumar Saha](https://www.linkedin.com/in/sandeep-kumar-saha-69a149386/)
 
 ---
 
