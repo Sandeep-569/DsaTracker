@@ -1,7 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/api/sync/leetcode", "destination": "/api/sync/leetcode.js" }
-  ]
+  "cleanUrls": true
 }
-
-
