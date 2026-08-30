@@ -17,7 +17,7 @@
 // browser-like headers. Either way, the cron script is tolerant of an empty
 // solved[] — it just won't add anything that run.
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -120,3 +120,6 @@ export default async function handler(req, res) {
     solved
   });
 }
+
+module.exports = handler;
+module.exports.default = handler;
