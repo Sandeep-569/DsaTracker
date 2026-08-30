@@ -305,7 +305,8 @@ header p {
   pointer-events: none;
 }
 
-input[type="text"] {
+.search-box-wrapper input[type="text"],
+.search-box-wrapper input {
   width: 100%;
   padding: 14px 16px 14px 44px;
   background: var(--panel);
@@ -320,7 +321,8 @@ input[type="text"] {
   box-shadow: var(--shadow);
 }
 
-input[type="text"]:focus {
+.search-box-wrapper input[type="text"]:focus,
+.search-box-wrapper input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
