@@ -3,7 +3,8 @@
 A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, a spaced repetition review engine for long-term retention, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions and serverless endpoints.
 
 [![Live App](https://img.shields.io/badge/Live_App-Firebase_Hosting-orange?style=flat-square&logo=firebase)](https://dsatracker-6e8d0.web.app)
-[![Serverless Sync](https://img.shields.io/badge/Sync_API-Vercel_Serverless-black?style=flat-square&logo=vercel)](https://github.com/Sandeep-569/DsaTracker)
+[![Database](https://img.shields.io/badge/Database-Cloud_Firestore-blue?style=flat-square&logo=firebase)](https://firebase.google.com/)
+[![Auto Sync](https://img.shields.io/badge/Auto_Sync-GitHub_Actions-2088FF?style=flat-square&logo=githubactions)](https://github.com/Sandeep-569/DsaTracker)
 [![JavaScript](https://img.shields.io/badge/Language-Vanilla_JavaScript_ES6+-yellow?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
@@ -58,8 +59,7 @@ Never forget core algorithm patterns or tricky edge cases.
 
 ### 5. 🤖 Automated LeetCode Profile Auto-Sync
 - **GitHub Actions Cron Workflow (`.github/workflows/leetcode-autosync.yml`)**: Periodic scheduled runner queries the LeetCode GraphQL API for recent submissions.
-- **Serverless API Endpoint (`/api/sync/leetcode`)**: Secure webhook endpoint to trigger sync on demand.
-- **Intelligent Title Mapping**: Matches incoming LeetCode submissions against the question database and automatically marks them solved in Firestore with UTC timestamps.
+- **Direct Firestore Sync**: Matches incoming LeetCode submissions against the question database and automatically marks them solved in Firestore with UTC timestamps.
 
 ---
 
@@ -79,8 +79,8 @@ Never forget core algorithm patterns or tricky edge cases.
 | **Styling** | Vanilla CSS (CSS Variables, Flexbox, CSS Grid) | Dark-mode glassmorphism, responsive split rows, animations |
 | **Authentication** | Firebase Auth (Google Sign-In) | Secure OAuth sign-in with email allowlist gate |
 | **Database** | Cloud Firestore | Real-time synchronized JSON document stores |
-| **Automations** | GitHub Actions & Vercel Serverless | Scheduled GraphQL scrapers & cron sync |
-| **Hosting** | Vercel & Firebase Hosting | High-speed global edge CDN deployment |
+| **Automations** | GitHub Actions | Scheduled GraphQL scrapers & cron sync |
+| **Hosting** | Firebase Hosting | High-speed global edge CDN deployment |
 
 ---
 
@@ -93,11 +93,10 @@ DsaTracker/
 │       ├── leetcode-autosync.yml          # GitHub Actions cron for LeetCode profile sync
 │       ├── firebase-hosting-merge.yml     # Firebase Hosting CI/CD on main branch merge
 │       └── firebase-hosting-pull-request.yml
-├── api/
-│   └── sync/
-│       └── leetcode.js                   # Vercel serverless function for LeetCode sync
 ├── scripts/
-│   └── sync-leetcode-cron.js             # Node.js script querying LeetCode GraphQL & Firestore
+│   ├── sync-leetcode-cron.js             # Node.js script querying LeetCode GraphQL & Firestore
+│   ├── local-server.js                   # Local development server
+│   └── process_full_dataset.js           # Dataset processor
 ├── app.js                                # Core application controller, state, & review engine
 ├── data.js                               # Offline LeetCode dataset with company frequency tags
 ├── firebase-service.js                   # Firebase SDK initialization, Auth, & Firestore listeners
@@ -107,7 +106,6 @@ DsaTracker/
 ├── styles.css                            # Complete CSS design system, themes, and animations
 ├── firestore.rules                       # Firestore security rules
 ├── firebase.json                         # Firebase hosting & headers configuration
-├── vercel.json                           # Vercel routing & headers configuration
 └── package.json                          # Node scripts & dependencies
 ```
 
@@ -124,21 +122,17 @@ cd DsaTracker
 ### 2. Run a Local Development Server
 Because the application uses native ES6 JavaScript modules and service workers, serve the project with any local HTTP server:
 
+Using Node:
+```bash
+node scripts/local-server.js
+```
+
 Using Python:
 ```bash
-# Python 3
-python -m http.server 3000
+python -m http.server 8080
 ```
 
-Using Node (`npx serve`):
-```bash
-npx serve .
-```
-
-Using VS Code Live Server:
-- Right click `index.html` and select **"Open with Live Server"**.
-
-Open your browser at `http://localhost:3000`.
+Open your browser at `http://localhost:8080`.
 
 ---
 
@@ -163,16 +157,12 @@ const firebaseConfig = {
 ### LeetCode Autosync Secrets (GitHub Actions)
 To enable automated submission syncing, configure the following secrets in **GitHub Repository → Settings → Secrets and variables → Actions**:
 - `LEETCODE_USERNAME`: Your LeetCode profile handle.
+- `OWNER_EMAIL`: Your authorized Firebase login email.
 - `FIREBASE_SERVICE_ACCOUNT_KEY`: Service account private key JSON from Firebase Console.
 
 ---
 
 ## 🚢 Deployment
-
-### Deploy to Vercel (Recommended)
-```bash
-npx vercel --prod
-```
 
 ### Deploy to Firebase Hosting
 ```bash

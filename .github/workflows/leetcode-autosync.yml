@@ -23,7 +23,6 @@ jobs:
       - name: Run LeetCode sync
         env:
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
-          LEETCODE_SYNC_API_URL: ${{ secrets.LEETCODE_SYNC_API_URL }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
