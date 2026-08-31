@@ -9,6 +9,7 @@ let currentTopicFilter = 'All';
 let solvedProblems = new Set();
 let starredProblems = new Set();
 let solvedDates = new Map(); // title → ISO date string of when it was solved
+let bookmarkDates = new Map(); // title → ISO date string of when it was bookmarked
 let reviewProblems = []; // Array of { id, name, pattern, notes, solvedDate, stage, nextReview, history }
 let totalUniqueCount = 0;
 
@@ -367,6 +368,13 @@ function initData() {
           if (title && typeof title === 'string' && date) solvedDates.set(title.trim(), date);
         });
       }
+      // Load bookmark dates
+      const savedBookmarkDates = JSON.parse(localStorage.getItem('leetcode_bookmark_dates_v1') || '{}');
+      if (savedBookmarkDates && typeof savedBookmarkDates === 'object' && !Array.isArray(savedBookmarkDates)) {
+        Object.entries(savedBookmarkDates).forEach(([title, date]) => {
+          if (title && typeof title === 'string' && date) bookmarkDates.set(title.trim(), date);
+        });
+      }
       // Load spaced repetition review problems
       const savedReviews = JSON.parse(localStorage.getItem('leetcode_review_problems_v1') || '[]');
       if (Array.isArray(savedReviews)) {
@@ -426,6 +434,9 @@ function updateStarredStats(skipCloudSync = false) {
 
   try {
     localStorage.setItem('leetcode_starred_v1', JSON.stringify(Array.from(starredProblems)));
+    const bmDatesObj = {};
+    bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
+    localStorage.setItem('leetcode_bookmark_dates_v1', JSON.stringify(bmDatesObj));
   } catch (e) {
     console.error("Error saving starred problems to localStorage:", e);
   }
@@ -1153,6 +1164,12 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
       }
     }
 
+    const bmDateStr = bookmarkDates.get(p.title);
+    const bmDateDisplay = bmDateStr
+      ? new Date(bmDateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—';
+    const bmDateTitle = bmDateStr ? new Date(bmDateStr).toLocaleString() : '';
+
     tr.innerHTML = `
       <td class="cb-cell">
         <input type="checkbox" class="status-cb" ${isSolved ? 'checked' : ''}>
@@ -1174,7 +1191,7 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
         </div>
       </td>
       <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
-      <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
+      <td style="text-align:right; white-space: nowrap;" title="${bmDateTitle}"><span class="bm-date-tag">${bmDateDisplay}</span></td>
     `;
 
     const cb = tr.querySelector('.status-cb');
@@ -1272,9 +1289,12 @@ function toggleStar(title, event) {
 
   if (starredProblems.has(cleanTitle)) {
     starredProblems.delete(cleanTitle);
+    bookmarkDates.delete(cleanTitle);
   } else {
     starredProblems.delete(title);
+    bookmarkDates.delete(title);
     starredProblems.add(cleanTitle);
+    bookmarkDates.set(cleanTitle, new Date().toISOString());
   }
 
   updateStarredStats();
@@ -1339,8 +1359,10 @@ function closeBackupModal() {
 function generateBackupPayload() {
   const solvedDatesObj = {};
   solvedDates.forEach((date, title) => { solvedDatesObj[title] = date; });
+  const bmDatesObj = {};
+  bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
   return {
-    version: '1.2',
+    version: '1.3',
     app: 'DSA Tracker',
     exportedAt: new Date().toISOString(),
     stats: {
@@ -1351,6 +1373,7 @@ function generateBackupPayload() {
     solvedProblems: Array.from(solvedProblems),
     starredProblems: Array.from(starredProblems),
     solvedDates: solvedDatesObj,
+    bookmarkDates: bmDatesObj,
     reviewProblems: reviewProblems
   };
 }
@@ -1447,6 +1470,12 @@ function parseImportJson(text) {
     solvedDatesObj = parsed.solvedDates;
   }
 
+  // Extract bookmark dates if present (v1.3 backup format)
+  let bookmarkDatesObj = {};
+  if (parsed.bookmarkDates && typeof parsed.bookmarkDates === 'object' && !Array.isArray(parsed.bookmarkDates)) {
+    bookmarkDatesObj = parsed.bookmarkDates;
+  }
+
   // Format 2: Raw Array of solved problems
   if (Array.isArray(parsed) && solvedList.length === 0 && starredList.length === 0) {
     solvedList = parsed;
@@ -1460,12 +1489,12 @@ function parseImportJson(text) {
     throw new Error('No valid solved, bookmarked, or review questions found in this backup.');
   }
 
-  return { solvedList, starredList, solvedDatesObj, reviewList };
+  return { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, reviewList };
 }
 
 function processImportJsonString(jsonString) {
   try {
-    const { solvedList, starredList, solvedDatesObj, reviewList } = parseImportJson(jsonString);
+    const { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, reviewList } = parseImportJson(jsonString);
 
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
 
@@ -1474,6 +1503,8 @@ function processImportJsonString(jsonString) {
       starredProblems = new Set(starredList);
       solvedDates = new Map();
       Object.entries(solvedDatesObj || {}).forEach(([t, d]) => solvedDates.set(t, d));
+      bookmarkDates = new Map();
+      Object.entries(bookmarkDatesObj || {}).forEach(([t, d]) => bookmarkDates.set(t, d));
       if (Array.isArray(reviewList)) reviewProblems = reviewList;
     } else {
       // Merge mode: only set date if not already tracked
@@ -1483,7 +1514,12 @@ function processImportJsonString(jsonString) {
           solvedDates.set(p, solvedDatesObj[p]);
         }
       });
-      starredList.forEach(p => starredProblems.add(p));
+      starredList.forEach(p => {
+        starredProblems.add(p);
+        if (!bookmarkDates.has(p) && bookmarkDatesObj && bookmarkDatesObj[p]) {
+          bookmarkDates.set(p, bookmarkDatesObj[p]);
+        }
+      });
       if (Array.isArray(reviewList)) {
         const existingIds = new Set(reviewProblems.map(p => p.id));
         reviewList.forEach(r => {
@@ -1665,11 +1701,14 @@ function syncToCloudDebounced() {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
+      const bmDatesObj = {};
+      bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
       window.FirebaseService.saveProgressToCloud(
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        reviewProblems
+        reviewProblems,
+        bmDatesObj
       );
     }
   }, 400);
@@ -1719,9 +1758,11 @@ async function handleSignOut() {
     cloudAuthoritativeDataLoaded = false;
     solvedProblems.clear();
     starredProblems.clear();
+    bookmarkDates.clear();
     reviewProblems = [];
     localStorage.removeItem('leetcode_solved_v1');
     localStorage.removeItem('leetcode_starred_v1');
+    localStorage.removeItem('leetcode_bookmark_dates_v1');
     localStorage.removeItem('leetcode_review_problems_v1');
     updateSolvedStats(true);
     updateStarredStats(true);
@@ -1755,11 +1796,14 @@ async function triggerManualCloudSync() {
   try {
     const datesObj = {};
     solvedDates.forEach((date, title) => { datesObj[title] = date; });
+    const bmDatesObj = {};
+    bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
     const success = await window.FirebaseService.saveProgressToCloud(
       Array.from(solvedProblems),
       Array.from(starredProblems),
       datesObj,
-      reviewProblems
+      reviewProblems,
+      bmDatesObj
     );
     if (success) {
       showToast("☁️ Progress successfully synced to Cloud Firestore!", "success");
@@ -1948,7 +1992,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, reviewProblems: cloudReviews } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, reviewProblems: cloudReviews, bookmarkDates: cloudBmDates } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -1960,6 +2004,13 @@ window.addEventListener('cloud-data-received', (e) => {
   if (cloudDates && typeof cloudDates === 'object') {
     Object.entries(cloudDates).forEach(([title, date]) => {
       if (title && date) solvedDates.set(title.trim(), date);
+    });
+  }
+  // Restore bookmark dates from cloud
+  bookmarkDates = new Map();
+  if (cloudBmDates && typeof cloudBmDates === 'object') {
+    Object.entries(cloudBmDates).forEach(([title, date]) => {
+      if (title && date) bookmarkDates.set(title.trim(), date);
     });
   }
 
@@ -2002,11 +2053,14 @@ window.addEventListener('cloud-new-user-init', () => {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
+      const bmDatesObj = {};
+      bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
       window.FirebaseService.saveProgressToCloud(
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        reviewProblems
+        reviewProblems,
+        bmDatesObj
       );
     }
   }

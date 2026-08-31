@@ -949,6 +949,16 @@ td.count {
   border-radius: 4px;
 }
 
+.bm-date-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(80, 200, 180, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
