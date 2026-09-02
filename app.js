@@ -2388,7 +2388,8 @@ function handleRecallInputPreview() {
 
   const found = lookupProblemByNumberOrTitle(val);
   if (found && found.title) {
-    const numBadge = found.lcNum ? `#${found.lcNum} ` : '';
+    const hasNumPrefix = found.lcNum && found.title.trim().startsWith(String(found.lcNum));
+    const numBadge = found.lcNum && !hasNumPrefix ? `${found.lcNum}. ` : '';
     const diffBadge = `<span class="diff-tag ${found.diff.toLowerCase()}" style="font-size: 10px; padding: 1px 6px;">${found.diff}</span>`;
     previewEl.style.display = 'flex';
     previewEl.innerHTML = `<span>✓ Found:</span> <strong>${numBadge}${escapeHtml(found.title)}</strong> ${diffBadge}`;
@@ -2449,7 +2450,8 @@ function addRecallQuestion() {
   inputEl.value = '';
   if (previewEl) previewEl.style.display = 'none';
 
-  const numLabel = prob.lcNum ? `#${prob.lcNum} ` : '';
+  const hasNumPrefix = prob.lcNum && prob.title.trim().startsWith(String(prob.lcNum));
+  const numLabel = prob.lcNum && !hasNumPrefix ? `${prob.lcNum}. ` : '';
   showToast(`✅ Added ${numLabel}"${prob.title}" to Revision Sheet! Next solve scheduled in 3 days.`, 'success');
 }
 
@@ -2541,7 +2543,8 @@ function renderRecallTable() {
   tbody.innerHTML = recallItems.map(item => {
     const stages = item.stagesCompleted || [false, false, false, false, false];
     const diffClass = (item.diff || 'Medium').toLowerCase();
-    const lcNumBadge = item.lcNum ? `<span style="color:#ffa116; font-family:var(--mono); font-weight:700; margin-right:4px;">#${item.lcNum}</span>` : '';
+    const hasNumPrefix = item.lcNum && item.title.trim().startsWith(String(item.lcNum));
+    const lcNumBadge = item.lcNum && !hasNumPrefix ? `<span style="color:#ffa116; font-family:var(--mono); font-weight:700; margin-right:6px;">${item.lcNum}.</span>` : '';
     const nameHtml = item.url
       ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary); text-decoration:none; font-weight:600;" onmouseover="this.style.color='#ffa116'" onmouseout="this.style.color='var(--text-primary)'">${lcNumBadge}${escapeHtml(item.title)}</a>`
       : `<span style="color:var(--text-primary); font-weight:600;">${lcNumBadge}${escapeHtml(item.title)}</span>`;
