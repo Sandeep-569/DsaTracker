@@ -1694,8 +1694,8 @@ function syncToCloudDebounced() {
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        reviewProblems,
-        bmDatesObj
+        bmDatesObj,
+        typeof recallItems !== 'undefined' ? recallItems : []
       );
     }
   }, 400);
@@ -1786,7 +1786,8 @@ async function triggerManualCloudSync() {
       Array.from(solvedProblems),
       Array.from(starredProblems),
       datesObj,
-      bmDatesObj
+      bmDatesObj,
+      typeof recallItems !== 'undefined' ? recallItems : []
     );
     if (success) {
       showToast("☁️ Progress successfully synced to Cloud Firestore!", "success");
@@ -1883,7 +1884,7 @@ async function loadTrackerDataScripts() {
   console.log('[DSA Tracker] Verified owner authenticated. Downloading dataset scripts...');
   dataLoadingPromise = (async () => {
     try {
-      await loadScript('data.js?v=2.8.2');
+      await loadScript('data.js?v=2.8.3');
       // solvedQuestion.js is loaded statically in index.html
       dataScriptsLoaded = true;
       console.log('[DSA Tracker] All dataset scripts successfully loaded and initialized!');
@@ -1974,7 +1975,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates, recallItems: cloudRecall } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -1994,6 +1995,14 @@ window.addEventListener('cloud-data-received', (e) => {
     Object.entries(cloudBmDates).forEach(([title, date]) => {
       if (title && date) bookmarkDates.set(title.trim(), date);
     });
+  }
+  // Restore recall items from cloud
+  if (Array.isArray(cloudRecall)) {
+    recallItems = cloudRecall;
+    try {
+      localStorage.setItem('leetcode_recall_items_v1', JSON.stringify(recallItems));
+    } catch(err){}
+    if (typeof renderRecallTable === 'function') renderRecallTable();
   }
 
   // Update local storage and UI counters without triggering another cloud write
@@ -2022,7 +2031,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
 window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
-  if (solvedProblems.size > 0 || starredProblems.size > 0) {
+  if (solvedProblems.size > 0 || starredProblems.size > 0 || (typeof recallItems !== 'undefined' && recallItems.length > 0)) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
@@ -2032,7 +2041,8 @@ window.addEventListener('cloud-new-user-init', () => {
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        bmDatesObj
+        bmDatesObj,
+        typeof recallItems !== 'undefined' ? recallItems : []
       );
     }
   }
@@ -2052,7 +2062,11 @@ window.addEventListener('cloud-sync-status', (e) => {
   if (statusText) {
     if (status === 'synced') statusText.textContent = `Synced (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
     else if (status === 'syncing') statusText.textContent = 'Syncing...';
-    else if (status === 'error') statusText.textContent = 'Sync Error';
+    else if (status === 'error') statusText.textContent = `Sync Error: ${e.detail?.error || 'Unknown'}`;
+  }
+
+  if (status === 'error' && e.detail?.error && typeof showToast === 'function') {
+    showToast(`⚠️ Cloud Sync Error: ${e.detail.error}`, 'error');
   }
 });
 
@@ -2256,6 +2270,7 @@ function loadRecallItems() {
 function saveRecallItems() {
   try {
     localStorage.setItem('leetcode_recall_items_v1', JSON.stringify(recallItems));
+    if (typeof syncToCloudDebounced === 'function') syncToCloudDebounced();
   } catch (e) {
     console.error("Error saving recall items to localStorage:", e);
   }

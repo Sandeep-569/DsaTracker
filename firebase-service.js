@@ -138,12 +138,19 @@
   }
 
   // Firestore: Save Progress to Cloud
-  async function saveProgressToCloud(solvedArray, starredArray, datesObj, bookmarkDatesObj) {
-    if (!db || !currentUser) return false;
+  async function saveProgressToCloud(solvedArray, starredArray, datesObj, bookmarkDatesObj, recallArray) {
+    if (!db || !currentUser) {
+      console.warn("[FirebaseService] Cannot sync: user not signed in or db not initialized.", { db: !!db, currentUser: !!currentUser });
+      return false;
+    }
     try {
+      window.dispatchEvent(new CustomEvent('cloud-sync-status', { 
+        detail: { status: 'syncing' } 
+      }));
+
       const payload = {
-        solvedProblems: solvedArray,
-        starredProblems: starredArray,
+        solvedProblems: Array.isArray(solvedArray) ? solvedArray : [],
+        starredProblems: Array.isArray(starredArray) ? starredArray : [],
         updatedAt: new Date().toISOString(),
         userEmail: currentUser.email || '',
         displayName: currentUser.displayName || ''
@@ -154,14 +161,32 @@
       if (bookmarkDatesObj && typeof bookmarkDatesObj === 'object') {
         payload.bookmarkDates = bookmarkDatesObj;
       }
-      await db.collection('users').doc(currentUser.uid).set(payload, { merge: true });
+      if (Array.isArray(recallArray)) {
+        payload.recallItems = recallArray.map(item => ({
+          id: item.id || Date.now(),
+          title: item.title || '',
+          url: item.url || '',
+          diff: item.diff || 'Medium',
+          lcNum: item.lcNum != null ? item.lcNum : null,
+          stagesCompleted: Array.isArray(item.stagesCompleted) ? item.stagesCompleted : [false, false, false, false, false],
+          addedDate: item.addedDate || new Date().toISOString().split('T')[0],
+          lastCheckedDate: item.lastCheckedDate || null,
+          nextSolveDate: item.nextSolveDate || null
+        }));
+      }
+
+      // Sanitize payload to strip any accidental undefined values that crash Firestore
+      const cleanPayload = JSON.parse(JSON.stringify(payload));
+      await db.collection('users').doc(currentUser.uid).set(cleanPayload, { merge: true });
+
+      console.log("[FirebaseService] Progress successfully saved to Firestore for user:", currentUser.uid);
 
       window.dispatchEvent(new CustomEvent('cloud-sync-status', { 
         detail: { status: 'synced', timestamp: new Date() } 
       }));
       return true;
     } catch (err) {
-      console.error("Error saving progress to Firestore:", err);
+      console.error("[FirebaseService] Error saving progress to Firestore:", err);
       window.dispatchEvent(new CustomEvent('cloud-sync-status', { 
         detail: { status: 'error', error: err.message } 
       }));
@@ -191,6 +216,7 @@
             starredProblems: data.starredProblems || [],
             solvedDates: data.solvedDates || {},
             bookmarkDates: data.bookmarkDates || {},
+            recallItems: data.recallItems || [],
             updatedAt: data.updatedAt
           } 
         }));

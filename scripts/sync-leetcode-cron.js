@@ -67,23 +67,32 @@ function loadQuestionBank() {
   return sandbox.LEETCODE_DATA || sandbox.RAW_DATA || {};
 }
 
-// Build a flat, normalized lookup: lowercased-trimmed title -> exact canonical
-// title string (must match exactly what the frontend uses as the solvedProblems
-// Set key). Each entry in the question bank is [title, difficulty, url, source].
-function buildTitleLookup(questionBank) {
-  const lookup = new Map();
+// Build flat, normalized lookups:
+// 1. titleLookup: lowercased-trimmed title -> exact canonical title string
+// 2. slugLookup: lowercased URL slug -> exact canonical title string
+function buildLookups(questionBank) {
+  const titleLookup = new Map();
+  const slugLookup = new Map();
   Object.values(questionBank).forEach((problems) => {
     if (!Array.isArray(problems)) return;
     problems.forEach((p) => {
-      // p is either an array [title, ...] or an object {title, ...}
       const rawTitle = Array.isArray(p) ? p[0] : p.title;
+      const url = Array.isArray(p) ? p[2] : p.url;
       if (!rawTitle || typeof rawTitle !== 'string') return;
       const canonical = rawTitle.trim();
       const key = canonical.toLowerCase();
-      if (!lookup.has(key)) lookup.set(key, canonical);
+      if (!titleLookup.has(key)) titleLookup.set(key, canonical);
+
+      if (url) {
+        const match = url.match(/leetcode\.com\/problems\/([^\/\?#]+)/);
+        if (match) {
+          const slug = match[1].toLowerCase();
+          if (!slugLookup.has(slug)) slugLookup.set(slug, canonical);
+        }
+      }
     });
   });
-  return lookup;
+  return { titleLookup, slugLookup };
 }
 
 async function main() {
@@ -93,78 +102,56 @@ async function main() {
   let totalSolved = null;
   const sessionToken = (process.env.LEETCODE_SESSION || '').trim();
 
-  // ── 1. If LEETCODE_SESSION is provided, validate and fetch directly ──────────
-  if (sessionToken) {
-    console.log('Validating LEETCODE_SESSION cookie...');
+  // ── 1. Fetch from official LeetCode GraphQL (recentAcSubmissionList) ────────
+  console.log(`Fetching recent AC submissions for "${LEETCODE_USERNAME}" via LeetCode GraphQL...`);
+  try {
     const headers = {
       'Content-Type': 'application/json',
-      'Cookie': `LEETCODE_SESSION=${sessionToken};`,
       'Referer': `https://leetcode.com/u/${LEETCODE_USERNAME}/`,
       'Origin': 'https://leetcode.com',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36'
     };
-
-    try {
-      const statusRes = await fetchWithTimeout('https://leetcode.com/graphql', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          query: `query userStatus { userStatus { isSignedIn username } }`
-        })
-      }, 15000);
-
-      if (statusRes.ok) {
-        const statusData = await statusRes.json();
-        const userStatus = statusData?.data?.userStatus;
-        if (!userStatus || !userStatus.isSignedIn) {
-          console.error('\n❌ ERROR: LEETCODE_SESSION has EXPIRED or is invalid!');
-          console.error('👉 Please copy your fresh LEETCODE_SESSION cookie from leetcode.com and update the GitHub secret.');
-          process.exit(1);
-        }
-        console.log(`✓ Session is valid and active for user "${userStatus.username || LEETCODE_USERNAME}".`);
-      }
-    } catch (err) {
-      console.log(`Warning during session check: ${err.message}`);
+    if (sessionToken) {
+      headers['Cookie'] = `LEETCODE_SESSION=${sessionToken};`;
     }
 
-    // Fetch accepted submissions using valid session
-    try {
-      const lcRes = await fetchWithTimeout('https://leetcode.com/graphql', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          query: `query recentAcSubmissions($username: String!, $limit: Int!) {
-            recentAcSubmissionList(username: $username, limit: $limit) {
-              id
-              title
-              titleSlug
-              timestamp
-            }
-          }`,
-          variables: { username: LEETCODE_USERNAME, limit: 20 }
-        })
-      }, 20000);
+    const lcRes = await fetchWithTimeout('https://leetcode.com/graphql', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        query: `query recentAcSubmissions($username: String!, $limit: Int!) {
+          recentAcSubmissionList(username: $username, limit: $limit) {
+            id
+            title
+            titleSlug
+            timestamp
+          }
+        }`,
+        variables: { username: LEETCODE_USERNAME, limit: 20 }
+      })
+    }, 20000);
 
-      if (lcRes.ok) {
-        const lcData = await lcRes.json();
-        const list = lcData?.data?.recentAcSubmissionList || [];
-        if (list.length > 0) {
-          solvedList = list.map(s => ({
-            title: s.title,
-            titleSlug: s.titleSlug,
-            timestamp: s.timestamp ? Number(s.timestamp) : null
-          }));
-          console.log(`LeetCode GraphQL (recentAcSubmissionList) returned ${solvedList.length} submission(s).`);
-        }
+    if (lcRes.ok) {
+      const lcData = await lcRes.json();
+      const list = lcData?.data?.recentAcSubmissionList || [];
+      if (list.length > 0) {
+        solvedList = list.map(s => ({
+          title: s.title,
+          titleSlug: s.titleSlug,
+          timestamp: s.timestamp ? Number(s.timestamp) : null
+        }));
+        console.log(`✓ LeetCode GraphQL returned ${solvedList.length} recent submission(s).`);
       }
-    } catch (e) {
-      console.log(`LeetCode GraphQL recentAcSubmissionList failed: ${e.message}`);
+    } else {
+      console.log(`LeetCode GraphQL returned HTTP ${lcRes.status}`);
     }
+  } catch (e) {
+    console.log(`LeetCode GraphQL request encountered an issue: ${e.message}`);
   }
 
-  // ── 2. Fallback if no session was provided or if list is still empty ───────
-  if (solvedList.length === 0 && !sessionToken) {
-    console.log('Calling alfa-leetcode-api (may take up to 60s on cold start)...');
+  // ── 2. Fallback to alfa-leetcode-api if direct GraphQL returned nothing ─────
+  if (solvedList.length === 0) {
+    console.log('Calling alfa-leetcode-api (fallback)...');
     try {
       const acRes = await fetchWithTimeout(
         `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(LEETCODE_USERNAME)}/acSubmissions?limit=20`,
@@ -180,15 +167,13 @@ async function main() {
             titleSlug: s.titleSlug,
             timestamp: s.timestamp ? Number(s.timestamp) : null
           }));
-          console.log(`alfa-leetcode-api returned ${solvedList.length} submission(s).`);
+          console.log(`✓ alfa-leetcode-api returned ${solvedList.length} submission(s).`);
         }
       }
     } catch (e) {
       console.log(`alfa-leetcode-api failed: ${e.message}`);
     }
   }
-
-
 
   // Get total solved count for logging
   try {
@@ -208,10 +193,10 @@ async function main() {
     return;
   }
 
-  // 2. Load question bank and build lookup
+  // 2. Load question bank and build lookups
   const questionBank = loadQuestionBank();
-  const titleLookup = buildTitleLookup(questionBank);
-  console.log(`Question bank loaded. ${titleLookup.size} unique problem titles indexed.`);
+  const { titleLookup, slugLookup } = buildLookups(questionBank);
+  console.log(`Question bank loaded. ${titleLookup.size} titles and ${slugLookup.size} slugs indexed.`);
 
   // 3. Resolve the owner's Firestore doc (by uid, looked up from email)
   const userRecord = await auth.getUserByEmail(OWNER_EMAIL);
@@ -232,8 +217,9 @@ async function main() {
 
   solvedList.forEach((item) => {
     const key = (item.title || '').trim().toLowerCase();
-    if (!key) return;
-    const matchedTitle = titleLookup.get(key);
+    const slugKey = (item.titleSlug || '').trim().toLowerCase();
+    if (!key && !slugKey) return;
+    const matchedTitle = (key && titleLookup.get(key)) || (slugKey && slugLookup.get(slugKey));
     if (!matchedTitle) {
       skippedNotInBank++;
       return; // not in this tracker's question bank, skip
