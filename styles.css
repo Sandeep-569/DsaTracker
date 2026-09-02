@@ -648,6 +648,19 @@ td.count {
 #recall-view { display: none; }
 #recall-view.active { display: block; }
 
+#main-header.hidden {
+  display: none !important;
+}
+
+.recall-blank-content {
+  min-height: 500px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  margin-top: 16px;
+}
+
 .header-row {
   display: flex;
   align-items: center;

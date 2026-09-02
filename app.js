@@ -1225,6 +1225,7 @@ function goBackToCompanyTopics() {
 }
 
 function openRecallView() {
+  document.getElementById('main-header')?.classList.add('hidden');
   document.getElementById('home-view')?.classList.add('hidden');
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
@@ -1235,6 +1236,7 @@ function openRecallView() {
 }
 
 function goHome() {
+  document.getElementById('main-header')?.classList.remove('hidden');
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.remove('active');
