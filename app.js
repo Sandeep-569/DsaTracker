@@ -1224,12 +1224,23 @@ function goBackToCompanyTopics() {
   renderCompanyTopics();
 }
 
+function openRecallView() {
+  document.getElementById('home-view')?.classList.add('hidden');
+  document.getElementById('company-topics-view')?.classList.remove('active');
+  document.getElementById('topic-problems-view')?.classList.remove('active');
+  document.getElementById('solved-view')?.classList.remove('active');
+  document.getElementById('bookmarks-view')?.classList.remove('active');
+  document.getElementById('recall-view')?.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
 function goHome() {
-  document.getElementById('company-topics-view').classList.remove('active');
-  document.getElementById('topic-problems-view').classList.remove('active');
+  document.getElementById('company-topics-view')?.classList.remove('active');
+  document.getElementById('topic-problems-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('home-view').classList.remove('hidden');
+  document.getElementById('recall-view')?.classList.remove('active');
+  document.getElementById('home-view')?.classList.remove('hidden');
   currentCompanyObj = null;
   currentTopicName = null;
   renderCompanies();
@@ -2226,8 +2237,9 @@ function renderSolvedHeatmap() {
 }
 
 
-// Expose globally so solvedQuestion.js can call it after date edits
+// Expose globally
 window.renderSolvedHeatmap = renderSolvedHeatmap;
+window.openRecallView = openRecallView;
 
 
 

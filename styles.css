@@ -645,6 +645,9 @@ td.count {
 #solved-view { display: none; }
 #solved-view.active { display: block; }
 
+#recall-view { display: none; }
+#recall-view.active { display: block; }
+
 .header-row {
   display: flex;
   align-items: center;
