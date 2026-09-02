@@ -2166,7 +2166,7 @@ function renderSolvedHeatmap() {
     const totalDaysInMonth = lastDayOfMonth.getUTCDate();
     const startDow = firstDayOfMonth.getUTCDay(); // 0=Sun..6=Sat
     const totalCols = Math.floor((startDow + totalDaysInMonth - 1) / 7) + 1;
-    const monthWidth = totalCols * 11 + (totalCols - 1) * 3;
+    const monthWidth = totalCols * 13 + (totalCols - 1) * 3;
 
     // Month Label
     const lbl = document.createElement('span');
