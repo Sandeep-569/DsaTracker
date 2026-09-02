@@ -2355,9 +2355,9 @@ tr.row:hover .solved-date-badge {
 }
 
 .heatmap-stats strong {
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: normal;
+  font-size: 13px;
 }
 
 .heatmap-scroll-container {
