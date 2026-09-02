@@ -2344,6 +2344,12 @@ tr.row:hover .solved-date-badge {
   line-height: 1.3;
 }
 
+.heatmap-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .heatmap-stats span {
   white-space: nowrap;
 }
