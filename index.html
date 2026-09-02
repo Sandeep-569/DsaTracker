@@ -169,98 +169,23 @@
         </div>
       </div>
 
-      <!-- Dashboard Row: Heatmap + Spaced Repetition Review Tracker -->
-      <div class="dashboard-split-row">
-        <!-- Solved Activity Heatmap -->
-        <div class="heatmap-wrapper" id="heatmap-wrapper">
-          <div class="heatmap-header">
-            <div class="heatmap-title">
-              <span id="heatmap-total-count">0</span> questions solved in the past one year
-              <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
-            </div>
-            <div class="heatmap-stats">
-              <div class="heatmap-stats-row">
-                <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
-                <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
-              </div>
-              <div class="heatmap-stats-row">
-                <span title="Number of questions solved in the past 7 days">Past 7 days: <strong id="heatmap-past-7-days">0</strong></span>
-              </div>
-              <div class="heatmap-stats-row">
-                <span title="Number of questions solved in the current calendar month">Current month: <strong id="heatmap-current-month">0</strong></span>
-              </div>
-            </div>
+      <!-- Solved Activity Heatmap -->
+      <div class="heatmap-wrapper" id="heatmap-wrapper">
+        <div class="heatmap-header">
+          <div class="heatmap-title">
+            <span id="heatmap-total-count">0</span> questions solved in the past one year
+            <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
           </div>
-          <div class="heatmap-scroll-container">
-            <div class="heatmap-months" id="heatmap-months"></div>
-            <div class="heatmap-grid" id="heatmap-grid"></div>
+          <div class="heatmap-stats">
+            <span>Total active days: <strong id="heatmap-active-days">0</strong></span>
+            <span>Max streak: <strong id="heatmap-max-streak">0</strong></span>
+            <span title="Number of questions solved in the past 7 days">Past 7 days: <strong id="heatmap-past-7-days">0</strong></span>
+            <span title="Number of questions solved in the current calendar month">Current month: <strong id="heatmap-current-month">0</strong></span>
           </div>
         </div>
-
-        <!-- DSA Spaced Repetition Review Tracker -->
-        <div class="review-tracker-wrapper" id="review-tracker-wrapper">
-          <div class="review-tracker-header">
-            <div class="review-tracker-title-group">
-              <div class="review-tracker-title">
-                <span class="review-flame-icon">🔥</span>
-                <span>DSA Review Tracker</span>
-              </div>
-              <p class="review-tracker-subtitle">Spaced cold-retries so patterns stick</p>
-            </div>
-            <button class="review-add-btn" id="review-toggle-form-btn" onclick="toggleReviewForm()" title="Add a problem to spaced review">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              <span>Add</span>
-            </button>
-          </div>
-
-          <!-- Add Problem Form: Single Question Number Input -->
-          <form class="review-form-card" id="review-form-card" style="display: none;" onsubmit="event.preventDefault(); addReviewProblem();">
-            <div class="review-input-row">
-              <input type="text" id="review-input-num" placeholder="Enter question number (e.g. 1, 42, 206)..." class="review-input" autocomplete="off" oninput="handleReviewNumInput()" />
-              <button type="submit" class="review-btn-submit">Add</button>
-              <button type="button" class="review-btn-cancel" onclick="toggleReviewForm(false)" title="Close">✕</button>
-            </div>
-            <div id="review-input-preview" class="review-input-preview" style="display: none;"></div>
-          </form>
-
-          <!-- Review Items Content Container -->
-          <div class="review-tracker-content">
-            <!-- Due Today Section -->
-            <div class="review-section" id="review-due-section">
-              <div class="review-section-header">
-                <div class="review-section-title">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                  <span>DUE FOR REVIEW</span>
-                  <span class="review-badge-count due" id="review-due-badge">0</span>
-                </div>
-              </div>
-              <div class="review-items-list" id="review-due-list"></div>
-            </div>
-
-            <!-- Upcoming Section -->
-            <div class="review-section upcoming" id="review-upcoming-section">
-              <div class="review-section-header">
-                <div class="review-section-title">
-                  <span>UPCOMING</span>
-                  <span class="review-badge-count upcoming" id="review-upcoming-badge">0</span>
-                </div>
-              </div>
-              <div class="review-items-list" id="review-upcoming-list"></div>
-            </div>
-          </div>
-
-          <!-- Schedule Footer Explainer -->
-          <div class="review-tracker-footer">
-            <span>Schedule: Day 3 → 7 → 14 → 30 → 60. Mark <strong>✓</strong> to advance or <strong>✗</strong> to reset.</span>
-          </div>
+        <div class="heatmap-scroll-container">
+          <div class="heatmap-months" id="heatmap-months"></div>
+          <div class="heatmap-grid" id="heatmap-grid"></div>
         </div>
       </div>
 

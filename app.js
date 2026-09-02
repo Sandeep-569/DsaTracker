@@ -10,7 +10,6 @@ let solvedProblems = new Set();
 let starredProblems = new Set();
 let solvedDates = new Map(); // title → ISO date string of when it was solved
 let bookmarkDates = new Map(); // title → ISO date string of when it was bookmarked
-let reviewProblems = []; // Array of { id, name, pattern, notes, solvedDate, stage, nextReview, history }
 let totalUniqueCount = 0;
 
 // True once Firestore has delivered authoritative data for this session.
@@ -375,11 +374,6 @@ function initData() {
           if (title && typeof title === 'string' && date) bookmarkDates.set(title.trim(), date);
         });
       }
-      // Load spaced repetition review problems
-      const savedReviews = JSON.parse(localStorage.getItem('leetcode_review_problems_v1') || '[]');
-      if (Array.isArray(savedReviews)) {
-        reviewProblems = savedReviews;
-      }
     } catch (e) {
       console.error("Error loading progress from localStorage:", e);
     }
@@ -387,7 +381,6 @@ function initData() {
 
   updateSolvedStats(true);
   updateStarredStats(true);
-  if (typeof renderReviewTracker === 'function') renderReviewTracker();
 }
 
 function updateSolvedStats(skipCloudSync = false) {
@@ -1367,14 +1360,12 @@ function generateBackupPayload() {
     exportedAt: new Date().toISOString(),
     stats: {
       solvedCount: solvedProblems.size,
-      starredCount: starredProblems.size,
-      reviewCount: reviewProblems.length
+      starredCount: starredProblems.size
     },
     solvedProblems: Array.from(solvedProblems),
     starredProblems: Array.from(starredProblems),
     solvedDates: solvedDatesObj,
-    bookmarkDates: bmDatesObj,
-    reviewProblems: reviewProblems
+    bookmarkDates: bmDatesObj
   };
 }
 
@@ -1441,8 +1432,6 @@ function parseImportJson(text) {
   let solvedList = [];
   let starredList = [];
   let solvedDatesObj = {};
-  let reviewList = [];
-
   // Format 1: Standard structured format { solvedProblems: [...], starredProblems: [...] }
   if (Array.isArray(parsed.solvedProblems)) {
     solvedList = parsed.solvedProblems;
@@ -1458,11 +1447,6 @@ function parseImportJson(text) {
     starredList = parsed.starred;
   } else if (Array.isArray(parsed.leetcode_starred_v1)) {
     starredList = parsed.leetcode_starred_v1;
-  }
-
-  // Extract review problems if present
-  if (Array.isArray(parsed.reviewProblems)) {
-    reviewList = parsed.reviewProblems;
   }
 
   // Extract solved dates if present (v1.1 backup format)
@@ -1485,16 +1469,16 @@ function parseImportJson(text) {
   solvedList = solvedList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
   starredList = starredList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
 
-  if (solvedList.length === 0 && starredList.length === 0 && reviewList.length === 0) {
-    throw new Error('No valid solved, bookmarked, or review questions found in this backup.');
+  if (solvedList.length === 0 && starredList.length === 0) {
+    throw new Error('No valid solved or bookmarked questions found in this backup.');
   }
 
-  return { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, reviewList };
+  return { solvedList, starredList, solvedDatesObj, bookmarkDatesObj };
 }
 
 function processImportJsonString(jsonString) {
   try {
-    const { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, reviewList } = parseImportJson(jsonString);
+    const { solvedList, starredList, solvedDatesObj, bookmarkDatesObj } = parseImportJson(jsonString);
 
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
 
@@ -1505,7 +1489,6 @@ function processImportJsonString(jsonString) {
       Object.entries(solvedDatesObj || {}).forEach(([t, d]) => solvedDates.set(t, d));
       bookmarkDates = new Map();
       Object.entries(bookmarkDatesObj || {}).forEach(([t, d]) => bookmarkDates.set(t, d));
-      if (Array.isArray(reviewList)) reviewProblems = reviewList;
     } else {
       // Merge mode: only set date if not already tracked
       solvedList.forEach(p => {
@@ -1520,22 +1503,11 @@ function processImportJsonString(jsonString) {
           bookmarkDates.set(p, bookmarkDatesObj[p]);
         }
       });
-      if (Array.isArray(reviewList)) {
-        const existingIds = new Set(reviewProblems.map(p => p.id));
-        reviewList.forEach(r => {
-          if (r && r.id && !existingIds.has(r.id)) {
-            reviewProblems.push(r);
-            existingIds.add(r.id);
-          }
-        });
-      }
     }
 
     // Persist to localStorage using existing storage keys & update UI
     updateSolvedStats();
     updateStarredStats();
-    saveReviewProblems();
-    if (typeof renderReviewTracker === 'function') renderReviewTracker();
 
     // Re-render currently active view
     if (document.getElementById('solved-view')?.classList.contains('active')) {
@@ -1759,14 +1731,11 @@ async function handleSignOut() {
     solvedProblems.clear();
     starredProblems.clear();
     bookmarkDates.clear();
-    reviewProblems = [];
     localStorage.removeItem('leetcode_solved_v1');
     localStorage.removeItem('leetcode_starred_v1');
     localStorage.removeItem('leetcode_bookmark_dates_v1');
-    localStorage.removeItem('leetcode_review_problems_v1');
     updateSolvedStats(true);
     updateStarredStats(true);
-    if (typeof renderReviewTracker === 'function') renderReviewTracker();
     closeAuthModal();
 
     document.body.classList.add('auth-locked');
@@ -1802,7 +1771,6 @@ async function triggerManualCloudSync() {
       Array.from(solvedProblems),
       Array.from(starredProblems),
       datesObj,
-      reviewProblems,
       bmDatesObj
     );
     if (success) {
@@ -1959,7 +1927,6 @@ async function handleAuthState(user) {
     initData();
     renderCompanies();
     if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
-    if (typeof renderReviewTracker === 'function') renderReviewTracker();
   } else {
     document.body.classList.add('auth-locked');
     if (loadingEl) loadingEl.style.display = 'none';
@@ -1992,7 +1959,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, reviewProblems: cloudReviews, bookmarkDates: cloudBmDates } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -2014,19 +1981,10 @@ window.addEventListener('cloud-data-received', (e) => {
     });
   }
 
-  // Restore review problems from cloud
-  if (Array.isArray(cloudReviews)) {
-    reviewProblems = cloudReviews;
-    try {
-      localStorage.setItem('leetcode_review_problems_v1', JSON.stringify(reviewProblems));
-    } catch {}
-  }
-
   // Update local storage and UI counters without triggering another cloud write
   updateSolvedStats(true);
   updateStarredStats(true);
   if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
-  if (typeof renderReviewTracker === 'function') renderReviewTracker();
 
   // Re-render active view to immediately reflect additions/removals
   if (document.getElementById('solved-view')?.classList.contains('active')) {
@@ -2049,7 +2007,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
 window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
-  if (solvedProblems.size > 0 || starredProblems.size > 0 || reviewProblems.length > 0) {
+  if (solvedProblems.size > 0 || starredProblems.size > 0) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
@@ -2059,7 +2017,6 @@ window.addEventListener('cloud-new-user-init', () => {
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        reviewProblems,
         bmDatesObj
       );
     }
@@ -2272,410 +2229,6 @@ function renderSolvedHeatmap() {
 // Expose globally so solvedQuestion.js can call it after date edits
 window.renderSolvedHeatmap = renderSolvedHeatmap;
 
-/* ── DSA Spaced Repetition Review Tracker ───────────────────────────────── */
-const REVIEW_INTERVALS = [3, 7, 14, 30, 60]; // Days between successive review stages
 
-function getReviewDaysFromNow(n) {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().split("T")[0];
-}
-
-function getReviewTodayStr() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function getReviewDaysBetween(a, b) {
-  const d1 = new Date(a);
-  const d2 = new Date(b);
-  return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-}
-
-function saveReviewProblems() {
-  try {
-    localStorage.setItem('leetcode_review_problems_v1', JSON.stringify(reviewProblems));
-  } catch (e) {
-    console.error("Error saving review problems to localStorage:", e);
-  }
-  syncToCloudDebounced();
-}
-
-/**
- * Look up a LeetCode problem by its question number (e.g. 1, 42, #206) or title
- */
-function lookupProblemByNumberOrTitle(query) {
-  if (!query) return null;
-  const trimmed = String(query).trim();
-  if (!trimmed) return null;
-
-  const numQuery = parseLeetCodeNumberQuery(trimmed);
-
-  // Search 1: Search in loaded companyList
-  if (typeof companyList !== 'undefined' && Array.isArray(companyList)) {
-    for (const comp of companyList) {
-      if (!comp.problems) continue;
-      for (const p of comp.problems) {
-        if (numQuery !== null && p.lcNum === numQuery) {
-          const tags = (p.tags && p.tags.length > 0 && p.tags[0] !== 'General DSA')
-            ? p.tags
-            : getTopicsForProblem(p);
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || '',
-            lcNum: p.lcNum,
-            pattern: tags[0] || 'General DSA'
-          };
-        }
-        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
-          const tags = (p.tags && p.tags.length > 0 && p.tags[0] !== 'General DSA')
-            ? p.tags
-            : getTopicsForProblem(p);
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || '',
-            lcNum: p.lcNum || getLeetCodeNumber(p.url),
-            pattern: tags[0] || 'General DSA'
-          };
-        }
-      }
-    }
-  }
-
-  // Search 2: Search in global LEETCODE_DATA
-  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : null);
-  if (dataObj) {
-    for (const rawProblems of Object.values(dataObj)) {
-      if (!Array.isArray(rawProblems)) continue;
-      for (const p of rawProblems) {
-        const pNum = getLeetCodeNumber(p.url);
-        if (numQuery !== null && pNum === numQuery) {
-          const tags = getTopicsForProblem(p);
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || '',
-            lcNum: pNum,
-            pattern: tags[0] || 'General DSA'
-          };
-        }
-        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
-          const tags = getTopicsForProblem(p);
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || '',
-            lcNum: pNum,
-            pattern: tags[0] || 'General DSA'
-          };
-        }
-      }
-    }
-  }
-
-  // Search 3: Search in LEETCODE_NUM_MAP (slug mapping)
-  if (numQuery !== null && typeof LEETCODE_NUM_MAP !== 'undefined') {
-    for (const [slug, num] of Object.entries(LEETCODE_NUM_MAP)) {
-      if (num === numQuery) {
-        const formattedTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        const dummyProb = { title: formattedTitle, url: `https://leetcode.com/problems/${slug}` };
-        const tags = getTopicsForProblem(dummyProb);
-        return {
-          title: formattedTitle,
-          url: `https://leetcode.com/problems/${slug}`,
-          diff: '',
-          lcNum: num,
-          pattern: tags[0] || 'General DSA'
-        };
-      }
-    }
-  }
-
-  // Fallback: If a number was entered, create a generic problem entry
-  if (numQuery !== null) {
-    return {
-      title: `Problem #${numQuery}`,
-      url: `https://leetcode.com/problemset/all/?search=${numQuery}`,
-      diff: '',
-      lcNum: numQuery,
-      pattern: 'General DSA'
-    };
-  }
-
-  // If a text string was entered, use it as problem title
-  return {
-    title: trimmed,
-    url: '',
-    diff: '',
-    lcNum: null,
-    pattern: 'General DSA'
-  };
-}
-
-function handleReviewNumInput() {
-  const numInput = document.getElementById('review-input-num');
-  const preview = document.getElementById('review-input-preview');
-  if (!numInput || !preview) return;
-
-  const val = (numInput.value || '').trim();
-  if (!val) {
-    preview.style.display = 'none';
-    preview.innerHTML = '';
-    return;
-  }
-
-  const found = lookupProblemByNumberOrTitle(val);
-  if (found && found.title) {
-    const numStr = found.lcNum ? `#${found.lcNum} ` : '';
-    const diffBadge = found.diff ? `<span class="diff-tag ${found.diff.toLowerCase()}" style="font-size: 9px; padding: 1px 5px; border-radius: 3px;">${found.diff}</span>` : '';
-    preview.style.display = 'flex';
-    preview.innerHTML = `<span>✓</span> <strong>${numStr}${escapeHtml(found.title)}</strong> <span class="review-pattern-pill">${escapeHtml(found.pattern)}</span> ${diffBadge}`;
-  } else {
-    preview.style.display = 'none';
-    preview.innerHTML = '';
-  }
-}
-
-function toggleReviewForm(force) {
-  const form = document.getElementById('review-form-card');
-  const btn = document.getElementById('review-toggle-form-btn');
-  if (!form) return;
-  
-  const show = typeof force === 'boolean' ? force : (form.style.display === 'none' || !form.style.display);
-  form.style.display = show ? 'block' : 'none';
-  if (btn) {
-    btn.innerHTML = show
-      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg><span>Close</span>`
-      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Add</span>`;
-  }
-  
-  if (show) {
-    const numInput = document.getElementById('review-input-num');
-    const preview = document.getElementById('review-input-preview');
-    if (preview) {
-      preview.style.display = 'none';
-      preview.innerHTML = '';
-    }
-    if (numInput) {
-      numInput.value = '';
-      setTimeout(() => numInput.focus(), 50);
-    }
-  }
-}
-
-function addReviewProblem() {
-  const numInput = document.getElementById('review-input-num');
-  if (!numInput) return;
-
-  const rawVal = (numInput.value || '').trim();
-  if (!rawVal) {
-    showToast('⚠️ Please enter a question number.', 'warning');
-    numInput.focus();
-    return;
-  }
-
-  const problem = lookupProblemByNumberOrTitle(rawVal);
-  if (!problem) {
-    showToast('⚠️ Problem not found. Please enter a valid question number.', 'warning');
-    return;
-  }
-
-  // Check if problem already exists in review schedule
-  const exists = reviewProblems.some(p => 
-    p.name.toLowerCase() === problem.title.toLowerCase() || 
-    (problem.lcNum && p.lcNum === problem.lcNum)
-  );
-
-  if (exists) {
-    showToast(`ℹ️ "${problem.title}" is already in your review schedule.`, 'info');
-    numInput.value = '';
-    const preview = document.getElementById('review-input-preview');
-    if (preview) preview.style.display = 'none';
-    toggleReviewForm(false);
-    return;
-  }
-
-  const p = {
-    id: Date.now().toString(),
-    name: problem.title,
-    lcNum: problem.lcNum,
-    url: problem.url || '',
-    pattern: problem.pattern || 'General DSA',
-    notes: '',
-    solvedDate: getReviewTodayStr(),
-    stage: 0,
-    nextReview: getReviewDaysFromNow(REVIEW_INTERVALS[0]),
-    history: []
-  };
-
-  reviewProblems = [p, ...reviewProblems];
-  saveReviewProblems();
-  renderReviewTracker();
-
-  numInput.value = '';
-  const preview = document.getElementById('review-input-preview');
-  if (preview) preview.style.display = 'none';
-  toggleReviewForm(false);
-  
-  const numLabel = problem.lcNum ? `#${problem.lcNum} ` : '';
-  showToast(`🔥 Added ${numLabel}"${problem.title}" (${problem.pattern}) to Spaced Review! First review in 3 days.`, 'success');
-}
-
-function markReviewResult(id, passed) {
-  const today = getReviewTodayStr();
-  const p = reviewProblems.find(item => item.id === String(id));
-  if (!p) return;
-
-  if (!Array.isArray(p.history)) p.history = [];
-  p.history.push({ date: today, passed: !!passed });
-
-  if (passed) {
-    const nextStage = Math.min((p.stage || 0) + 1, REVIEW_INTERVALS.length - 1);
-    p.stage = nextStage;
-    p.nextReview = getReviewDaysFromNow(REVIEW_INTERVALS[nextStage]);
-    saveReviewProblems();
-    renderReviewTracker();
-    showToast(`✅ Solved cold! Advanced "${p.name}" to Stage ${nextStage + 1} (Next review in ${REVIEW_INTERVALS[nextStage]} days).`, 'success');
-  } else {
-    p.stage = 0;
-    p.nextReview = getReviewDaysFromNow(REVIEW_INTERVALS[0]);
-    saveReviewProblems();
-    renderReviewTracker();
-    showToast(`🔄 Reset "${p.name}" to Stage 1. Cold retry scheduled in 3 days.`, 'info');
-  }
-}
-
-function removeReviewProblem(id) {
-  const p = reviewProblems.find(item => item.id === String(id));
-  const pName = p ? p.name : 'Problem';
-  reviewProblems = reviewProblems.filter(item => item.id !== String(id));
-  saveReviewProblems();
-  renderReviewTracker();
-  showToast(`🗑️ Removed "${pName}" from review schedule.`, 'info');
-}
-
-function renderReviewTracker() {
-  const dueListEl = document.getElementById('review-due-list');
-  const upcomingListEl = document.getElementById('review-upcoming-list');
-  const dueBadge = document.getElementById('review-due-badge');
-  const upcomingBadge = document.getElementById('review-upcoming-badge');
-  if (!dueListEl || !upcomingListEl) return;
-
-  const today = getReviewTodayStr();
-  const dueToday = reviewProblems
-    .filter(p => (p.nextReview || '') <= today)
-    .sort((a, b) => (a.nextReview || '').localeCompare(b.nextReview || ''));
-
-  const upcoming = reviewProblems
-    .filter(p => (p.nextReview || '') > today)
-    .sort((a, b) => (a.nextReview || '').localeCompare(b.nextReview || ''));
-
-  if (dueBadge) {
-    dueBadge.textContent = dueToday.length;
-    if (dueToday.length > 0) {
-      dueBadge.style.boxShadow = '0 0 8px rgba(255, 161, 22, 0.4)';
-    } else {
-      dueBadge.style.boxShadow = 'none';
-    }
-  }
-  if (upcomingBadge) {
-    upcomingBadge.textContent = upcoming.length;
-  }
-
-  // Render Due Today
-  if (dueToday.length === 0) {
-    dueListEl.innerHTML = `<div class="review-empty-state">✨ Nothing due for review today. Add a problem above to start spaced retries!</div>`;
-  } else {
-    dueListEl.innerHTML = dueToday.map(p => {
-      const diff = getReviewDaysBetween(today, p.nextReview);
-      const dueLabel = diff < 0 ? `Overdue by ${Math.abs(diff)}d` : 'Due today';
-      const stageNum = (p.stage || 0) + 1;
-      const notesHtml = p.notes ? `<div class="review-item-notes" title="${escapeHtml(p.notes)}">💡 ${escapeHtml(p.notes)}</div>` : '';
-      const patternHtml = p.pattern ? `<span class="review-pattern-pill">${escapeHtml(p.pattern)}</span>` : '';
-      const lcNumBadge = p.lcNum ? `<span class="review-num-pill">#${p.lcNum}</span>` : '';
-      const nameHtml = p.url
-        ? `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer" class="review-item-name" title="${escapeHtml(p.name)} (Open on LeetCode)">${lcNumBadge}${escapeHtml(p.name)}</a>`
-        : `<span class="review-item-name" title="${escapeHtml(p.name)}">${lcNumBadge}${escapeHtml(p.name)}</span>`;
-
-      return `
-        <div class="review-item-card is-due" id="review-card-${escapeHtml(p.id)}">
-          <div class="review-item-info">
-            ${nameHtml}
-            <div class="review-item-meta">
-              ${patternHtml}
-              <span class="review-stage-pill">Stage ${stageNum}/5</span>
-              <span class="review-due-status">${dueLabel}</span>
-            </div>
-            ${notesHtml}
-          </div>
-          <div class="review-actions">
-            <button class="review-action-btn pass" onclick="markReviewResult('${escapeHtml(p.id)}', true)" title="Solved cold (Advance stage)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </button>
-            <button class="review-action-btn fail" onclick="markReviewResult('${escapeHtml(p.id)}', false)" title="Couldn't solve cold (Reset to Day 3)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-            <button class="review-action-btn del" onclick="removeReviewProblem('${escapeHtml(p.id)}')" title="Remove from reviews">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // Render Upcoming
-  if (upcoming.length === 0) {
-    upcomingListEl.innerHTML = `<div class="review-empty-state">No upcoming reviews scheduled.</div>`;
-  } else {
-    upcomingListEl.innerHTML = upcoming.map(p => {
-      const days = getReviewDaysBetween(today, p.nextReview);
-      const stageNum = (p.stage || 0) + 1;
-      const patternHtml = p.pattern ? `<span class="review-pattern-pill">${escapeHtml(p.pattern)}</span>` : '';
-      const lcNumBadge = p.lcNum ? `<span class="review-num-pill">#${p.lcNum}</span>` : '';
-      const nameHtml = p.url
-        ? `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener noreferrer" class="review-item-name" title="${escapeHtml(p.name)} (Open on LeetCode)">${lcNumBadge}${escapeHtml(p.name)}</a>`
-        : `<span class="review-item-name" title="${escapeHtml(p.name)}">${lcNumBadge}${escapeHtml(p.name)}</span>`;
-
-      return `
-        <div class="review-item-card" id="review-card-${escapeHtml(p.id)}">
-          <div class="review-item-info">
-            ${nameHtml}
-            <div class="review-item-meta">
-              ${patternHtml}
-              <span class="review-stage-pill">Stage ${stageNum}/5</span>
-              <span>Next in ${days}d (${escapeHtml(p.nextReview)})</span>
-            </div>
-          </div>
-          <div class="review-actions">
-            <button class="review-action-btn del" onclick="removeReviewProblem('${escapeHtml(p.id)}')" title="Remove from reviews">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-}
-
-// Expose review tracker functions globally
-window.toggleReviewForm = toggleReviewForm;
-window.handleReviewNumInput = handleReviewNumInput;
-window.addReviewProblem = addReviewProblem;
-window.markReviewResult = markReviewResult;
-window.removeReviewProblem = removeReviewProblem;
-window.renderReviewTracker = renderReviewTracker;
 
 
