@@ -637,7 +637,7 @@
       </div>
     </div>
 
-    <!-- 6. RECALL VIEW: Blank Page with Navbar -->
+    <!-- 6. RECALL VIEW: Spaced Revision Sheet -->
     <div id="recall-view">
       <header class="app-header recall-header">
         <div class="brand-bar">
@@ -650,7 +650,8 @@
               </svg>
             </div>
             <div>
-              <h1 style="font-size: 18px; margin: 0;">Recall</h1>
+              <h1 style="font-size: 18px; margin: 0;">Spaced Revision Sheet</h1>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin: 2px 0 0;">Track cold-retries & schedule future solving dates</p>
             </div>
           </div>
         </div>
@@ -665,8 +666,35 @@
         </div>
       </header>
 
-      <div class="recall-blank-content">
-        <!-- Blank page content area -->
+      <!-- Add Question Bar -->
+      <div class="recall-add-bar">
+        <div class="recall-input-wrapper">
+          <input type="text" id="recall-input-num" class="recall-input" placeholder="Enter LeetCode question # or title (e.g. 1, 42, 206, Two Sum)..." oninput="handleRecallInputPreview()" onkeydown="if(event.key==='Enter') addRecallQuestion()" />
+          <button class="recall-add-btn" onclick="addRecallQuestion()">+ Add Question</button>
+        </div>
+        <div id="recall-input-preview" class="recall-input-preview" style="display:none;"></div>
+      </div>
+
+      <!-- Revision Sheet Table Card -->
+      <div class="table-card recall-table-card">
+        <table class="recall-table">
+          <thead>
+            <tr>
+              <th>LeetCode Question</th>
+              <th style="width: 110px; text-align: center;">Difficulty</th>
+              <th style="width: 85px; text-align: center;">3 Days</th>
+              <th style="width: 85px; text-align: center;">7 Days</th>
+              <th style="width: 85px; text-align: center;">14 Days</th>
+              <th style="width: 85px; text-align: center;">30 Days</th>
+              <th style="width: 85px; text-align: center;">60 Days</th>
+              <th style="width: 140px; text-align: center;">Next Solving Date</th>
+              <th style="width: 70px; text-align: center;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="recall-table-body">
+            <!-- Dynamically rendered -->
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
