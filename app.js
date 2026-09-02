@@ -2329,26 +2329,31 @@ function lookupProblemByNumberOrTitle(query) {
     }
   }
 
-  // Search 2: Search in global LEETCODE_DATA
-  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : null);
+  // Search 2: Search in global LEETCODE_DATA / RAW_DATA
+  const dataObj = window.LEETCODE_DATA || window.RAW_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : (typeof RAW_DATA !== 'undefined' ? RAW_DATA : null));
   if (dataObj) {
     for (const rawProblems of Object.values(dataObj)) {
       if (!Array.isArray(rawProblems)) continue;
       for (const p of rawProblems) {
-        const pNum = getLeetCodeNumber(p.url);
+        const title = Array.isArray(p) ? p[0] : p?.title;
+        const diff = Array.isArray(p) ? p[1] : (p?.diff || 'Medium');
+        const url = Array.isArray(p) ? p[2] : (p?.url || '');
+        if (!title) continue;
+
+        const pNum = getLeetCodeNumber(url);
         if (numQuery !== null && pNum === numQuery) {
           return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || 'Medium',
+            title,
+            url,
+            diff,
             lcNum: pNum
           };
         }
-        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
+        if (title.toLowerCase() === trimmed.toLowerCase()) {
           return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || 'Medium',
+            title,
+            url,
+            diff,
             lcNum: pNum
           };
         }
