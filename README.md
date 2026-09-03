@@ -1,8 +1,8 @@
-# 🚀 DSA Tracker — Company-Tagged DSA & Spaced Repetition Platform
+# 🚀 DSA Tracker — Company-Tagged DSA Platform
 
 > 🌐 **Live Website**: [**https://dsatracker-6e8d0.web.app**](https://dsatracker-6e8d0.web.app)
 
-A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, a spaced repetition review engine for long-term retention, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions.
+A modern, high-performance web platform designed to streamline Data Structures & Algorithms interview preparation. Features thousands of curated company-tagged LeetCode problems, an interactive 53-week submission heatmap, Google Cloud Firestore real-time sync, and automated LeetCode submission syncing via GitHub Actions.
 
 [![Live App](https://img.shields.io/badge/Live_App-Firebase_Hosting-orange?style=flat-square&logo=firebase)](https://dsatracker-6e8d0.web.app)
 [![Database](https://img.shields.io/badge/Database-Cloud_Firestore-blue?style=flat-square&logo=firebase)](https://firebase.google.com/)
@@ -27,20 +27,7 @@ A modern, high-performance web platform designed to streamline Data Structures &
 
 ---
 
-### 2. 🧠 Spaced Repetition Review Engine (Cold Retries)
-Never forget core algorithm patterns or tricky edge cases.
-- **Optimal Review Intervals**: Questions follow progressive spaced review stages:
-  $$\text{Day 3} \longrightarrow \text{Day 7} \longrightarrow \text{Day 14} \longrightarrow \text{Day 30} \longrightarrow \text{Day 60 (Mastered)}$$
-- **Quick Single-Input Question Add**: Simply type the LeetCode question number (e.g. `42` or `206`). The app automatically resolves the title, URL, pattern, and difficulty level with live autocomplete.
-- **Cold Retry Validation**:
-  - **✓ Solved Cold**: Advances problem to the next interval stage and logs attempt history.
-  - **✗ Failed Cold**: Resets the problem back to Stage 1 (3-day retry) to reinforce weak spots.
-  - **🗑️ Delete**: Removes questions from active review schedule.
-- **Due Today vs. Upcoming Queues**: Real-time queues highlighting urgent reviews with orange glowing badges and overdue day counters.
-
----
-
-### 3. 📊 Activity Heatmap & Productivity Analytics
+### 2. 📊 Activity Heatmap & Productivity Analytics
 - **53-Week Interactive Heatmap**: LeetCode/GitHub-style green contribution grid with 4 intensity levels based on daily solved volume.
 - **Streak & Consistency Metrics**:
   - **Total Active Days**: Total unique calendar days with at least one problem solved.
@@ -51,15 +38,15 @@ Never forget core algorithm patterns or tricky edge cases.
 
 ---
 
-### 4. ☁️ Real-Time Cloud Sync & Security Gate
+### 3. ☁️ Real-Time Cloud Sync & Security Gate
 - **Google Firebase Authentication**: Multi-device login with authorized whitelist protection preventing unauthorized external access.
 - **Cloud Firestore Real-Time DB**: Instant two-way synchronization (`onSnapshot`) across all desktop and mobile devices.
-- **Optimistic Local Caching**: Instant rendering on startup from `localStorage` (`leetcode_solved_v1`, `leetcode_starred_v1`, `leetcode_review_problems_v1`) before network resolution.
+- **Optimistic Local Caching**: Instant rendering on startup from `localStorage` (`leetcode_solved_v1`, `leetcode_starred_v1`) before network resolution.
 - **JSON Data Backup & Restore**: Full data ownership with single-click JSON export and import.
 
 ---
 
-### 5. 🤖 Automated LeetCode Profile Auto-Sync
+### 4. 🤖 Automated LeetCode Profile Auto-Sync
 - **GitHub Actions Cron Workflow (`.github/workflows/leetcode-autosync.yml`)**: Periodic scheduled runner queries the LeetCode GraphQL API for recent submissions.
 - **Direct Firestore Sync**: Matches incoming LeetCode submissions against the question database and automatically marks them solved in Firestore with UTC timestamps.
 
@@ -99,7 +86,7 @@ DsaTracker/
 │   ├── sync-leetcode-cron.js             # Node.js script querying LeetCode GraphQL & Firestore
 │   ├── local-server.js                   # Local development server
 │   └── process_full_dataset.js           # Dataset processor
-├── app.js                                # Core application controller, state, & review engine
+├── app.js                                # Core application controller & state
 ├── data.js                               # Offline LeetCode dataset with company frequency tags
 ├── firebase-service.js                   # Firebase SDK initialization, Auth, & Firestore listeners
 ├── index.html                            # Semantic single-page application structure

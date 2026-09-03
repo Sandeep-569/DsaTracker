@@ -138,7 +138,7 @@
   }
 
   // Firestore: Save Progress to Cloud
-  async function saveProgressToCloud(solvedArray, starredArray, datesObj, bookmarkDatesObj, recallArray) {
+  async function saveProgressToCloud(solvedArray, starredArray, datesObj, bookmarkDatesObj) {
     if (!db || !currentUser) {
       console.warn("[FirebaseService] Cannot sync: user not signed in or db not initialized.", { db: !!db, currentUser: !!currentUser });
       return false;
@@ -160,19 +160,6 @@
       }
       if (bookmarkDatesObj && typeof bookmarkDatesObj === 'object') {
         payload.bookmarkDates = bookmarkDatesObj;
-      }
-      if (Array.isArray(recallArray)) {
-        payload.recallItems = recallArray.map(item => ({
-          id: item.id || Date.now(),
-          title: item.title || '',
-          url: item.url || '',
-          diff: item.diff || 'Medium',
-          lcNum: item.lcNum != null ? item.lcNum : null,
-          stagesCompleted: Array.isArray(item.stagesCompleted) ? item.stagesCompleted : [false, false, false, false, false],
-          addedDate: item.addedDate || new Date().toISOString().split('T')[0],
-          lastCheckedDate: item.lastCheckedDate || null,
-          nextSolveDate: item.nextSolveDate || null
-        }));
       }
 
       // Sanitize payload to strip any accidental undefined values that crash Firestore
@@ -216,7 +203,6 @@
             starredProblems: data.starredProblems || [],
             solvedDates: data.solvedDates || {},
             bookmarkDates: data.bookmarkDates || {},
-            recallItems: data.recallItems || [],
             updatedAt: data.updatedAt
           } 
         }));

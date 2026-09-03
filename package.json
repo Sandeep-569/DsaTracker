@@ -1,7 +1,7 @@
 {
   "name": "dsatracker",
   "version": "1.0.0",
-  "description": "DSA Tracker — LeetCode company-tagged problem tracker & spaced repetition platform. Live at https://dsatracker-6e8d0.web.app",
+  "description": "DSA Tracker — LeetCode company-tagged problem tracker. Live at https://dsatracker-6e8d0.web.app",
   "homepage": "https://dsatracker-6e8d0.web.app",
   "private": true,
   "scripts": {

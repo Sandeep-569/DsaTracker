@@ -374,7 +374,8 @@ function initData() {
           if (title && typeof title === 'string' && date) bookmarkDates.set(title.trim(), date);
         });
       }
-      loadRecallItems();
+      // Clean up legacy recall items if present
+      try { localStorage.removeItem('leetcode_recall_items_v1'); } catch (err) {}
     } catch (e) {
       console.error("Error loading progress from localStorage:", e);
     }
@@ -1225,25 +1226,12 @@ function goBackToCompanyTopics() {
   renderCompanyTopics();
 }
 
-function openRecallView() {
-  document.getElementById('main-header')?.classList.add('hidden');
-  document.getElementById('home-view')?.classList.add('hidden');
-  document.getElementById('company-topics-view')?.classList.remove('active');
-  document.getElementById('topic-problems-view')?.classList.remove('active');
-  document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('bookmarks-view')?.classList.remove('active');
-  document.getElementById('recall-view')?.classList.add('active');
-  if (typeof renderRecallTable === 'function') renderRecallTable();
-  window.scrollTo(0, 0);
-}
-
 function goHome() {
   document.getElementById('main-header')?.classList.remove('hidden');
   document.getElementById('company-topics-view')?.classList.remove('active');
   document.getElementById('topic-problems-view')?.classList.remove('active');
   document.getElementById('bookmarks-view')?.classList.remove('active');
   document.getElementById('solved-view')?.classList.remove('active');
-  document.getElementById('recall-view')?.classList.remove('active');
   document.getElementById('home-view')?.classList.remove('hidden');
   currentCompanyObj = null;
   currentTopicName = null;
@@ -1694,8 +1682,7 @@ function syncToCloudDebounced() {
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        bmDatesObj,
-        typeof recallItems !== 'undefined' ? recallItems : []
+        bmDatesObj
       );
     }
   }, 400);
@@ -1786,8 +1773,7 @@ async function triggerManualCloudSync() {
       Array.from(solvedProblems),
       Array.from(starredProblems),
       datesObj,
-      bmDatesObj,
-      typeof recallItems !== 'undefined' ? recallItems : []
+      bmDatesObj
     );
     if (success) {
       showToast("☁️ Progress successfully synced to Cloud Firestore!", "success");
@@ -1975,7 +1961,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates, recallItems: cloudRecall } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -1995,14 +1981,6 @@ window.addEventListener('cloud-data-received', (e) => {
     Object.entries(cloudBmDates).forEach(([title, date]) => {
       if (title && date) bookmarkDates.set(title.trim(), date);
     });
-  }
-  // Restore recall items from cloud
-  if (Array.isArray(cloudRecall)) {
-    recallItems = cloudRecall;
-    try {
-      localStorage.setItem('leetcode_recall_items_v1', JSON.stringify(recallItems));
-    } catch(err){}
-    if (typeof renderRecallTable === 'function') renderRecallTable();
   }
 
   // Update local storage and UI counters without triggering another cloud write
@@ -2031,7 +2009,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
 window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
-  if (solvedProblems.size > 0 || starredProblems.size > 0 || (typeof recallItems !== 'undefined' && recallItems.length > 0)) {
+  if (solvedProblems.size > 0 || starredProblems.size > 0) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
@@ -2041,8 +2019,7 @@ window.addEventListener('cloud-new-user-init', () => {
         Array.from(solvedProblems),
         Array.from(starredProblems),
         datesObj,
-        bmDatesObj,
-        typeof recallItems !== 'undefined' ? recallItems : []
+        bmDatesObj
       );
     }
   }
@@ -2254,368 +2231,8 @@ function renderSolvedHeatmap() {
   grid.appendChild(gridFrag);
 }
 
-
-/* ── Spaced Revision Sheet Logic ────────────────────────────────────────── */
-let recallItems = [];
-
-function loadRecallItems() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('leetcode_recall_items_v1') || '[]');
-    if (Array.isArray(saved)) recallItems = saved;
-  } catch (e) {
-    console.error("Error loading recall items from localStorage:", e);
-  }
-}
-
-function saveRecallItems() {
-  try {
-    localStorage.setItem('leetcode_recall_items_v1', JSON.stringify(recallItems));
-    if (typeof syncToCloudDebounced === 'function') syncToCloudDebounced();
-  } catch (e) {
-    console.error("Error saving recall items to localStorage:", e);
-  }
-}
-
-function getTodayISOString() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function addDaysToISOString(baseIso, days) {
-  const d = baseIso ? new Date(baseIso + 'T00:00:00Z') : new Date();
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
-function formatDisplayDate(dateStr) {
-  if (!dateStr) return '—';
-  if (dateStr === 'Completed') return 'Completed 🎉';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const mIdx = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
-  return `${monthNames[mIdx]} ${day}, ${parts[0]}`;
-}
-
-function lookupProblemByNumberOrTitle(query) {
-  if (!query) return null;
-  const trimmed = String(query).trim();
-  if (!trimmed) return null;
-
-  const numQuery = parseLeetCodeNumberQuery(trimmed);
-
-  // Search 1: Search in loaded companyList
-  if (typeof companyList !== 'undefined' && Array.isArray(companyList)) {
-    for (const comp of companyList) {
-      if (!comp.problems) continue;
-      for (const p of comp.problems) {
-        if (numQuery !== null && p.lcNum === numQuery) {
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || 'Medium',
-            lcNum: p.lcNum
-          };
-        }
-        if (p.title.toLowerCase() === trimmed.toLowerCase()) {
-          return {
-            title: p.title,
-            url: p.url || '',
-            diff: p.diff || 'Medium',
-            lcNum: p.lcNum || getLeetCodeNumber(p.url)
-          };
-        }
-      }
-    }
-  }
-
-  // Search 2: Search in global LEETCODE_DATA / RAW_DATA
-  const dataObj = window.LEETCODE_DATA || window.RAW_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : (typeof RAW_DATA !== 'undefined' ? RAW_DATA : null));
-  if (dataObj) {
-    for (const rawProblems of Object.values(dataObj)) {
-      if (!Array.isArray(rawProblems)) continue;
-      for (const p of rawProblems) {
-        const title = Array.isArray(p) ? p[0] : p?.title;
-        const diff = Array.isArray(p) ? p[1] : (p?.diff || 'Medium');
-        const url = Array.isArray(p) ? p[2] : (p?.url || '');
-        if (!title) continue;
-
-        const pNum = getLeetCodeNumber(url);
-        if (numQuery !== null && pNum === numQuery) {
-          return {
-            title,
-            url,
-            diff,
-            lcNum: pNum
-          };
-        }
-        if (title.toLowerCase() === trimmed.toLowerCase()) {
-          return {
-            title,
-            url,
-            diff,
-            lcNum: pNum
-          };
-        }
-      }
-    }
-  }
-
-  // Search 3: Search in LEETCODE_NUM_MAP
-  if (numQuery !== null && typeof LEETCODE_NUM_MAP !== 'undefined') {
-    for (const [slug, num] of Object.entries(LEETCODE_NUM_MAP)) {
-      if (num === numQuery) {
-        const formattedTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        return {
-          title: formattedTitle,
-          url: `https://leetcode.com/problems/${slug}`,
-          diff: 'Medium',
-          lcNum: num
-        };
-      }
-    }
-  }
-
-  // Fallback: If number entered
-  if (numQuery !== null) {
-    return {
-      title: `Problem #${numQuery}`,
-      url: `https://leetcode.com/problemset/all/?search=${numQuery}`,
-      diff: 'Medium',
-      lcNum: numQuery
-    };
-  }
-
-  return {
-    title: trimmed,
-    url: '',
-    diff: 'Medium',
-    lcNum: null
-  };
-}
-
-function handleRecallInputPreview() {
-  const inputEl = document.getElementById('recall-input-num');
-  const previewEl = document.getElementById('recall-input-preview');
-  if (!inputEl || !previewEl) return;
-
-  const val = (inputEl.value || '').trim();
-  if (!val) {
-    previewEl.style.display = 'none';
-    previewEl.innerHTML = '';
-    return;
-  }
-
-  const found = lookupProblemByNumberOrTitle(val);
-  if (found && found.title) {
-    const hasNumPrefix = found.lcNum && found.title.trim().startsWith(String(found.lcNum));
-    const numBadge = found.lcNum && !hasNumPrefix ? `${found.lcNum}. ` : '';
-    const diffBadge = `<span class="diff-tag ${found.diff.toLowerCase()}" style="font-size: 10px; padding: 1px 6px;">${found.diff}</span>`;
-    previewEl.style.display = 'flex';
-    previewEl.innerHTML = `<span>✓ Found:</span> <strong>${numBadge}${escapeHtml(found.title)}</strong> ${diffBadge}`;
-  } else {
-    previewEl.style.display = 'none';
-    previewEl.innerHTML = '';
-  }
-}
-
-function addRecallQuestion() {
-  const inputEl = document.getElementById('recall-input-num');
-  const previewEl = document.getElementById('recall-input-preview');
-  if (!inputEl) return;
-
-  const val = (inputEl.value || '').trim();
-  if (!val) {
-    showToast('⚠️ Please enter a LeetCode question number or title.', 'warning');
-    inputEl.focus();
-    return;
-  }
-
-  const prob = lookupProblemByNumberOrTitle(val);
-  if (!prob) {
-    showToast('⚠️ Question not found. Please try another question #.', 'warning');
-    return;
-  }
-
-  // Check if question already exists in revision sheet
-  const exists = recallItems.some(item => 
-    item.title.toLowerCase() === prob.title.toLowerCase() ||
-    (prob.lcNum && item.lcNum === prob.lcNum)
-  );
-
-  if (exists) {
-    showToast(`ℹ️ "${prob.title}" is already in your revision sheet.`, 'info');
-    inputEl.value = '';
-    if (previewEl) previewEl.style.display = 'none';
-    return;
-  }
-
-  const todayIso = getTodayISOString();
-  const newItem = {
-    id: Date.now().toString(),
-    title: prob.title,
-    url: prob.url || '',
-    diff: prob.diff || 'Medium',
-    lcNum: prob.lcNum || null,
-    stagesCompleted: [false, false, false, false, false], // [3d, 7d, 14d, 30d, 60d]
-    addedDate: todayIso,
-    lastCheckedDate: null,
-    nextSolveDate: addDaysToISOString(todayIso, 3) // Initial due date: Today + 3 days
-  };
-
-  recallItems = [newItem, ...recallItems];
-  saveRecallItems();
-  renderRecallTable();
-
-  inputEl.value = '';
-  if (previewEl) previewEl.style.display = 'none';
-
-  const hasNumPrefix = prob.lcNum && prob.title.trim().startsWith(String(prob.lcNum));
-  const numLabel = prob.lcNum && !hasNumPrefix ? `${prob.lcNum}. ` : '';
-  showToast(`✅ Added ${numLabel}"${prob.title}" to Revision Sheet! Next solve scheduled in 3 days.`, 'success');
-}
-
-function toggleRecallStage(id, stageIdx) {
-  const item = recallItems.find(x => String(x.id) === String(id));
-  if (!item) return;
-
-  if (!Array.isArray(item.stagesCompleted)) {
-    item.stagesCompleted = [false, false, false, false, false];
-  }
-
-  const isCurrentlyChecked = item.stagesCompleted[stageIdx];
-  const todayIso = getTodayISOString();
-
-  const intervals = [3, 7, 14, 30, 60];
-  const nextIntervals = [7, 14, 30, 60, null];
-
-  if (!isCurrentlyChecked) {
-    // Checking this stage: mark this and all previous stages as completed
-    for (let i = 0; i <= stageIdx; i++) {
-      item.stagesCompleted[i] = true;
-    }
-    item.lastCheckedDate = todayIso;
-    const nextDays = nextIntervals[stageIdx];
-    if (nextDays !== null) {
-      item.nextSolveDate = addDaysToISOString(todayIso, nextDays);
-    } else {
-      item.nextSolveDate = 'Completed';
-    }
-    showToast(`✅ Marked ${intervals[stageIdx]}-day retry completed! Next solve date updated.`, 'success');
-  } else {
-    // Unchecking this stage: uncheck this and all subsequent stages
-    for (let i = stageIdx; i < 5; i++) {
-      item.stagesCompleted[i] = false;
-    }
-
-    // Determine highest remaining completed stage
-    let highestCompleted = -1;
-    for (let i = 4; i >= 0; i--) {
-      if (item.stagesCompleted[i]) {
-        highestCompleted = i;
-        break;
-      }
-    }
-
-    if (highestCompleted >= 0) {
-      const nextDays = nextIntervals[highestCompleted];
-      const baseDate = item.lastCheckedDate || todayIso;
-      item.nextSolveDate = addDaysToISOString(baseDate, nextDays);
-    } else {
-      item.lastCheckedDate = null;
-      item.nextSolveDate = addDaysToISOString(item.addedDate || todayIso, 3);
-    }
-  }
-
-  saveRecallItems();
-  renderRecallTable();
-}
-
-function deleteRecallItem(id) {
-  const item = recallItems.find(x => String(x.id) === String(id));
-  const name = item ? item.title : 'Question';
-
-  recallItems = recallItems.filter(x => String(x.id) !== String(id));
-  saveRecallItems();
-  renderRecallTable();
-  showToast(`🗑️ Removed "${name}" from Revision Sheet.`, 'info');
-}
-
-function renderRecallTable() {
-  const tbody = document.getElementById('recall-table-body');
-  if (!tbody) return;
-
-  if (recallItems.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="9" style="text-align: center; padding: 40px 20px; color: var(--dim);">
-          <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
-          <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Your Revision Sheet is empty</div>
-          <div style="font-size: 12px; margin-top: 4px;">Enter a LeetCode question number or title above (e.g. 1, 42, 206) to add it to your spaced revision schedule.</div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  const todayIso = getTodayISOString();
-
-  tbody.innerHTML = recallItems.map(item => {
-    const stages = item.stagesCompleted || [false, false, false, false, false];
-    const diffClass = (item.diff || 'Medium').toLowerCase();
-    const hasNumPrefix = item.lcNum && item.title.trim().startsWith(String(item.lcNum));
-    const lcNumBadge = item.lcNum && !hasNumPrefix ? `<span style="color:#ffa116; font-family:var(--mono); font-weight:700; margin-right:6px;">${item.lcNum}.</span>` : '';
-    const nameHtml = item.url
-      ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary); text-decoration:none; font-weight:600;" onmouseover="this.style.color='#ffa116'" onmouseout="this.style.color='var(--text-primary)'">${lcNumBadge}${escapeHtml(item.title)}</a>`
-      : `<span style="color:var(--text-primary); font-weight:600;">${lcNumBadge}${escapeHtml(item.title)}</span>`;
-
-    // Format Next Solving Date badge
-    let dateBadgeHtml = '';
-    if (item.nextSolveDate === 'Completed') {
-      dateBadgeHtml = `<span class="next-date-badge completed">Completed 🎉</span>`;
-    } else if (item.nextSolveDate && item.nextSolveDate <= todayIso) {
-      dateBadgeHtml = `<span class="next-date-badge due-today" title="Due for solving today!">Due Today</span>`;
-    } else {
-      dateBadgeHtml = `<span class="next-date-badge">${formatDisplayDate(item.nextSolveDate)}</span>`;
-    }
-
-    const c3d  = stages[0] ? 'checked' : '';
-    const c7d  = stages[1] ? 'checked' : '';
-    const c14d = stages[2] ? 'checked' : '';
-    const c30d = stages[3] ? 'checked' : '';
-    const c60d = stages[4] ? 'checked' : '';
-
-    return `
-      <tr class="row">
-        <td>${nameHtml}</td>
-        <td style="text-align: center;"><span class="diff-tag ${diffClass}">${escapeHtml(item.diff || 'Medium')}</span></td>
-        <td style="text-align: center;"><input type="checkbox" class="recall-checkbox" ${c3d} onclick="toggleRecallStage('${item.id}', 0)" title="3 Days Checkbox" /></td>
-        <td style="text-align: center;"><input type="checkbox" class="recall-checkbox" ${c7d} onclick="toggleRecallStage('${item.id}', 1)" title="7 Days Checkbox" /></td>
-        <td style="text-align: center;"><input type="checkbox" class="recall-checkbox" ${c14d} onclick="toggleRecallStage('${item.id}', 2)" title="14 Days Checkbox" /></td>
-        <td style="text-align: center;"><input type="checkbox" class="recall-checkbox" ${c30d} onclick="toggleRecallStage('${item.id}', 3)" title="30 Days Checkbox" /></td>
-        <td style="text-align: center;"><input type="checkbox" class="recall-checkbox" ${c60d} onclick="toggleRecallStage('${item.id}', 4)" title="60 Days Checkbox" /></td>
-        <td style="text-align: center;">${dateBadgeHtml}</td>
-        <td style="text-align: center;">
-          <button class="action-btn-del" onclick="deleteRecallItem('${item.id}')" title="Delete Question Row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
 // Expose globally
 window.renderSolvedHeatmap = renderSolvedHeatmap;
-window.openRecallView = openRecallView;
-window.addRecallQuestion = addRecallQuestion;
-window.handleRecallInputPreview = handleRecallInputPreview;
-window.toggleRecallStage = toggleRecallStage;
-window.deleteRecallItem = deleteRecallItem;
-window.renderRecallTable = renderRecallTable;
 
 
 
