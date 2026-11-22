@@ -740,18 +740,9 @@ function filterCompanies() {
     resultsDiv.style.display = 'none';
   }
 
-  // Dynamic layout: If the search matches a company by name, place the companies list at the top!
-  const hasCompanyNameMatch = filteredCompanies.some(c => c.name.toLowerCase().includes(q));
-  if (homeView && resultsDiv && companiesCard) {
-    if (hasCompanyNameMatch) {
-      if (companiesCard.nextElementSibling !== resultsDiv) {
-        homeView.insertBefore(companiesCard, resultsDiv);
-      }
-    } else {
-      if (resultsDiv.nextElementSibling !== companiesCard) {
-        homeView.insertBefore(resultsDiv, companiesCard);
-      }
-    }
+  // Always maintain layout order: Matching Questions first, followed by Companies table
+  if (homeView && resultsDiv && companiesCard && resultsDiv.nextElementSibling !== companiesCard) {
+    homeView.insertBefore(resultsDiv, companiesCard);
   }
 
   renderCompanies(filteredCompanies);
