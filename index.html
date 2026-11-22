@@ -853,25 +853,36 @@
       <div class="modal-box aq-modal-box">
         <div class="backup-modal-header">
           <div class="modal-title-group">
-            <div class="modal-badge-icon">➕</div>
+            <div class="modal-badge-icon" id="aq-modal-icon">➕</div>
             <div>
-              <h2>Add Question</h2>
-              <p class="modal-subtitle">Add a LeetCode problem to any company list. Syncs to Cloud.</p>
+              <h2 id="aq-modal-heading">Add Question</h2>
+              <p class="modal-subtitle" id="aq-modal-subheading">Add a LeetCode problem to any company list. Syncs to Cloud.</p>
             </div>
           </div>
           <button class="modal-close-btn" onclick="closeAddQuestionModal()" title="Close">&times;</button>
         </div>
 
         <div class="aq-form">
+          <input type="hidden" id="aq-edit-mode" value="false">
+          <input type="hidden" id="aq-edit-original-url" value="">
+          <input type="hidden" id="aq-edit-original-company" value="">
+
           <div class="aq-field">
             <label for="aq-url">LeetCode URL <span class="aq-required">*</span></label>
             <input id="aq-url" type="url" placeholder="https://leetcode.com/problems/two-sum" oninput="autoFillFromUrl()">
           </div>
 
-          <div class="aq-field">
-            <label for="aq-title">Problem Title <span class="aq-required">*</span></label>
-            <input id="aq-title" type="text" placeholder="Two Sum" oninput="onTitleManualEdit()">
-            <span class="aq-hint">Auto-fills from URL — edit if needed</span>
+          <div class="aq-row">
+            <div class="aq-field" style="flex: 2.2;">
+              <label for="aq-title">Problem Title <span class="aq-required">*</span></label>
+              <input id="aq-title" type="text" placeholder="Two Sum" oninput="onTitleManualEdit()">
+              <span class="aq-hint">Auto-fills from LeetCode</span>
+            </div>
+            <div class="aq-field" style="flex: 1;">
+              <label for="aq-number">LeetCode #</label>
+              <input id="aq-number" type="number" placeholder="e.g. 1" oninput="onNumberManualEdit()">
+              <span class="aq-hint">For search & badge</span>
+            </div>
           </div>
 
           <div class="aq-row">
@@ -883,7 +894,7 @@
                 <option value="Hard">Hard</option>
               </select>
             </div>
-            <div class="aq-field" style="flex:1.5;">
+            <div class="aq-field" style="flex:1.2;">
               <label for="aq-company">Company</label>
               <select id="aq-company" class="select-sec">
                 <option value="Random" selected>Random</option>
@@ -891,15 +902,28 @@
             </div>
           </div>
 
+          <div class="aq-field">
+            <label for="aq-primary-topic">Topic / Category</label>
+            <select id="aq-primary-topic" class="select-sec">
+              <option value="">Auto-Detect from LeetCode / Slug</option>
+            </select>
+            <span class="aq-hint">Select a category or leave auto-detected</span>
+          </div>
+
           <div id="aq-status" class="aq-status"></div>
 
-          <button id="aq-submit-btn" class="action-btn btn-primary aq-submit" onclick="submitAddQuestion()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Add Question</span>
-          </button>
+          <div class="aq-modal-actions" style="display: flex; gap: 10px; margin-top: 6px;">
+            <button id="aq-delete-btn" class="action-btn btn-danger" style="display: none; padding: 12px 18px;" onclick="handleModalDelete()">
+              🗑️ Delete
+            </button>
+            <button id="aq-submit-btn" class="action-btn btn-primary aq-submit" style="flex: 1;" onclick="submitAddQuestion()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span id="aq-submit-label">Add Question</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

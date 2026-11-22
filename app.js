@@ -285,6 +285,16 @@ function initData() {
     return;
   }
 
+  // Load custom questions from localStorage before processing if not populated
+  if (customQuestions.length === 0 && !cloudAuthoritativeDataLoaded) {
+    try {
+      const savedCustom = JSON.parse(localStorage.getItem('custom_questions_v1') || '[]');
+      if (Array.isArray(savedCustom) && savedCustom.length > 0) {
+        customQuestions = savedCustom;
+      }
+    } catch (e) {}
+  }
+
   for (const [rawName, rawProblems] of Object.entries(dataObj)) {
     const normKey = normalizeCompanyNameKey(rawName);
 
@@ -341,16 +351,30 @@ function initData() {
         url: cq.url,
         src: cq.src || 'Custom'
       };
-      const tags = getTopicsForProblem(probObj);
+
+      const tags = (cq.tags && Array.isArray(cq.tags) && cq.tags.length > 0)
+        ? cq.tags
+        : getTopicsForProblem(probObj);
+
       tags.forEach(t => {
         topicMap.set(t, (topicMap.get(t) || 0) + 1);
       });
+
+      const lcNum = (cq.lcNum !== undefined && cq.lcNum !== null && cq.lcNum !== '')
+        ? Number(cq.lcNum)
+        : getLeetCodeNumber(cq.url);
+
+      if (lcNum && typeof LEETCODE_NUM_MAP !== 'undefined') {
+        const slug = getSlugFromUrl(cq.url);
+        if (slug) LEETCODE_NUM_MAP[slug] = lcNum;
+      }
 
       if (!companyEntry.problemsMap.has(cq.title)) {
         companyEntry.problemsMap.set(cq.title, {
           ...probObj,
           tags,
-          lcNum: getLeetCodeNumber(cq.url)
+          lcNum,
+          isCustom: true
         });
       }
     });
@@ -433,6 +457,10 @@ function initData() {
 
   updateSolvedStats(true);
   updateStarredStats(true);
+
+  if (typeof autoEnrichCustomQuestions === 'function') {
+    setTimeout(autoEnrichCustomQuestions, 500);
+  }
 }
 
 function updateSolvedStats(skipCloudSync = false) {
@@ -707,7 +735,9 @@ function renderHomeProblemsResults(problemsList) {
         </div>
       </td>
       <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
-      <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
+      <td style="text-align:right;">
+        <span class="srctag ${p.isCustom ? 'custom-tag clickable' : ''}" ${p.isCustom ? `onclick="event.stopPropagation(); openEditQuestionModal('${escapeHtml(p.url)}', '${escapeHtml((p.companies && p.companies[0]) || 'Random')}')" title="Click to edit difficulty, tags, or question number"` : ''}>${p.src || 'L+S'}${p.isCustom ? ' ✏️' : ''}</span>
+      </td>
     `;
 
     // Direct Event Listeners
@@ -1041,7 +1071,9 @@ function renderProblemTableSection(tbodyId, sectionId, problemsList) {
         </div>
       </td>
       <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
-      <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
+      <td style="text-align:right;">
+        <span class="srctag ${p.isCustom ? 'custom-tag clickable' : ''}" ${p.isCustom ? `onclick="event.stopPropagation(); openEditQuestionModal('${escapeHtml(p.url)}', '${escapeHtml((p.companies && p.companies[0]) || 'Random')}')" title="Click to edit difficulty, tags, or question number"` : ''}>${p.src || 'L+S'}${p.isCustom ? ' ✏️' : ''}</span>
+      </td>
     `;
 
     // Direct Event Listeners
@@ -1235,7 +1267,7 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
           ${companyBadgeHTML}
         </div>
       </td>
-      <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
+      <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span>${p.isCustom ? ` <span class="srctag custom-tag clickable" onclick="event.stopPropagation(); openEditQuestionModal('${escapeHtml(p.url)}', '${escapeHtml((p.companies && p.companies[0]) || 'Random')}')" title="Click to edit difficulty, tags, or question number">✏️</span>` : ''}</td>
       <td style="text-align:right; white-space: nowrap;" title="${bmDateTitle}"><span class="bm-date-tag">${bmDateDisplay}</span></td>
     `;
 
@@ -2331,102 +2363,333 @@ function renderSolvedHeatmap() {
 window.renderSolvedHeatmap = renderSolvedHeatmap;
 
 // ============================================================
-// ADD QUESTION MODAL — Add custom questions to any company
+// ADD & EDIT QUESTION MODAL — Custom questions manager
 // ============================================================
 
-function openAddQuestionModal() {
-  // Build company options from existing companyList
+const LEETCODE_TAG_MAP = {
+  'array': 'Array',
+  'math': 'Math & Geometry',
+  'geometry': 'Math & Geometry',
+  'sorting': 'Sorting Algorithms',
+  'prefix sum': 'Prefix Sum',
+  'string': 'String',
+  'hash table': 'Hash Table',
+  'two pointers': 'Two Pointers',
+  'sliding window': 'Sliding Window',
+  'binary search': 'Binary Search',
+  'linked list': 'Linked List',
+  'stack': 'Stack & Queue',
+  'queue': 'Stack & Queue',
+  'monotonic stack': 'Monotonic Stack / Queue',
+  'monotonic queue': 'Monotonic Stack / Queue',
+  'heap (priority queue)': 'Heap / Priority Queue',
+  'priority queue': 'Heap / Priority Queue',
+  'recursion': 'Recursion',
+  'backtracking': 'Backtracking',
+  'tree': 'Tree & Binary Tree',
+  'binary tree': 'Tree & Binary Tree',
+  'binary search tree': 'Tree & Binary Tree',
+  'trie': 'Trie',
+  'segment tree': 'Segment Tree / BIT',
+  'binary indexed tree': 'Segment Tree / BIT',
+  'graph': 'Graph & DFS/BFS',
+  'depth-first search': 'Graph & DFS/BFS',
+  'breadth-first search': 'Graph & DFS/BFS',
+  'topological sort': 'Topological Sort',
+  'union find': 'Union Find',
+  'shortest path': 'Shortest Path',
+  'minimum spanning tree': 'Minimum Spanning Tree',
+  'greedy': 'Greedy',
+  'dynamic programming': 'Dynamic Programming',
+  'bit manipulation': 'Bit Manipulation',
+  'design': 'Design Problems',
+  'simulation': 'Simulation',
+  'database': 'SQL & Database'
+};
+
+function matchLeetCodeTagsToTopics(rawTags) {
+  if (!Array.isArray(rawTags)) return [];
+  const matched = new Set();
+  rawTags.forEach(t => {
+    const k = String(t).toLowerCase().trim();
+    if (LEETCODE_TAG_MAP[k]) matched.add(LEETCODE_TAG_MAP[k]);
+  });
+  return Array.from(matched);
+}
+
+function populateCompanyDropdown() {
   const companySelect = document.getElementById('aq-company');
-  const targetCompany = currentCompanyObj ? currentCompanyObj.name : 'Random';
+  if (!companySelect) return;
+  companySelect.innerHTML = '';
 
-  if (companySelect) {
-    companySelect.innerHTML = '';
-    // "Random" first
-    const randomOpt = document.createElement('option');
-    randomOpt.value = 'Random';
-    randomOpt.textContent = 'Random';
-    companySelect.appendChild(randomOpt);
+  const randomOpt = document.createElement('option');
+  randomOpt.value = 'Random';
+  randomOpt.textContent = 'Random';
+  companySelect.appendChild(randomOpt);
 
-    // Add all other companies sorted alphabetically
-    const otherCompanies = companyList
-      .map(c => c.name)
-      .filter(n => n !== 'Random')
-      .sort((a, b) => a.localeCompare(b));
+  const otherCompanies = companyList
+    .map(c => c.name)
+    .filter(n => n !== 'Random')
+    .sort((a, b) => a.localeCompare(b));
 
-    otherCompanies.forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      companySelect.appendChild(opt);
-    });
+  otherCompanies.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    companySelect.appendChild(opt);
+  });
+}
 
-    companySelect.value = targetCompany;
-  }
+function populateTopicDropdown() {
+  const topicSelect = document.getElementById('aq-primary-topic');
+  if (!topicSelect) return;
+  topicSelect.innerHTML = '<option value="">Auto-Detect from LeetCode / Slug</option>';
+
+  TOPIC_RULES.forEach(r => {
+    if (r.name === 'General DSA') return;
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = `${r.icon} ${r.name}`;
+    topicSelect.appendChild(opt);
+  });
+}
+
+function openAddQuestionModal() {
+  populateCompanyDropdown();
+  populateTopicDropdown();
+
+  document.getElementById('aq-edit-mode').value = 'false';
+  document.getElementById('aq-edit-original-url').value = '';
+  document.getElementById('aq-edit-original-company').value = '';
+
+  document.getElementById('aq-modal-icon').textContent = '➕';
+  document.getElementById('aq-modal-heading').textContent = 'Add Question';
+  document.getElementById('aq-modal-subheading').textContent = 'Add a LeetCode problem to any company list. Syncs to Cloud.';
+  document.getElementById('aq-submit-label').textContent = 'Add Question';
+
+  const deleteBtn = document.getElementById('aq-delete-btn');
+  if (deleteBtn) deleteBtn.style.display = 'none';
 
   // Clear fields
   const urlInput = document.getElementById('aq-url');
   const titleInput = document.getElementById('aq-title');
+  const numInput = document.getElementById('aq-number');
   const diffSelect = document.getElementById('aq-difficulty');
-  if (urlInput) urlInput.value = '';
-  if (titleInput) titleInput.value = '';
-  if (diffSelect) diffSelect.value = 'Medium';
+  const topicSelect = document.getElementById('aq-primary-topic');
+  const companySelect = document.getElementById('aq-company');
 
-  // Clear status
+  if (urlInput) urlInput.value = '';
+  if (titleInput) { titleInput.value = ''; titleInput.dataset.autoFilled = 'false'; }
+  if (numInput) { numInput.value = ''; numInput.dataset.autoFilled = 'false'; }
+  if (diffSelect) diffSelect.value = 'Medium';
+  if (topicSelect) { topicSelect.value = ''; topicSelect.dataset.autoFilled = 'false'; }
+
+  const targetCompany = currentCompanyObj ? currentCompanyObj.name : 'Random';
+  if (companySelect) companySelect.value = targetCompany;
+
   const statusEl = document.getElementById('aq-status');
   if (statusEl) { statusEl.textContent = ''; statusEl.className = 'aq-status'; }
 
   document.getElementById('add-question-modal')?.classList.add('active');
-
-  // Focus URL input
   setTimeout(() => urlInput?.focus(), 100);
+}
+
+function openEditQuestionModal(url, company) {
+  const cleanUrl = (url || '').trim().replace(/\/+$/, '');
+  const slug = getSlugFromUrl(cleanUrl);
+  const found = customQuestions.find(q =>
+    (q.url.replace(/\/+$/, '') === cleanUrl || getSlugFromUrl(q.url) === slug) &&
+    (!company || q.company === company)
+  ) || customQuestions.find(q =>
+    q.url.replace(/\/+$/, '') === cleanUrl || getSlugFromUrl(q.url) === slug
+  );
+
+  if (!found) {
+    showToast('⚠️ Could not find custom question to edit.', 'error');
+    return;
+  }
+
+  populateCompanyDropdown();
+  populateTopicDropdown();
+
+  document.getElementById('aq-edit-mode').value = 'true';
+  document.getElementById('aq-edit-original-url').value = found.url;
+  document.getElementById('aq-edit-original-company').value = found.company || 'Random';
+
+  document.getElementById('aq-modal-icon').textContent = '✏️';
+  document.getElementById('aq-modal-heading').textContent = 'Edit Question';
+  document.getElementById('aq-modal-subheading').textContent = 'Update difficulty, tags, or problem number';
+  document.getElementById('aq-submit-label').textContent = 'Save Changes';
+
+  const deleteBtn = document.getElementById('aq-delete-btn');
+  if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+
+  document.getElementById('aq-url').value = found.url;
+  document.getElementById('aq-title').value = found.title;
+  document.getElementById('aq-number').value = found.lcNum || '';
+  document.getElementById('aq-difficulty').value = found.diff || 'Medium';
+  document.getElementById('aq-company').value = found.company || 'Random';
+
+  const topicSelect = document.getElementById('aq-primary-topic');
+  if (topicSelect) {
+    topicSelect.value = (found.tags && found.tags[0] && found.tags[0] !== 'General DSA') ? found.tags[0] : '';
+  }
+
+  const statusEl = document.getElementById('aq-status');
+  if (statusEl) {
+    statusEl.innerHTML = found.lcNum
+      ? `LeetCode #${found.lcNum} • ${found.diff} • ${found.tags ? found.tags.join(', ') : 'General DSA'}`
+      : 'Tip: You can add the problem number or change tags/difficulty here.';
+    statusEl.className = 'aq-status';
+  }
+
+  document.getElementById('add-question-modal')?.classList.add('active');
 }
 
 function closeAddQuestionModal() {
   document.getElementById('add-question-modal')?.classList.remove('active');
 }
 
-// Auto-fill title from LeetCode URL slug
-function autoFillFromUrl() {
+let autoFetchAbortController = null;
+
+async function autoFillFromUrl() {
   const urlInput = document.getElementById('aq-url');
   const titleInput = document.getElementById('aq-title');
-  if (!urlInput || !titleInput) return;
+  const numInput = document.getElementById('aq-number');
+  const diffSelect = document.getElementById('aq-difficulty');
+  const topicSelect = document.getElementById('aq-primary-topic');
+  const statusEl = document.getElementById('aq-status');
+  if (!urlInput) return;
 
   const url = urlInput.value.trim();
   const match = url.match(/leetcode\.com\/problems\/([^\/?#]+)/);
-  if (match) {
-    const slug = match[1];
-    // Convert slug to title: "two-sum" → "Two Sum"
-    const autoTitle = slug
-      .split('-')
-      .map(w => {
-        if (!w) return '';
-        const upper = w.toUpperCase();
-        if (knownAcronyms.has(upper)) return upper;
-        return w.charAt(0).toUpperCase() + w.slice(1);
-      })
-      .join(' ');
+  if (!match) {
+    if (statusEl) statusEl.textContent = '';
+    return;
+  }
 
-    // Only auto-fill if title is empty or matches a previous auto-fill
-    if (!titleInput.value.trim() || titleInput.dataset.autoFilled === 'true') {
-      titleInput.value = autoTitle;
-      titleInput.dataset.autoFilled = 'true';
+  const slug = match[1].toLowerCase();
+
+  // 1. Instant fallback title from slug
+  const autoTitle = slug
+    .split('-')
+    .map(w => {
+      if (!w) return '';
+      const upper = w.toUpperCase();
+      if (knownAcronyms.has(upper)) return upper;
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    })
+    .join(' ');
+
+  if (titleInput && (!titleInput.value.trim() || titleInput.dataset.autoFilled === 'true')) {
+    titleInput.value = autoTitle;
+    titleInput.dataset.autoFilled = 'true';
+  }
+
+  // 2. Instant local number lookup if present in LEETCODE_NUM_MAP
+  if (typeof LEETCODE_NUM_MAP !== 'undefined' && LEETCODE_NUM_MAP[slug]) {
+    if (numInput && (!numInput.value || numInput.dataset.autoFilled === 'true')) {
+      numInput.value = LEETCODE_NUM_MAP[slug];
+      numInput.dataset.autoFilled = 'true';
+    }
+  }
+
+  // 3. Instant local topic detection from slug/title rules
+  const localTopics = getTopicsForProblem({ title: autoTitle, url });
+  if (topicSelect && (!topicSelect.value || topicSelect.dataset.autoFilled === 'true')) {
+    if (localTopics.length > 0 && localTopics[0] !== 'General DSA') {
+      topicSelect.value = localTopics[0];
+      topicSelect.dataset.autoFilled = 'true';
+    }
+  }
+
+  // 4. Query LeetCode API asynchronously for official number, difficulty, and tags
+  if (autoFetchAbortController) autoFetchAbortController.abort();
+  autoFetchAbortController = new AbortController();
+
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="aq-loading-spinner"></span> Auto-detecting details from LeetCode...`;
+    statusEl.className = 'aq-status';
+  }
+
+  try {
+    const res = await fetch(`https://alfa-leetcode-api.onrender.com/select?titleSlug=${slug}`, {
+      signal: autoFetchAbortController.signal
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const detectedInfo = [];
+
+      // Auto-fill Title
+      if (data.questionTitle && titleInput && titleInput.dataset.autoFilled === 'true') {
+        titleInput.value = data.questionTitle;
+      }
+
+      // Auto-fill Number
+      if (data.questionFrontendId && numInput && (!numInput.value || numInput.dataset.autoFilled === 'true')) {
+        numInput.value = data.questionFrontendId;
+        numInput.dataset.autoFilled = 'true';
+        detectedInfo.push(`#${data.questionFrontendId}`);
+      }
+
+      // Auto-fill Difficulty
+      if (data.difficulty && diffSelect) {
+        const d = data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1).toLowerCase();
+        diffSelect.value = d;
+        detectedInfo.push(d);
+      }
+
+      // Auto-fill Topic Tags
+      if (Array.isArray(data.topicTags) && data.topicTags.length > 0) {
+        const matched = matchLeetCodeTagsToTopics(data.topicTags.map(t => t.name || t.slug));
+        if (matched.length > 0 && topicSelect && (!topicSelect.value || topicSelect.dataset.autoFilled === 'true')) {
+          topicSelect.value = matched[0];
+          topicSelect.dataset.autoFilled = 'true';
+          detectedInfo.push(matched[0]);
+        }
+      }
+
+      if (statusEl) {
+        statusEl.innerHTML = `✅ Detected: ${detectedInfo.length > 0 ? detectedInfo.join(' • ') : 'LeetCode question found'}`;
+        statusEl.className = 'aq-status success';
+      }
+    } else {
+      if (statusEl) {
+        statusEl.textContent = 'ℹ️ Question not indexed on proxy yet. You can enter details manually.';
+        statusEl.className = 'aq-status';
+      }
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    if (statusEl) {
+      statusEl.textContent = 'ℹ️ Could not fetch LeetCode details automatically. You can enter them manually.';
+      statusEl.className = 'aq-status';
     }
   }
 }
 
-// Called when user manually types in the title field
 function onTitleManualEdit() {
   const titleInput = document.getElementById('aq-title');
-  if (titleInput) {
-    titleInput.dataset.autoFilled = 'false';
-  }
+  if (titleInput) titleInput.dataset.autoFilled = 'false';
+}
+
+function onNumberManualEdit() {
+  const numInput = document.getElementById('aq-number');
+  if (numInput) numInput.dataset.autoFilled = 'false';
 }
 
 async function submitAddQuestion() {
+  const isEditMode = document.getElementById('aq-edit-mode')?.value === 'true';
+  const origUrl = document.getElementById('aq-edit-original-url')?.value;
+  const origComp = document.getElementById('aq-edit-original-company')?.value;
+
   const urlInput = document.getElementById('aq-url');
   const titleInput = document.getElementById('aq-title');
+  const numInput = document.getElementById('aq-number');
   const diffSelect = document.getElementById('aq-difficulty');
   const companySelect = document.getElementById('aq-company');
+  const topicSelect = document.getElementById('aq-primary-topic');
   const statusEl = document.getElementById('aq-status');
   const submitBtn = document.getElementById('aq-submit-btn');
 
@@ -2434,6 +2697,9 @@ async function submitAddQuestion() {
   const title = (titleInput?.value || '').trim();
   const diff = diffSelect?.value || 'Medium';
   const company = companySelect?.value || 'Random';
+  const rawNum = (numInput?.value || '').trim();
+  const lcNum = rawNum ? parseInt(rawNum, 10) : null;
+  const chosenTopic = topicSelect?.value || '';
 
   // Validate
   if (!url) {
@@ -2442,7 +2708,6 @@ async function submitAddQuestion() {
     return;
   }
 
-  // Normalize URL (strip trailing slashes, enforce https)
   url = url.replace(/\/+$/, '');
 
   if (!url.includes('leetcode.com/problems/')) {
@@ -2459,23 +2724,50 @@ async function submitAddQuestion() {
 
   const slug = getSlugFromUrl(url);
 
-  // Check for duplicates in custom questions for this company
-  const alreadyCustom = customQuestions.some(q => (q.url === url || getSlugFromUrl(q.url) === slug) && q.company === company);
-  if (alreadyCustom) {
-    if (statusEl) { statusEl.textContent = `⚠️ Already added to "${company}".`; statusEl.className = 'aq-status error'; }
-    return;
+  // Compute tags
+  const tags = chosenTopic ? [chosenTopic] : getTopicsForProblem({ title, url });
+
+  if (isEditMode) {
+    // Edit existing
+    const idx = customQuestions.findIndex(q =>
+      (q.url === origUrl || getSlugFromUrl(q.url) === getSlugFromUrl(origUrl)) &&
+      q.company === origComp
+    );
+    if (idx !== -1) {
+      customQuestions[idx] = {
+        title,
+        diff,
+        url,
+        src: 'Custom',
+        company,
+        lcNum,
+        tags
+      };
+    }
+  } else {
+    // Check for duplicates in custom questions
+    const alreadyCustom = customQuestions.some(q => (q.url === url || getSlugFromUrl(q.url) === slug) && q.company === company);
+    if (alreadyCustom) {
+      if (statusEl) { statusEl.textContent = `⚠️ Already added to "${company}".`; statusEl.className = 'aq-status error'; }
+      return;
+    }
+
+    // Check if already exists in existing static data
+    const existingCompany = companyList.find(c => c.name === company);
+    if (existingCompany && existingCompany.problems.some(p => p.url === url || getSlugFromUrl(p.url) === slug)) {
+      if (statusEl) { statusEl.textContent = `⚠️ Already exists in "${company}".`; statusEl.className = 'aq-status error'; }
+      return;
+    }
+
+    // Add new
+    const newQuestion = { title, diff, url, src: 'Custom', company, lcNum, tags };
+    customQuestions.push(newQuestion);
   }
 
-  // Check if already exists in existing data for this company
-  const existingCompany = companyList.find(c => c.name === company);
-  if (existingCompany && existingCompany.problems.some(p => p.url === url || getSlugFromUrl(p.url) === slug)) {
-    if (statusEl) { statusEl.textContent = `⚠️ Already exists in "${company}".`; statusEl.className = 'aq-status error'; }
-    return;
+  // Register in memory LEETCODE_NUM_MAP
+  if (lcNum && typeof LEETCODE_NUM_MAP !== 'undefined') {
+    LEETCODE_NUM_MAP[slug] = lcNum;
   }
-
-  // Add to customQuestions
-  const newQuestion = { title, diff, url, src: 'Custom', company };
-  customQuestions.push(newQuestion);
 
   // Save to localStorage
   try {
@@ -2492,39 +2784,33 @@ async function submitAddQuestion() {
     } catch (err) {
       console.error('Error saving custom questions to cloud:', err);
     }
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '+ Add Question'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = isEditMode ? 'Save Changes' : '+ Add Question'; }
   }
 
-  // Re-initialize data to reflect the new question
+  // Re-initialize data to reflect the new or edited question
   initData();
 
   // Re-render the current active view
-  if (document.getElementById('company-topics-view')?.classList.contains('active')) {
-    // If viewing the same company, refresh it
-    if (currentCompanyObj && currentCompanyObj.name === company) {
-      const updatedCompany = companyList.find(c => c.name === company);
-      if (updatedCompany) {
-        currentCompanyObj = updatedCompany;
-        if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
-          renderTopicProblems();
-        } else {
-          renderCompanyTopics();
-        }
-      }
-    } else {
-      renderCompanyTopics();
-    }
-  } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
-    filterCompanies();
-  }
+  refreshActiveView();
 
   if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
 
-  showToast(`✅ Added "${title}" (${diff}) to ${company}!`, 'success');
+  showToast(`✅ ${isEditMode ? 'Updated' : 'Added'} "${title}" (${diff}) in ${company}!`, 'success');
   closeAddQuestionModal();
 }
 
-// Delete a custom question
+function handleModalDelete() {
+  const origUrl = document.getElementById('aq-edit-original-url')?.value;
+  const origComp = document.getElementById('aq-edit-original-company')?.value;
+  if (!origUrl) return;
+
+  const confirmed = window.confirm("Are you sure you want to delete this custom question?");
+  if (!confirmed) return;
+
+  deleteCustomQuestion(origUrl, origComp);
+  closeAddQuestionModal();
+}
+
 function deleteCustomQuestion(url, company) {
   const cleanUrl = (url || '').trim().replace(/\/+$/, '');
   const slug = getSlugFromUrl(cleanUrl);
@@ -2533,37 +2819,109 @@ function deleteCustomQuestion(url, company) {
 
   const removed = customQuestions.splice(idx, 1)[0];
 
-  // Save to localStorage
   try {
     localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
   } catch (e) {
     console.error('Error saving custom questions to localStorage:', e);
   }
 
-  // Save to Firestore
   if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
     window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
   }
 
-  // Re-initialize and re-render
   initData();
-  if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+  refreshActiveView();
+
+  showToast(`🗑️ Removed "${removed.title}" from ${company}.`, 'info');
+}
+
+// Helper to refresh whatever view is currently active on screen
+function refreshActiveView() {
+  if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
     if (currentCompanyObj) {
-      const updatedCompany = companyList.find(c => c.name === currentCompanyObj.name);
-      if (updatedCompany) {
-        currentCompanyObj = updatedCompany;
-        if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
-          renderTopicProblems();
-        } else {
-          renderCompanyTopics();
-        }
-      }
+      const updated = companyList.find(c => c.name === currentCompanyObj.name);
+      if (updated) currentCompanyObj = updated;
+      renderTopicProblems();
     }
+  } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    if (currentCompanyObj) {
+      const updated = companyList.find(c => c.name === currentCompanyObj.name);
+      if (updated) currentCompanyObj = updated;
+      renderCompanyTopics();
+    }
+  } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+    renderBookmarksView();
+  } else if (document.getElementById('solved-view')?.classList.contains('active')) {
+    if (typeof renderSolvedView === 'function') renderSolvedView();
   } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
     filterCompanies();
   }
+}
 
-  showToast(`🗑️ Removed "${removed.title}" from ${company}.`, 'info');
+// Background enricher: auto-detect missing number, difficulty, and tags for existing custom questions
+let isEnrichingCustom = false;
+async function autoEnrichCustomQuestions() {
+  if (isEnrichingCustom || !customQuestions || customQuestions.length === 0) return;
+  const toEnrich = customQuestions.filter(q => !q.lcNum || (!q._enriched && (!q.tags || q.tags.length === 0 || q.tags.includes('General DSA'))));
+  if (toEnrich.length === 0) return;
+
+  isEnrichingCustom = true;
+  let hasChanges = false;
+
+  for (const q of toEnrich) {
+    const slug = getSlugFromUrl(q.url);
+    if (!slug) continue;
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`https://alfa-leetcode-api.onrender.com/select?titleSlug=${slug}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const d = await res.json();
+        if (d && d.questionFrontendId) {
+          q._enriched = true;
+          const num = Number(d.questionFrontendId);
+          if (q.lcNum !== num) {
+            q.lcNum = num;
+            hasChanges = true;
+          }
+          if (d.difficulty) {
+            const cleanDiff = d.difficulty.charAt(0).toUpperCase() + d.difficulty.slice(1).toLowerCase();
+            if (q.diff !== cleanDiff) {
+              q.diff = cleanDiff;
+              hasChanges = true;
+            }
+          }
+          if (d.questionTitle && q.title !== d.questionTitle) {
+            q.title = d.questionTitle;
+            hasChanges = true;
+          }
+          if (Array.isArray(d.topicTags) && d.topicTags.length > 0) {
+            const matched = matchLeetCodeTagsToTopics(d.topicTags.map(t => t.name || t.slug));
+            if (matched.length > 0 && (!q.tags || q.tags.includes('General DSA'))) {
+              q.tags = matched;
+              hasChanges = true;
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  isEnrichingCustom = false;
+
+  if (hasChanges) {
+    try {
+      localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
+    } catch (e) {}
+    if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+      window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
+    }
+    initData();
+    refreshActiveView();
+  }
 }
 
 

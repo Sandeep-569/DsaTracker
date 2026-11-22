@@ -53,11 +53,18 @@ A modern, high-performance web platform designed to streamline Data Structures &
 ---
 
 ### 5. ➕ In-App Custom & Contest Question Manager
-- **One-Click Header Modal**: Add new contest or unlisted problems directly from the UI without manual code edits or script runs.
-- **Auto Title Parsing**: Automatically extracts and formats the question title from any pasted LeetCode URL slug (with manual override).
-- **Target Company Flexibility**: Defaults to **"Random"** for recent contest questions, or allows filing under any existing company.
-- **Dual Persistence & Sync**: Saves instantly to Cloud Firestore (`users/{uid}.customQuestions`) for cross-device synchronization and `localStorage` for offline access.
-- **Integrated Backup & Restore**: Full support in JSON export/import (v1.4) to back up custom questions alongside solved and starred records.
+- **Header Action Trigger**: Quick-access `+ Add Question` button in the navigation header to log recent contest questions or unlisted problems directly without touching code.
+- **Automatic LeetCode Metadata Auto-Detection**: Pasting any LeetCode problem URL queries official LeetCode problem details:
+  - **LeetCode Problem Number** (e.g. `#4120`, `#4097`)
+  - **Difficulty** (`Easy`, `Medium`, `Hard`)
+  - **Official Title** (e.g. `Count Dominant Elements`)
+  - **Pattern / Topic Tags** automatically mapped to DSA topics
+- **Live Edit & Delete (`Custom ✏️`)**: Click the `Custom ✏️` badge in any table (Company problems, Bookmarks, Solved history) to edit tags, difficulty, question number, target company, or delete the problem.
+- **Full Number Search & Badge Integration**: Custom questions display official `<span class="lc-num">#XXXX</span>` badges and are instantly searchable by problem number (e.g. `4120`, `#4097`).
+- **Background Auto-Enrichment**: Automatically analyzes existing custom questions in the background to fetch missing LeetCode numbers and difficulties without requiring manual re-entry.
+- **Target Company Flexibility**: Defaults to **"Random"** for recent contest questions, or allows filing under any company in the database.
+- **Dual Persistence & Firestore Cloud Sync**: Synchronized instantly to Cloud Firestore (`users/{uid}.customQuestions`) across devices with offline `localStorage` fallback.
+- **Integrated Backup & Restore**: Full JSON backup & restore (v1.4) compatibility to export custom questions alongside solved and starred records.
 
 ---
 

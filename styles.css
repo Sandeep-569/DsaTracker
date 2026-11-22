@@ -2358,7 +2358,8 @@ tr.row:hover .solved-date-badge {
 }
 
 .aq-field input[type="text"],
-.aq-field input[type="url"] {
+.aq-field input[type="url"],
+.aq-field input[type="number"] {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -2368,10 +2369,12 @@ tr.row:hover .solved-date-badge {
   font-family: var(--sans);
   outline: none;
   transition: all 0.2s ease;
+  width: 100%;
 }
 
 .aq-field input[type="text"]:focus,
-.aq-field input[type="url"]:focus {
+.aq-field input[type="url"]:focus,
+.aq-field input[type="number"]:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-glow);
   background: rgba(255, 255, 255, 0.08);
@@ -2435,6 +2438,39 @@ tr.row:hover .solved-date-badge {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.aq-loading-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(88, 166, 255, 0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: aq-spin 0.65s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes aq-spin {
+  to { transform: rotate(360deg); }
+}
+
+.custom-tag.clickable {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.custom-tag.clickable:hover {
+  background: rgba(163, 113, 247, 0.25) !important;
+  border-color: rgba(163, 113, 247, 0.6) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(163, 113, 247, 0.3);
 }
 
 

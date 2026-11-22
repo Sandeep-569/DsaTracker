@@ -365,7 +365,9 @@ function renderSolvedTableSection(tbodyId, sectionId, problemsList) {
         </div>
       </td>
       <td style="text-align:right;"><span class="tag ${p.diff}">${p.diff}</span></td>
-      <td style="text-align:right;"><span class="srctag">${p.src || 'L+S'}</span></td>
+      <td style="text-align:right;">
+        <span class="srctag ${p.isCustom ? 'custom-tag clickable' : ''}" ${p.isCustom ? `onclick="event.stopPropagation(); if (typeof openEditQuestionModal === 'function') openEditQuestionModal('${escapeHtml(p.url)}', '${escapeHtml((p.companies && p.companies[0]) || 'Random')}')" title="Click to edit difficulty, tags, or question number"` : ''}>${p.src || 'L+S'}${p.isCustom ? ' ✏️' : ''}</span>
+      </td>
       <td style="text-align:right; white-space:nowrap;">
         <span
           class="solved-date-badge"
