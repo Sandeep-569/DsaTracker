@@ -604,12 +604,62 @@ function renderCompanies(dataToRender = companyList) {
   }
 }
 
+// Calculate company search relevance score for intelligent ranking
+function getCompanyRelevanceScore(c, query, lcNum) {
+  const cName = c.name.toLowerCase().trim();
+
+  // Tier 1: Exact company name match (e.g. "random" === "random") -> Score 100000
+  if (cName === query) {
+    return 100000;
+  }
+
+  // Tier 2: Company name starts with query (e.g. "rand" -> "Random", "goog" -> "Google") -> Score 50000
+  if (cName.startsWith(query)) {
+    return 50000 - Math.min(cName.length, 1000);
+  }
+
+  // Tier 3: Company name contains query as a whole word (e.g. "Sachs" -> "Goldman Sachs") -> Score 30000
+  const words = cName.split(/[\s\-_\/&]+/);
+  if (words.some(w => w === query)) {
+    return 30000;
+  }
+  if (words.some(w => w.startsWith(query))) {
+    return 25000;
+  }
+
+  // Tier 4: Company name contains query substring -> Score 15000
+  const subIdx = cName.indexOf(query);
+  if (subIdx !== -1) {
+    return 15000 - subIdx;
+  }
+
+  // Tier 5: LeetCode number search match (company contains this exact question)
+  if (lcNum !== null && c.problems.some(p => p.lcNum === lcNum)) {
+    return 8000;
+  }
+
+  // Tier 6: Company only matched because problem title or tag matches query
+  let matchCount = 0;
+  for (let i = 0; i < c.problems.length; i++) {
+    const p = c.problems[i];
+    if (p.title.toLowerCase().includes(query) || (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))) {
+      matchCount++;
+    }
+  }
+  return 1000 + Math.min(matchCount, 500);
+}
+
 function filterCompanies() {
   const q = document.getElementById('search').value.trim().toLowerCase();
   const resultsDiv = document.getElementById('home-problems-results');
+  const homeView = document.getElementById('home-view');
+  const companiesCard = document.getElementById('home-companies-card');
 
   if (!q) {
     if (resultsDiv) resultsDiv.style.display = 'none';
+    if (homeView && resultsDiv && companiesCard && resultsDiv.nextElementSibling !== companiesCard) {
+      homeView.insertBefore(resultsDiv, companiesCard);
+    }
     renderCompanies(companyList);
     return;
   }
@@ -625,6 +675,28 @@ function filterCompanies() {
       return p.title.toLowerCase().includes(q) || (p.tags && p.tags.some(t => t.toLowerCase().includes(q)));
     })
   );
+
+  // Sort companies by search relevance score
+  const sortMode = document.getElementById('company-sort')?.value || 'total';
+  filteredCompanies.sort((a, b) => {
+    const scoreA = getCompanyRelevanceScore(a, q, lcNumQuery);
+    const scoreB = getCompanyRelevanceScore(b, q, lcNumQuery);
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA; // Highest relevance score first!
+    }
+    // Tie-breaker based on user's selected sort mode
+    if (sortMode === 'name') {
+      return a.name.localeCompare(b.name);
+    }
+    if (sortMode === 'solved') {
+      const aSolved = a.problems.filter(p => solvedProblems.has(p.title)).length;
+      const bSolved = b.problems.filter(p => solvedProblems.has(p.title)).length;
+      const aPct = a.total > 0 ? aSolved / a.total : 0;
+      const bPct = b.total > 0 ? bSolved / b.total : 0;
+      return bPct - aPct || b.total - a.total;
+    }
+    return b.total - a.total;
+  });
 
   // 2. Filter & Deduplicate Individual Problems Across All Companies by Title
   const probMap = new Map();
@@ -656,17 +728,6 @@ function filterCompanies() {
     });
   });
 
-  // If searching by number, prioritize companies that contain the exact question
-  if (lcNumQuery !== null) {
-    filteredCompanies.sort((a, b) => {
-      const aHasExact = a.problems.some(p => p.lcNum === lcNumQuery);
-      const bHasExact = b.problems.some(p => p.lcNum === lcNumQuery);
-      if (aHasExact && !bHasExact) return -1;
-      if (!aHasExact && bHasExact) return 1;
-      return b.total - a.total;
-    });
-  }
-
   const uniqueMatchedProblems = (typeof sortSearchResults === 'function')
     ? sortSearchResults(Array.from(probMap.values()), q, lcNumQuery)
     : sortProblemsByTopic(Array.from(probMap.values()));
@@ -677,6 +738,20 @@ function filterCompanies() {
     renderHomeProblemsResults(uniqueMatchedProblems.slice(0, 100)); // Render top 100 unique matches for fast rendering
   } else if (resultsDiv) {
     resultsDiv.style.display = 'none';
+  }
+
+  // Dynamic layout: If the search matches a company by name, place the companies list at the top!
+  const hasCompanyNameMatch = filteredCompanies.some(c => c.name.toLowerCase().includes(q));
+  if (homeView && resultsDiv && companiesCard) {
+    if (hasCompanyNameMatch) {
+      if (companiesCard.nextElementSibling !== resultsDiv) {
+        homeView.insertBefore(companiesCard, resultsDiv);
+      }
+    } else {
+      if (resultsDiv.nextElementSibling !== companiesCard) {
+        homeView.insertBefore(resultsDiv, companiesCard);
+      }
+    }
   }
 
   renderCompanies(filteredCompanies);
@@ -1317,7 +1392,7 @@ function goHome() {
   document.getElementById('home-view')?.classList.remove('hidden');
   currentCompanyObj = null;
   currentTopicName = null;
-  renderCompanies();
+  filterCompanies();
 }
 
 function escapeHtml(str) {
