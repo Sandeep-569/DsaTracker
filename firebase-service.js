@@ -137,6 +137,37 @@
     await auth.signOut();
   }
 
+  // Firestore: Save Custom Questions to Cloud
+  async function saveCustomQuestionsToCloud(questionsArray) {
+    if (!db || !currentUser) {
+      console.warn("[FirebaseService] Cannot sync custom questions: user not signed in or db not initialized.");
+      return false;
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('cloud-sync-status', {
+        detail: { status: 'syncing' }
+      }));
+
+      const cleanPayload = JSON.parse(JSON.stringify({
+        customQuestions: Array.isArray(questionsArray) ? questionsArray : [],
+        updatedAt: new Date().toISOString()
+      }));
+      await db.collection('users').doc(currentUser.uid).set(cleanPayload, { merge: true });
+
+      console.log("[FirebaseService] Custom questions saved to Firestore.");
+      window.dispatchEvent(new CustomEvent('cloud-sync-status', {
+        detail: { status: 'synced', timestamp: new Date() }
+      }));
+      return true;
+    } catch (err) {
+      console.error("[FirebaseService] Error saving custom questions:", err);
+      window.dispatchEvent(new CustomEvent('cloud-sync-status', {
+        detail: { status: 'error', error: err.message }
+      }));
+      return false;
+    }
+  }
+
   // Firestore: Save Progress to Cloud
   async function saveProgressToCloud(solvedArray, starredArray, datesObj, bookmarkDatesObj) {
     if (!db || !currentUser) {
@@ -203,6 +234,7 @@
             starredProblems: data.starredProblems || [],
             solvedDates: data.solvedDates || {},
             bookmarkDates: data.bookmarkDates || {},
+            customQuestions: data.customQuestions || [],
             updatedAt: data.updatedAt
           } 
         }));
@@ -228,6 +260,7 @@
     signInWithGoogle,
     logoutUser,
     saveProgressToCloud,
+    saveCustomQuestionsToCloud,
     getCurrentUser: () => currentUser
   };
 

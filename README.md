@@ -52,6 +52,15 @@ A modern, high-performance web platform designed to streamline Data Structures &
 
 ---
 
+### 5. ➕ In-App Custom & Contest Question Manager
+- **One-Click Header Modal**: Add new contest or unlisted problems directly from the UI without manual code edits or script runs.
+- **Auto Title Parsing**: Automatically extracts and formats the question title from any pasted LeetCode URL slug (with manual override).
+- **Target Company Flexibility**: Defaults to **"Random"** for recent contest questions, or allows filing under any existing company.
+- **Dual Persistence & Sync**: Saves instantly to Cloud Firestore (`users/{uid}.customQuestions`) for cross-device synchronization and `localStorage` for offline access.
+- **Integrated Backup & Restore**: Full support in JSON export/import (v1.4) to back up custom questions alongside solved and starred records.
+
+---
+
 ### 6. 🎨 Premium Dark-Mode Glassmorphism Design
 - Custom Vanilla CSS architecture with custom CSS custom properties (tokens).
 - Typography powered by Google Fonts (**Inter** + **JetBrains Mono**).
@@ -162,10 +171,10 @@ npx firebase deploy --only hosting
 
 ## 👤 Author & Links
 
-- **Author**: Sandeep Kumar Saha
+- **Author**: Sandeep Saha
 - **GitHub**: [@Sandeep-569](https://github.com/Sandeep-569)
 - **LeetCode**: [codedbysandeep](https://leetcode.com/u/codedbysandeep/)
-- **LinkedIn**: [Sandeep Kumar Saha](https://www.linkedin.com/in/codedbysandeep)
+- **LinkedIn**: [Sandeep  Saha](https://www.linkedin.com/in/codedbysandeep)
 
 ---
 

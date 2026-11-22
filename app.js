@@ -12,6 +12,10 @@ let solvedDates = new Map(); // title → ISO date string of when it was solved
 let bookmarkDates = new Map(); // title → ISO date string of when it was bookmarked
 let totalUniqueCount = 0;
 
+// Custom Questions added by user (synced via Firestore)
+// Each entry: { title, diff, url, src, company }
+let customQuestions = [];
+
 // True once Firestore has delivered authoritative data for this session.
 // Prevents initData()'s localStorage seed-merge from overwriting/polluting
 // cloud data if the cloud snapshot arrives before data.js finishes loading.
@@ -315,6 +319,43 @@ function initData() {
     });
   }
 
+  // Merge user-added custom questions cleanly into mergedCompanyMap
+  if (customQuestions && customQuestions.length > 0) {
+    customQuestions.forEach(cq => {
+      const compName = cq.company || 'Random';
+      const normKey = normalizeCompanyNameKey(compName);
+
+      if (!mergedCompanyMap.has(normKey)) {
+        mergedCompanyMap.set(normKey, {
+          name: formatCompanyTitle(compName),
+          problemsMap: new Map()
+        });
+      }
+
+      const companyEntry = mergedCompanyMap.get(normKey);
+      uniqueProbs.add(cq.title);
+
+      const probObj = {
+        title: cq.title,
+        diff: cq.diff,
+        url: cq.url,
+        src: cq.src || 'Custom'
+      };
+      const tags = getTopicsForProblem(probObj);
+      tags.forEach(t => {
+        topicMap.set(t, (topicMap.get(t) || 0) + 1);
+      });
+
+      if (!companyEntry.problemsMap.has(cq.title)) {
+        companyEntry.problemsMap.set(cq.title, {
+          ...probObj,
+          tags,
+          lcNum: getLeetCodeNumber(cq.url)
+        });
+      }
+    });
+  }
+
   // Convert merged map to companyList array
   mergedCompanyMap.forEach((entry) => {
     const problems = Array.from(entry.problemsMap.values());
@@ -376,6 +417,15 @@ function initData() {
       }
       // Clean up legacy recall items if present
       try { localStorage.removeItem('leetcode_recall_items_v1'); } catch (err) {}
+      // Load custom questions from localStorage
+      try {
+        const savedCustom = JSON.parse(localStorage.getItem('custom_questions_v1') || '[]');
+        if (Array.isArray(savedCustom) && savedCustom.length > 0 && customQuestions.length === 0) {
+          customQuestions = savedCustom;
+        }
+      } catch (err) {
+        console.error("Error loading custom questions from localStorage:", err);
+      }
     } catch (e) {
       console.error("Error loading progress from localStorage:", e);
     }
@@ -1358,17 +1408,19 @@ function generateBackupPayload() {
   const bmDatesObj = {};
   bookmarkDates.forEach((date, title) => { bmDatesObj[title] = date; });
   return {
-    version: '1.3',
+    version: '1.4',
     app: 'DSA Tracker',
     exportedAt: new Date().toISOString(),
     stats: {
       solvedCount: solvedProblems.size,
-      starredCount: starredProblems.size
+      starredCount: starredProblems.size,
+      customQuestionsCount: customQuestions.length
     },
     solvedProblems: Array.from(solvedProblems),
     starredProblems: Array.from(starredProblems),
     solvedDates: solvedDatesObj,
-    bookmarkDates: bmDatesObj
+    bookmarkDates: bmDatesObj,
+    customQuestions: customQuestions
   };
 }
 
@@ -1463,6 +1515,12 @@ function parseImportJson(text) {
     bookmarkDatesObj = parsed.bookmarkDates;
   }
 
+  // Extract custom questions if present (v1.4 backup format)
+  let customQuestionsList = [];
+  if (Array.isArray(parsed.customQuestions)) {
+    customQuestionsList = parsed.customQuestions.filter(q => q && q.title && q.url);
+  }
+
   // Format 2: Raw Array of solved problems
   if (Array.isArray(parsed) && solvedList.length === 0 && starredList.length === 0) {
     solvedList = parsed;
@@ -1472,16 +1530,16 @@ function parseImportJson(text) {
   solvedList = solvedList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
   starredList = starredList.filter(item => item && typeof item === 'string').map(s => s.trim()).filter(Boolean);
 
-  if (solvedList.length === 0 && starredList.length === 0) {
-    throw new Error('No valid solved or bookmarked questions found in this backup.');
+  if (solvedList.length === 0 && starredList.length === 0 && customQuestionsList.length === 0) {
+    throw new Error('No valid solved, bookmarked, or custom questions found in this backup.');
   }
 
-  return { solvedList, starredList, solvedDatesObj, bookmarkDatesObj };
+  return { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, customQuestionsList };
 }
 
 function processImportJsonString(jsonString) {
   try {
-    const { solvedList, starredList, solvedDatesObj, bookmarkDatesObj } = parseImportJson(jsonString);
+    const { solvedList, starredList, solvedDatesObj, bookmarkDatesObj, customQuestionsList } = parseImportJson(jsonString);
 
     const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
 
@@ -1492,6 +1550,9 @@ function processImportJsonString(jsonString) {
       Object.entries(solvedDatesObj || {}).forEach(([t, d]) => solvedDates.set(t, d));
       bookmarkDates = new Map();
       Object.entries(bookmarkDatesObj || {}).forEach(([t, d]) => bookmarkDates.set(t, d));
+      if (customQuestionsList.length > 0) {
+        customQuestions = customQuestionsList;
+      }
     } else {
       // Merge mode: only set date if not already tracked
       solvedList.forEach(p => {
@@ -1506,6 +1567,23 @@ function processImportJsonString(jsonString) {
           bookmarkDates.set(p, bookmarkDatesObj[p]);
         }
       });
+      if (customQuestionsList.length > 0) {
+        customQuestionsList.forEach(cq => {
+          if (!customQuestions.some(q => q.url === cq.url && q.company === cq.company)) {
+            customQuestions.push(cq);
+          }
+        });
+      }
+    }
+
+    if (customQuestionsList.length > 0) {
+      try {
+        localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
+      } catch (e) {}
+      if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+        window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
+      }
+      initData();
     }
 
     // Persist to localStorage using existing storage keys & update UI
@@ -1733,9 +1811,11 @@ async function handleSignOut() {
     solvedProblems.clear();
     starredProblems.clear();
     bookmarkDates.clear();
+    customQuestions = [];
     localStorage.removeItem('leetcode_solved_v1');
     localStorage.removeItem('leetcode_starred_v1');
     localStorage.removeItem('leetcode_bookmark_dates_v1');
+    localStorage.removeItem('custom_questions_v1');
     updateSolvedStats(true);
     updateStarredStats(true);
     closeAuthModal();
@@ -1961,7 +2041,7 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates, customQuestions: cloudCustom } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
 
@@ -1981,6 +2061,19 @@ window.addEventListener('cloud-data-received', (e) => {
     Object.entries(cloudBmDates).forEach(([title, date]) => {
       if (title && date) bookmarkDates.set(title.trim(), date);
     });
+  }
+
+  // Restore custom questions from cloud
+  if (Array.isArray(cloudCustom) && cloudCustom.length > 0) {
+    customQuestions = cloudCustom;
+    try {
+      localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
+    } catch (e) {
+      console.error('Error saving cloud custom questions to localStorage:', e);
+    }
+    // Re-initialize data to include custom questions
+    initData();
+    renderCompanies();
   }
 
   // Update local storage and UI counters without triggering another cloud write
@@ -2009,7 +2102,7 @@ window.addEventListener('cloud-data-received', (e) => {
 
 window.addEventListener('cloud-new-user-init', () => {
   // Brand new account (no cloud document yet): upload local storage data once
-  if (solvedProblems.size > 0 || starredProblems.size > 0) {
+  if (solvedProblems.size > 0 || starredProblems.size > 0 || customQuestions.length > 0) {
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       const datesObj = {};
       solvedDates.forEach((date, title) => { datesObj[title] = date; });
@@ -2021,6 +2114,9 @@ window.addEventListener('cloud-new-user-init', () => {
         datesObj,
         bmDatesObj
       );
+      if (customQuestions.length > 0) {
+        window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
+      }
     }
   }
 });
@@ -2233,6 +2329,242 @@ function renderSolvedHeatmap() {
 
 // Expose globally
 window.renderSolvedHeatmap = renderSolvedHeatmap;
+
+// ============================================================
+// ADD QUESTION MODAL — Add custom questions to any company
+// ============================================================
+
+function openAddQuestionModal() {
+  // Build company options from existing companyList
+  const companySelect = document.getElementById('aq-company');
+  const targetCompany = currentCompanyObj ? currentCompanyObj.name : 'Random';
+
+  if (companySelect) {
+    companySelect.innerHTML = '';
+    // "Random" first
+    const randomOpt = document.createElement('option');
+    randomOpt.value = 'Random';
+    randomOpt.textContent = 'Random';
+    companySelect.appendChild(randomOpt);
+
+    // Add all other companies sorted alphabetically
+    const otherCompanies = companyList
+      .map(c => c.name)
+      .filter(n => n !== 'Random')
+      .sort((a, b) => a.localeCompare(b));
+
+    otherCompanies.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      companySelect.appendChild(opt);
+    });
+
+    companySelect.value = targetCompany;
+  }
+
+  // Clear fields
+  const urlInput = document.getElementById('aq-url');
+  const titleInput = document.getElementById('aq-title');
+  const diffSelect = document.getElementById('aq-difficulty');
+  if (urlInput) urlInput.value = '';
+  if (titleInput) titleInput.value = '';
+  if (diffSelect) diffSelect.value = 'Medium';
+
+  // Clear status
+  const statusEl = document.getElementById('aq-status');
+  if (statusEl) { statusEl.textContent = ''; statusEl.className = 'aq-status'; }
+
+  document.getElementById('add-question-modal')?.classList.add('active');
+
+  // Focus URL input
+  setTimeout(() => urlInput?.focus(), 100);
+}
+
+function closeAddQuestionModal() {
+  document.getElementById('add-question-modal')?.classList.remove('active');
+}
+
+// Auto-fill title from LeetCode URL slug
+function autoFillFromUrl() {
+  const urlInput = document.getElementById('aq-url');
+  const titleInput = document.getElementById('aq-title');
+  if (!urlInput || !titleInput) return;
+
+  const url = urlInput.value.trim();
+  const match = url.match(/leetcode\.com\/problems\/([^\/?#]+)/);
+  if (match) {
+    const slug = match[1];
+    // Convert slug to title: "two-sum" → "Two Sum"
+    const autoTitle = slug
+      .split('-')
+      .map(w => {
+        if (!w) return '';
+        const upper = w.toUpperCase();
+        if (knownAcronyms.has(upper)) return upper;
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      })
+      .join(' ');
+
+    // Only auto-fill if title is empty or matches a previous auto-fill
+    if (!titleInput.value.trim() || titleInput.dataset.autoFilled === 'true') {
+      titleInput.value = autoTitle;
+      titleInput.dataset.autoFilled = 'true';
+    }
+  }
+}
+
+// Called when user manually types in the title field
+function onTitleManualEdit() {
+  const titleInput = document.getElementById('aq-title');
+  if (titleInput) {
+    titleInput.dataset.autoFilled = 'false';
+  }
+}
+
+async function submitAddQuestion() {
+  const urlInput = document.getElementById('aq-url');
+  const titleInput = document.getElementById('aq-title');
+  const diffSelect = document.getElementById('aq-difficulty');
+  const companySelect = document.getElementById('aq-company');
+  const statusEl = document.getElementById('aq-status');
+  const submitBtn = document.getElementById('aq-submit-btn');
+
+  let url = (urlInput?.value || '').trim();
+  const title = (titleInput?.value || '').trim();
+  const diff = diffSelect?.value || 'Medium';
+  const company = companySelect?.value || 'Random';
+
+  // Validate
+  if (!url) {
+    if (statusEl) { statusEl.textContent = '❌ Please enter a LeetCode URL.'; statusEl.className = 'aq-status error'; }
+    urlInput?.focus();
+    return;
+  }
+
+  // Normalize URL (strip trailing slashes, enforce https)
+  url = url.replace(/\/+$/, '');
+
+  if (!url.includes('leetcode.com/problems/')) {
+    if (statusEl) { statusEl.textContent = '❌ Please enter a valid LeetCode problem URL.'; statusEl.className = 'aq-status error'; }
+    urlInput?.focus();
+    return;
+  }
+
+  if (!title) {
+    if (statusEl) { statusEl.textContent = '❌ Please enter a problem title.'; statusEl.className = 'aq-status error'; }
+    titleInput?.focus();
+    return;
+  }
+
+  const slug = getSlugFromUrl(url);
+
+  // Check for duplicates in custom questions for this company
+  const alreadyCustom = customQuestions.some(q => (q.url === url || getSlugFromUrl(q.url) === slug) && q.company === company);
+  if (alreadyCustom) {
+    if (statusEl) { statusEl.textContent = `⚠️ Already added to "${company}".`; statusEl.className = 'aq-status error'; }
+    return;
+  }
+
+  // Check if already exists in existing data for this company
+  const existingCompany = companyList.find(c => c.name === company);
+  if (existingCompany && existingCompany.problems.some(p => p.url === url || getSlugFromUrl(p.url) === slug)) {
+    if (statusEl) { statusEl.textContent = `⚠️ Already exists in "${company}".`; statusEl.className = 'aq-status error'; }
+    return;
+  }
+
+  // Add to customQuestions
+  const newQuestion = { title, diff, url, src: 'Custom', company };
+  customQuestions.push(newQuestion);
+
+  // Save to localStorage
+  try {
+    localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
+  } catch (e) {
+    console.error('Error saving custom questions to localStorage:', e);
+  }
+
+  // Save to Firestore
+  if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving to Cloud...'; }
+    try {
+      await window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
+    } catch (err) {
+      console.error('Error saving custom questions to cloud:', err);
+    }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '+ Add Question'; }
+  }
+
+  // Re-initialize data to reflect the new question
+  initData();
+
+  // Re-render the current active view
+  if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    // If viewing the same company, refresh it
+    if (currentCompanyObj && currentCompanyObj.name === company) {
+      const updatedCompany = companyList.find(c => c.name === company);
+      if (updatedCompany) {
+        currentCompanyObj = updatedCompany;
+        if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+          renderTopicProblems();
+        } else {
+          renderCompanyTopics();
+        }
+      }
+    } else {
+      renderCompanyTopics();
+    }
+  } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+    filterCompanies();
+  }
+
+  if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
+
+  showToast(`✅ Added "${title}" (${diff}) to ${company}!`, 'success');
+  closeAddQuestionModal();
+}
+
+// Delete a custom question
+function deleteCustomQuestion(url, company) {
+  const cleanUrl = (url || '').trim().replace(/\/+$/, '');
+  const slug = getSlugFromUrl(cleanUrl);
+  const idx = customQuestions.findIndex(q => (q.url === cleanUrl || getSlugFromUrl(q.url) === slug) && q.company === company);
+  if (idx === -1) return;
+
+  const removed = customQuestions.splice(idx, 1)[0];
+
+  // Save to localStorage
+  try {
+    localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
+  } catch (e) {
+    console.error('Error saving custom questions to localStorage:', e);
+  }
+
+  // Save to Firestore
+  if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
+    window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
+  }
+
+  // Re-initialize and re-render
+  initData();
+  if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+    if (currentCompanyObj) {
+      const updatedCompany = companyList.find(c => c.name === currentCompanyObj.name);
+      if (updatedCompany) {
+        currentCompanyObj = updatedCompany;
+        if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+          renderTopicProblems();
+        } else {
+          renderCompanyTopics();
+        }
+      }
+    }
+  } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+    filterCompanies();
+  }
+
+  showToast(`🗑️ Removed "${removed.title}" from ${company}.`, 'info');
+}
 
 
 

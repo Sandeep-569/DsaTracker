@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312151b' stroke='%23FFA116' stroke-width='3' stroke-opacity='0.8'/%3E%3Cg transform='translate(11, 11) scale(1.75)'%3E%3Cpath d='M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z' fill='%23E6EDF3'/%3E%3Cpath d='M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3Cpath d='M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="alternate icon" href="favicon.svg?v=2.1.0">
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
-  <link rel="stylesheet" href="styles.css?v=3.2.0">
+  <link rel="stylesheet" href="styles.css?v=3.3.0">
   <style>
     /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
     body.auth-locked {
@@ -111,6 +111,13 @@
           </div>
         </div>
         <div class="header-actions">
+          <button class="social-btn add-btn" id="header-add-btn" onclick="openAddQuestionModal()" title="Add new or contest question to Random or any company">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Add Question</span>
+          </button>
           <button class="social-btn auth-btn" id="auth-btn" onclick="openAuthModal()" title="Firebase Cloud Sync & Account">
             <span class="auth-icon" id="auth-btn-icon">☁️</span>
             <span id="auth-btn-label">Cloud Sync</span>
@@ -840,6 +847,62 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Question Modal -->
+    <div class="modal-overlay" id="add-question-modal" onclick="if(event.target === this) closeAddQuestionModal()">
+      <div class="modal-box aq-modal-box">
+        <div class="backup-modal-header">
+          <div class="modal-title-group">
+            <div class="modal-badge-icon">➕</div>
+            <div>
+              <h2>Add Question</h2>
+              <p class="modal-subtitle">Add a LeetCode problem to any company list. Syncs to Cloud.</p>
+            </div>
+          </div>
+          <button class="modal-close-btn" onclick="closeAddQuestionModal()" title="Close">&times;</button>
+        </div>
+
+        <div class="aq-form">
+          <div class="aq-field">
+            <label for="aq-url">LeetCode URL <span class="aq-required">*</span></label>
+            <input id="aq-url" type="url" placeholder="https://leetcode.com/problems/two-sum" oninput="autoFillFromUrl()">
+          </div>
+
+          <div class="aq-field">
+            <label for="aq-title">Problem Title <span class="aq-required">*</span></label>
+            <input id="aq-title" type="text" placeholder="Two Sum" oninput="onTitleManualEdit()">
+            <span class="aq-hint">Auto-fills from URL — edit if needed</span>
+          </div>
+
+          <div class="aq-row">
+            <div class="aq-field" style="flex:1;">
+              <label for="aq-difficulty">Difficulty</label>
+              <select id="aq-difficulty" class="select-sec">
+                <option value="Easy">Easy</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+            <div class="aq-field" style="flex:1.5;">
+              <label for="aq-company">Company</label>
+              <select id="aq-company" class="select-sec">
+                <option value="Random" selected>Random</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="aq-status" class="aq-status"></div>
+
+          <button id="aq-submit-btn" class="action-btn btn-primary aq-submit" onclick="submitAddQuestion()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Add Question</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Toast Notification Container -->
@@ -849,10 +912,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="firebase-service.js?v=2.8.3"></script>
+  <script src="firebase-service.js?v=2.9.0"></script>
   <script src="leetcode-numbers.js?v=2.8.5"></script>
   <script src="solvedQuestion.js?v=2.8.3"></script>
-  <script src="app.js?v=2.8.5"></script>
+  <script src="app.js?v=2.9.0"></script>
 </body>
 
 </html>
