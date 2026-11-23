@@ -2520,6 +2520,87 @@ function populateTopicDropdown() {
   });
 }
 
+function selectAqDifficulty(diff) {
+  const cleanDiff = diff ? (diff.charAt(0).toUpperCase() + diff.slice(1).toLowerCase()) : 'Medium';
+  const hiddenSelect = document.getElementById('aq-difficulty');
+  if (hiddenSelect) hiddenSelect.value = cleanDiff;
+
+  document.querySelectorAll('.aq-diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === cleanDiff);
+  });
+
+  updateAqPreview();
+}
+
+function updateAqPreview() {
+  const previewCard = document.getElementById('aq-preview-card');
+  const titleInput = document.getElementById('aq-title');
+  const numInput = document.getElementById('aq-number');
+  const diffSelect = document.getElementById('aq-difficulty');
+  const compSelect = document.getElementById('aq-company');
+  const topicSelect = document.getElementById('aq-primary-topic');
+
+  if (!previewCard) return;
+
+  const title = (titleInput?.value || '').trim();
+  const num = (numInput?.value || '').trim();
+  const diff = diffSelect?.value || 'Medium';
+  const comp = compSelect?.value || 'Random';
+  const topic = topicSelect?.value || 'General DSA';
+
+  if (!title && !num) {
+    previewCard.style.display = 'none';
+    return;
+  }
+
+  previewCard.style.display = 'flex';
+
+  const numEl = document.getElementById('aq-preview-num');
+  if (numEl) {
+    if (num) {
+      numEl.textContent = '#' + num;
+      numEl.style.display = 'inline-block';
+    } else {
+      numEl.style.display = 'none';
+    }
+  }
+
+  const titleEl = document.getElementById('aq-preview-title');
+  if (titleEl) titleEl.textContent = title || 'Untitled Problem';
+
+  const diffEl = document.getElementById('aq-preview-diff');
+  if (diffEl) {
+    diffEl.textContent = diff;
+    diffEl.className = 'tag ' + diff;
+  }
+
+  const topicEl = document.getElementById('aq-preview-topic');
+  if (topicEl) topicEl.textContent = topic;
+
+  const compEl = document.getElementById('aq-preview-comp');
+  if (compEl) compEl.textContent = '🏢 ' + comp;
+}
+
+async function pasteFromClipboard() {
+  const urlInput = document.getElementById('aq-url');
+  if (!urlInput) return;
+
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && text.includes('leetcode.com')) {
+      urlInput.value = text.trim();
+      autoFillFromUrl();
+      showToast('📋 Pasted LeetCode URL!', 'info');
+    } else if (text) {
+      urlInput.value = text.trim();
+      autoFillFromUrl();
+    }
+  } catch (err) {
+    urlInput.focus();
+    urlInput.select();
+  }
+}
+
 function openAddQuestionModal() {
   populateCompanyDropdown();
   populateTopicDropdown();
@@ -2530,7 +2611,7 @@ function openAddQuestionModal() {
 
   document.getElementById('aq-modal-icon').textContent = '➕';
   document.getElementById('aq-modal-heading').textContent = 'Add Question';
-  document.getElementById('aq-modal-subheading').textContent = 'Add a LeetCode problem to any company list. Syncs to Cloud.';
+  document.getElementById('aq-modal-subheading').textContent = 'Paste a LeetCode URL to auto-detect details, or customize freely';
   document.getElementById('aq-submit-label').textContent = 'Add Question';
 
   const deleteBtn = document.getElementById('aq-delete-btn');
@@ -2540,21 +2621,26 @@ function openAddQuestionModal() {
   const urlInput = document.getElementById('aq-url');
   const titleInput = document.getElementById('aq-title');
   const numInput = document.getElementById('aq-number');
-  const diffSelect = document.getElementById('aq-difficulty');
   const topicSelect = document.getElementById('aq-primary-topic');
   const companySelect = document.getElementById('aq-company');
 
   if (urlInput) urlInput.value = '';
   if (titleInput) { titleInput.value = ''; titleInput.dataset.autoFilled = 'false'; }
   if (numInput) { numInput.value = ''; numInput.dataset.autoFilled = 'false'; }
-  if (diffSelect) diffSelect.value = 'Medium';
   if (topicSelect) { topicSelect.value = ''; topicSelect.dataset.autoFilled = 'false'; }
+
+  selectAqDifficulty('Medium');
 
   const targetCompany = currentCompanyObj ? currentCompanyObj.name : 'Random';
   if (companySelect) companySelect.value = targetCompany;
 
   const statusEl = document.getElementById('aq-status');
   if (statusEl) { statusEl.textContent = ''; statusEl.className = 'aq-status'; }
+
+  const syncBadge = document.getElementById('aq-preview-badge');
+  if (syncBadge) syncBadge.textContent = '⚡ Live Preview';
+
+  updateAqPreview();
 
   document.getElementById('add-question-modal')?.classList.add('active');
   setTimeout(() => urlInput?.focus(), 100);
@@ -2593,8 +2679,9 @@ function openEditQuestionModal(url, company) {
   document.getElementById('aq-url').value = found.url;
   document.getElementById('aq-title').value = found.title;
   document.getElementById('aq-number').value = found.lcNum || '';
-  document.getElementById('aq-difficulty').value = found.diff || 'Medium';
   document.getElementById('aq-company').value = found.company || 'Random';
+
+  selectAqDifficulty(found.diff || 'Medium');
 
   const topicSelect = document.getElementById('aq-primary-topic');
   if (topicSelect) {
@@ -2605,9 +2692,14 @@ function openEditQuestionModal(url, company) {
   if (statusEl) {
     statusEl.innerHTML = found.lcNum
       ? `LeetCode #${found.lcNum} • ${found.diff} • ${found.tags ? found.tags.join(', ') : 'General DSA'}`
-      : 'Tip: You can add the problem number or change tags/difficulty here.';
-    statusEl.className = 'aq-status';
+      : 'Tip: You can edit or add problem number, difficulty, and tags.';
+    statusEl.className = 'aq-status info';
   }
+
+  const syncBadge = document.getElementById('aq-preview-badge');
+  if (syncBadge) syncBadge.textContent = '✏️ Custom Question';
+
+  updateAqPreview();
 
   document.getElementById('add-question-modal')?.classList.add('active');
 }
@@ -2622,7 +2714,6 @@ async function autoFillFromUrl() {
   const urlInput = document.getElementById('aq-url');
   const titleInput = document.getElementById('aq-title');
   const numInput = document.getElementById('aq-number');
-  const diffSelect = document.getElementById('aq-difficulty');
   const topicSelect = document.getElementById('aq-primary-topic');
   const statusEl = document.getElementById('aq-status');
   if (!urlInput) return;
@@ -2630,7 +2721,8 @@ async function autoFillFromUrl() {
   const url = urlInput.value.trim();
   const match = url.match(/leetcode\.com\/problems\/([^\/?#]+)/);
   if (!match) {
-    if (statusEl) statusEl.textContent = '';
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'aq-status'; }
+    updateAqPreview();
     return;
   }
 
@@ -2669,13 +2761,15 @@ async function autoFillFromUrl() {
     }
   }
 
+  updateAqPreview();
+
   // 4. Query LeetCode API asynchronously for official number, difficulty, and tags
   if (autoFetchAbortController) autoFetchAbortController.abort();
   autoFetchAbortController = new AbortController();
 
   if (statusEl) {
     statusEl.innerHTML = `<span class="aq-loading-spinner"></span> Auto-detecting details from LeetCode...`;
-    statusEl.className = 'aq-status';
+    statusEl.className = 'aq-status loading';
   }
 
   try {
@@ -2700,9 +2794,9 @@ async function autoFillFromUrl() {
       }
 
       // Auto-fill Difficulty
-      if (data.difficulty && diffSelect) {
+      if (data.difficulty) {
         const d = data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1).toLowerCase();
-        diffSelect.value = d;
+        selectAqDifficulty(d);
         detectedInfo.push(d);
       }
 
@@ -2716,22 +2810,29 @@ async function autoFillFromUrl() {
         }
       }
 
+      const syncBadge = document.getElementById('aq-preview-badge');
+      if (syncBadge) syncBadge.textContent = '⚡ LeetCode API';
+
       if (statusEl) {
-        statusEl.innerHTML = `✅ Detected: ${detectedInfo.length > 0 ? detectedInfo.join(' • ') : 'LeetCode question found'}`;
+        statusEl.innerHTML = `✨ Auto-detected: ${detectedInfo.length > 0 ? detectedInfo.join(' • ') : 'LeetCode question found'}`;
         statusEl.className = 'aq-status success';
       }
+
+      updateAqPreview();
     } else {
       if (statusEl) {
         statusEl.textContent = 'ℹ️ Question not indexed on proxy yet. You can enter details manually.';
-        statusEl.className = 'aq-status';
+        statusEl.className = 'aq-status info';
       }
+      updateAqPreview();
     }
   } catch (err) {
     if (err.name === 'AbortError') return;
     if (statusEl) {
       statusEl.textContent = 'ℹ️ Could not fetch LeetCode details automatically. You can enter them manually.';
-      statusEl.className = 'aq-status';
+      statusEl.className = 'aq-status info';
     }
+    updateAqPreview();
   }
 }
 

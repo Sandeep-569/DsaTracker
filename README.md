@@ -53,7 +53,10 @@ A modern, high-performance web platform designed to streamline Data Structures &
 ---
 
 ### 5. ➕ In-App Custom & Contest Question Manager
-- **Header Action Trigger**: Quick-access `+ Add Question` button in the navigation header to log recent contest questions or unlisted problems directly without touching code.
+- **Modern Glassmorphic Modal UI**: Premium dark glass modal with dedicated icon fields, live status banners, and smooth animations.
+- **Interactive Difficulty Pills**: Color-coded segmented buttons (`🟢 Easy`, `🟡 Medium`, `🔴 Hard`) with active glow states instead of standard dropdowns.
+- **Real-Time Live Preview Card**: Dynamically previews how your problem will render in tables (LeetCode badge, title, topic tags, and company badge).
+- **One-Click Paste Button**: Inline `📋 Paste` action automatically reads clipboard links and triggers instant auto-detection.
 - **Automatic LeetCode Metadata Auto-Detection**: Pasting any LeetCode problem URL queries official LeetCode problem details:
   - **LeetCode Problem Number** (e.g. `#4120`, `#4097`)
   - **Difficulty** (`Easy`, `Medium`, `Hard`)

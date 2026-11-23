@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312151b' stroke='%23FFA116' stroke-width='3' stroke-opacity='0.8'/%3E%3Cg transform='translate(11, 11) scale(1.75)'%3E%3Cpath d='M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z' fill='%23E6EDF3'/%3E%3Cpath d='M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3Cpath d='M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z' fill='%23FFA116'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="alternate icon" href="favicon.svg?v=2.1.0">
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
-  <link rel="stylesheet" href="styles.css?v=3.3.0">
+  <link rel="stylesheet" href="styles.css?v=3.4.0">
   <style>
     /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
     body.auth-locked {
@@ -851,12 +851,12 @@
     <!-- Add Question Modal -->
     <div class="modal-overlay" id="add-question-modal" onclick="if(event.target === this) closeAddQuestionModal()">
       <div class="modal-box aq-modal-box">
-        <div class="backup-modal-header">
+        <div class="backup-modal-header aq-header">
           <div class="modal-title-group">
-            <div class="modal-badge-icon" id="aq-modal-icon">➕</div>
+            <div class="modal-badge-icon aq-icon-glow" id="aq-modal-icon">➕</div>
             <div>
               <h2 id="aq-modal-heading">Add Question</h2>
-              <p class="modal-subtitle" id="aq-modal-subheading">Add a LeetCode problem to any company list. Syncs to Cloud.</p>
+              <p class="modal-subtitle" id="aq-modal-subheading">Paste a LeetCode URL to auto-detect details, or customize freely</p>
             </div>
           </div>
           <button class="modal-close-btn" onclick="closeAddQuestionModal()" title="Close">&times;</button>
@@ -867,56 +867,116 @@
           <input type="hidden" id="aq-edit-original-url" value="">
           <input type="hidden" id="aq-edit-original-company" value="">
 
+          <!-- LeetCode URL Field with Inline Paste Button -->
           <div class="aq-field">
-            <label for="aq-url">LeetCode URL <span class="aq-required">*</span></label>
-            <input id="aq-url" type="url" placeholder="https://leetcode.com/problems/two-sum" oninput="autoFillFromUrl()">
+            <div class="aq-label-row">
+              <label for="aq-url">LeetCode Problem URL <span class="aq-required">*</span></label>
+              <button type="button" class="aq-paste-btn" onclick="pasteFromClipboard()" title="Paste link from clipboard">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                <span>Paste</span>
+              </button>
+            </div>
+            <div class="aq-input-wrap">
+              <span class="aq-input-icon">🔗</span>
+              <input id="aq-url" type="url" placeholder="https://leetcode.com/problems/count-dominant-elements/" oninput="autoFillFromUrl()">
+            </div>
           </div>
 
+          <!-- Auto-detection Status Banner right below URL -->
+          <div id="aq-status" class="aq-status"></div>
+
+          <!-- Live Problem Preview Card -->
+          <div id="aq-preview-card" class="aq-preview-card" style="display: none;">
+            <div class="aq-preview-header">
+              <span class="aq-preview-label">Live Preview</span>
+              <span id="aq-preview-badge" class="aq-preview-sync-badge">⚡ Auto-Detected</span>
+            </div>
+            <div class="aq-preview-body">
+              <div class="aq-preview-title-row">
+                <span id="aq-preview-num" class="lc-num">#</span>
+                <span id="aq-preview-title" class="aq-preview-title">Problem Title</span>
+              </div>
+              <div class="aq-preview-tags">
+                <span id="aq-preview-diff" class="tag Medium">Medium</span>
+                <span id="aq-preview-topic" class="topic-tag">General DSA</span>
+                <span id="aq-preview-comp" class="comp-tag">🏢 Random</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Problem Title and LeetCode Number -->
           <div class="aq-row">
             <div class="aq-field" style="flex: 2.2;">
               <label for="aq-title">Problem Title <span class="aq-required">*</span></label>
-              <input id="aq-title" type="text" placeholder="Two Sum" oninput="onTitleManualEdit()">
-              <span class="aq-hint">Auto-fills from LeetCode</span>
+              <div class="aq-input-wrap">
+                <span class="aq-input-icon">📝</span>
+                <input id="aq-title" type="text" placeholder="e.g. Count Dominant Elements" oninput="onTitleManualEdit(); updateAqPreview();">
+              </div>
             </div>
             <div class="aq-field" style="flex: 1;">
               <label for="aq-number">LeetCode #</label>
-              <input id="aq-number" type="number" placeholder="e.g. 1" oninput="onNumberManualEdit()">
-              <span class="aq-hint">For search & badge</span>
+              <div class="aq-input-wrap">
+                <span class="aq-input-icon">🔢</span>
+                <input id="aq-number" type="number" placeholder="4120" oninput="onNumberManualEdit(); updateAqPreview();">
+              </div>
             </div>
           </div>
 
-          <div class="aq-row">
-            <div class="aq-field" style="flex:1;">
-              <label for="aq-difficulty">Difficulty</label>
-              <select id="aq-difficulty" class="select-sec">
-                <option value="Easy">Easy</option>
-                <option value="Medium" selected>Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
-            <div class="aq-field" style="flex:1.2;">
-              <label for="aq-company">Company</label>
-              <select id="aq-company" class="select-sec">
-                <option value="Random" selected>Random</option>
-              </select>
-            </div>
-          </div>
-
+          <!-- Difficulty Pill Selector -->
           <div class="aq-field">
-            <label for="aq-primary-topic">Topic / Category</label>
-            <select id="aq-primary-topic" class="select-sec">
-              <option value="">Auto-Detect from LeetCode / Slug</option>
+            <label>Difficulty</label>
+            <div class="aq-diff-group">
+              <button type="button" class="aq-diff-btn easy" data-diff="Easy" onclick="selectAqDifficulty('Easy')">
+                <span class="diff-dot easy"></span>
+                <span>Easy</span>
+              </button>
+              <button type="button" class="aq-diff-btn med active" data-diff="Medium" onclick="selectAqDifficulty('Medium')">
+                <span class="diff-dot med"></span>
+                <span>Medium</span>
+              </button>
+              <button type="button" class="aq-diff-btn hard" data-diff="Hard" onclick="selectAqDifficulty('Hard')">
+                <span class="diff-dot hard"></span>
+                <span>Hard</span>
+              </button>
+            </div>
+            <!-- Hidden native select for full compatibility -->
+            <select id="aq-difficulty" style="display: none;">
+              <option value="Easy">Easy</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="Hard">Hard</option>
             </select>
-            <span class="aq-hint">Select a category or leave auto-detected</span>
           </div>
 
-          <div id="aq-status" class="aq-status"></div>
+          <!-- Company and Topic Selection -->
+          <div class="aq-row">
+            <div class="aq-field" style="flex: 1;">
+              <label for="aq-company">Company</label>
+              <div class="aq-input-wrap">
+                <span class="aq-input-icon">🏢</span>
+                <select id="aq-company" class="select-sec" onchange="updateAqPreview()">
+                  <option value="Random" selected>Random</option>
+                </select>
+              </div>
+            </div>
+            <div class="aq-field" style="flex: 1.2;">
+              <label for="aq-primary-topic">Topic / Category</label>
+              <div class="aq-input-wrap">
+                <span class="aq-input-icon">🏷️</span>
+                <select id="aq-primary-topic" class="select-sec" onchange="updateAqPreview()">
+                  <option value="">Auto-Detect Category</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
-          <div class="aq-modal-actions" style="display: flex; gap: 10px; margin-top: 6px;">
-            <button id="aq-delete-btn" class="action-btn btn-danger" style="display: none; padding: 12px 18px;" onclick="handleModalDelete()">
-              🗑️ Delete
+          <!-- Action Buttons -->
+          <div class="aq-modal-actions">
+            <button id="aq-delete-btn" type="button" class="action-btn btn-danger aq-delete-action" style="display: none;" onclick="handleModalDelete()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Delete</span>
             </button>
-            <button id="aq-submit-btn" class="action-btn btn-primary aq-submit" style="flex: 1;" onclick="submitAddQuestion()">
+            <button type="button" class="action-btn aq-cancel-btn" onclick="closeAddQuestionModal()">Cancel</button>
+            <button id="aq-submit-btn" type="button" class="action-btn btn-primary aq-submit" style="flex: 1;" onclick="submitAddQuestion()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -939,7 +999,7 @@
   <script src="firebase-service.js?v=2.9.0"></script>
   <script src="leetcode-numbers.js?v=2.8.5"></script>
   <script src="solvedQuestion.js?v=2.8.3"></script>
-  <script src="app.js?v=2.9.0"></script>
+  <script src="app.js?v=3.0.0"></script>
 </body>
 
 </html>
