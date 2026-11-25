@@ -20,6 +20,8 @@ let customQuestions = [];
 // Prevents initData()'s localStorage seed-merge from overwriting/polluting
 // cloud data if the cloud snapshot arrives before data.js finishes loading.
 let cloudAuthoritativeDataLoaded = false;
+let currentLeetCodeUsername = '';
+let cachedQuestionLookups = null;
 
 // ============================================================
 // TOPIC CLASSIFICATION ENGINE — 31 Topics, Basic → Advanced
@@ -274,6 +276,7 @@ function formatCompanyTitle(str) {
 // Initialize Data from LEETCODE_DATA (with company merging & capitalization normalization)
 function initData() {
   companyList = [];
+  cachedQuestionLookups = null;
   const uniqueProbs = new Set();
   const topicMap = new Map();
 
@@ -2026,6 +2029,14 @@ async function handleSignOut() {
       await window.FirebaseService.logoutUser();
     }
     cloudAuthoritativeDataLoaded = false;
+    currentLeetCodeUsername = '';
+    const userLcInput = document.getElementById('user-leetcode-username');
+    if (userLcInput) userLcInput.value = '';
+    const userLcStatus = document.getElementById('user-leetcode-status');
+    if (userLcStatus) { userLcStatus.textContent = ''; userLcStatus.className = 'user-lc-status'; }
+    const headerLcBtn = document.getElementById('header-lc-sync-btn');
+    if (headerLcBtn) headerLcBtn.style.display = 'none';
+
     solvedProblems.clear();
     starredProblems.clear();
     bookmarkDates.clear();
@@ -2071,12 +2082,296 @@ async function triggerManualCloudSync() {
   }
 }
 
+// ============================================================
+// USER LEETCODE AUTO-SYNC & IN-APP SOLVE FETCHER
+// ============================================================
+
+function getQuestionBankLookups() {
+  if (cachedQuestionLookups) return cachedQuestionLookups;
+
+  const titleLookup = new Map();
+  const slugLookup = new Map();
+
+  const dataObj = window.LEETCODE_DATA || (typeof LEETCODE_DATA !== 'undefined' ? LEETCODE_DATA : (typeof RAW_DATA !== 'undefined' ? RAW_DATA : null));
+  if (dataObj) {
+    Object.values(dataObj).forEach(problems => {
+      if (!Array.isArray(problems)) return;
+      problems.forEach(p => {
+        const rawTitle = Array.isArray(p) ? p[0] : (p ? p.title : null);
+        const url = Array.isArray(p) ? p[2] : (p ? p.url : null);
+        if (!rawTitle || typeof rawTitle !== 'string') return;
+        const canonical = rawTitle.trim();
+        const key = canonical.toLowerCase();
+        if (!titleLookup.has(key)) titleLookup.set(key, canonical);
+
+        if (url) {
+          const match = url.match(/leetcode\.com\/problems\/([^\/\?#]+)/);
+          if (match) {
+            const slug = match[1].toLowerCase();
+            if (!slugLookup.has(slug)) slugLookup.set(slug, canonical);
+          }
+        }
+      });
+    });
+  }
+
+  // Also include custom questions
+  if (Array.isArray(customQuestions)) {
+    customQuestions.forEach(cq => {
+      if (!cq || !cq.title) return;
+      const canonical = cq.title.trim();
+      const key = canonical.toLowerCase();
+      if (!titleLookup.has(key)) titleLookup.set(key, canonical);
+      if (cq.url) {
+        const match = cq.url.match(/leetcode\.com\/problems\/([^\/\?#]+)/);
+        if (match) {
+          const slug = match[1].toLowerCase();
+          if (!slugLookup.has(slug)) slugLookup.set(slug, canonical);
+        }
+      }
+    });
+  }
+
+  cachedQuestionLookups = { titleLookup, slugLookup };
+  return cachedQuestionLookups;
+}
+
+function matchAndMergeLeetCodeSubmissions(submissions) {
+  if (!Array.isArray(submissions) || submissions.length === 0) return 0;
+  const { titleLookup, slugLookup } = getQuestionBankLookups();
+
+  let newlyAdded = 0;
+  submissions.forEach(sub => {
+    if (!sub) return;
+    const rawTitle = (sub.title || '').trim();
+    const rawSlug = (sub.titleSlug || sub.slug || '').trim().toLowerCase();
+    const timestamp = sub.timestamp ? Number(sub.timestamp) : null;
+
+    let matchedTitle = null;
+    if (rawTitle && titleLookup.has(rawTitle.toLowerCase())) {
+      matchedTitle = titleLookup.get(rawTitle.toLowerCase());
+    } else if (rawSlug && slugLookup.has(rawSlug)) {
+      matchedTitle = slugLookup.get(rawSlug);
+    } else if (rawTitle) {
+      const derivedSlug = rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (slugLookup.has(derivedSlug)) {
+        matchedTitle = slugLookup.get(derivedSlug);
+      }
+    }
+
+    if (matchedTitle) {
+      const isNew = !solvedProblems.has(matchedTitle);
+      if (isNew) {
+        solvedProblems.add(matchedTitle);
+        newlyAdded++;
+      }
+      if (!solvedDates.has(matchedTitle) && timestamp) {
+        const iso = new Date(timestamp * 1000).toISOString();
+        solvedDates.set(matchedTitle, iso);
+      } else if (!solvedDates.has(matchedTitle)) {
+        solvedDates.set(matchedTitle, new Date().toISOString());
+      }
+    }
+  });
+
+  if (newlyAdded > 0) {
+    updateSolvedStats(); // persists locally and triggers syncToCloudDebounced()
+    if (typeof renderSolvedHeatmap === 'function') renderSolvedHeatmap();
+
+    if (document.getElementById('solved-view')?.classList.contains('active')) {
+      if (typeof renderSolvedView === 'function') renderSolvedView();
+    } else if (document.getElementById('bookmarks-view')?.classList.contains('active')) {
+      renderBookmarksView();
+    } else if (document.getElementById('topic-problems-view')?.classList.contains('active')) {
+      renderTopicProblems();
+    } else if (document.getElementById('company-topics-view')?.classList.contains('active')) {
+      renderCompanyTopics();
+    } else if (!document.getElementById('home-view')?.classList.contains('hidden')) {
+      if (companyList && companyList.length > 0) filterCompanies();
+    }
+  }
+
+  return newlyAdded;
+}
+
+async function saveUserLeetCodeUsername() {
+  const input = document.getElementById('user-leetcode-username');
+  const statusEl = document.getElementById('user-leetcode-status');
+  const val = input ? input.value.trim() : '';
+
+  if (!val) {
+    if (statusEl) {
+      statusEl.textContent = '❌ Please enter a LeetCode username';
+      statusEl.className = 'user-lc-status error';
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.innerHTML = '<span class="aq-loading-spinner"></span> Saving...';
+    statusEl.className = 'user-lc-status loading';
+  }
+
+  if (window.FirebaseService && typeof window.FirebaseService.saveUserLeetCodeHandle === 'function') {
+    const ok = await window.FirebaseService.saveUserLeetCodeHandle(val);
+    if (ok) {
+      currentLeetCodeUsername = val;
+      if (statusEl) {
+        statusEl.textContent = `✓ Saved @${val}! Ready to sync.`;
+        statusEl.className = 'user-lc-status success';
+      }
+      const headerBtn = document.getElementById('header-lc-sync-btn');
+      if (headerBtn) headerBtn.style.display = 'inline-flex';
+      showToast(`✓ LeetCode username @${val} saved!`, 'success');
+    } else {
+      if (statusEl) {
+        statusEl.textContent = '❌ Failed to save to cloud. Ensure you are signed in.';
+        statusEl.className = 'user-lc-status error';
+      }
+    }
+  } else {
+    if (statusEl) {
+      statusEl.textContent = '❌ Please sign in to save your username.';
+      statusEl.className = 'user-lc-status error';
+    }
+  }
+}
+
+async function syncUserLeetCodeSolves() {
+  const input = document.getElementById('user-leetcode-username');
+  const statusEl = document.getElementById('user-leetcode-status');
+  const btn = document.getElementById('user-leetcode-sync-btn');
+  const label = document.getElementById('user-lc-sync-label');
+  const headerBtn = document.getElementById('header-lc-sync-btn');
+  const headerLabel = document.getElementById('header-lc-sync-label');
+  const username = (input ? input.value.trim() : '') || currentLeetCodeUsername;
+
+  if (!username) {
+    openAuthModal();
+    const lcInput = document.getElementById('user-leetcode-username');
+    if (lcInput) lcInput.focus();
+    if (statusEl) {
+      statusEl.textContent = '⚠️ Please enter your LeetCode username and click Save first.';
+      statusEl.className = 'user-lc-status error';
+    }
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (label) label.textContent = 'Fetching from LeetCode...';
+  if (headerBtn) headerBtn.disabled = true;
+  if (headerLabel) headerLabel.textContent = 'Syncing...';
+  if (statusEl) {
+    statusEl.innerHTML = `<span class="aq-loading-spinner"></span> Querying recent solves for @${escapeHtml(username)}...`;
+    statusEl.className = 'user-lc-status loading';
+  }
+
+  try {
+    let list = [];
+
+    // 1. Try local dev proxy if on localhost or 127.0.0.1
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal) {
+      try {
+        const res = await fetch(`/api/leetcode-submissions?username=${encodeURIComponent(username)}&limit=30`);
+        if (res.ok) {
+          const data = await res.json();
+          list = data?.data?.recentAcSubmissionList || [];
+        }
+      } catch (err) {
+        console.warn('[LeetCode Sync] Local proxy error, falling back:', err);
+      }
+    }
+
+    // 2. Fallback to public mirrors
+    if (!list || list.length === 0) {
+      try {
+        const fRes = await fetch(`https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(username)}`);
+        if (fRes.ok) {
+          const fData = await fRes.json();
+          const recents = fData?.recentSubmissions || [];
+          list = recents
+            .filter(s => !s.statusDisplay || s.statusDisplay.toLowerCase() === 'accepted')
+            .map(s => ({
+              title: s.title,
+              titleSlug: s.titleSlug,
+              timestamp: s.timestamp ? Number(s.timestamp) : null
+            }));
+        }
+      } catch (err) {
+        console.warn('[LeetCode Sync] Faisalshohag mirror error:', err);
+      }
+    }
+
+    if (!list || list.length === 0) {
+      try {
+        const aRes = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(username)}/acSubmissions?limit=30`);
+        if (aRes.ok) {
+          const aData = await aRes.json();
+          const items = aData?.submission || aData?.acSubmissionList || (Array.isArray(aData) ? aData : []);
+          if (Array.isArray(items) && items.length > 0) {
+            list = items.map(s => ({
+              title: s.title,
+              titleSlug: s.titleSlug,
+              timestamp: s.timestamp ? Number(s.timestamp) : null
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn('[LeetCode Sync] Alfa mirror error:', err);
+      }
+    }
+
+    if (!list || list.length === 0) {
+      if (statusEl) {
+        statusEl.textContent = `ℹ️ No recent accepted solves found for @${username} (or profile is private/rate limited).`;
+        statusEl.className = 'user-lc-status info';
+      }
+      showToast(`No new solves found for @${username}. Background cron also checks every 3 hours!`, 'info');
+      return;
+    }
+
+    // Match with question bank and merge
+    const newlyAdded = matchAndMergeLeetCodeSubmissions(list);
+    if (newlyAdded > 0) {
+      if (statusEl) {
+        statusEl.textContent = `🎉 Successfully imported ${newlyAdded} new solved problem(s)!`;
+        statusEl.className = 'user-lc-status success';
+      }
+      showToast(`🎉 Imported ${newlyAdded} new solved question(s) from LeetCode!`, 'success');
+    } else {
+      if (statusEl) {
+        statusEl.textContent = `✓ Everything is up to date! (${list.length} recent AC solves checked)`;
+        statusEl.className = 'user-lc-status success';
+      }
+      showToast('✓ Everything is already up to date with LeetCode!', 'info');
+    }
+  } catch (err) {
+    console.error('[LeetCode Sync Error]', err);
+    if (statusEl) {
+      statusEl.textContent = `❌ Sync error: ${err.message}`;
+      statusEl.className = 'user-lc-status error';
+    }
+    showToast(`Could not fetch LeetCode solves: ${err.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (label) label.textContent = 'Fetch Recent Solves Now';
+    if (headerBtn) headerBtn.disabled = false;
+    if (headerLabel) headerLabel.textContent = 'Sync LeetCode';
+  }
+}
+
+// Expose globally for onclick handlers
+window.saveUserLeetCodeUsername = saveUserLeetCodeUsername;
+window.syncUserLeetCodeSolves = syncUserLeetCodeSolves;
+
 function updateAuthUserUI(user) {
   const authBtn = document.getElementById('auth-btn');
   const authLabel = document.getElementById('auth-btn-label');
   const syncDot = document.getElementById('sync-dot');
   const loggedOutView = document.getElementById('auth-logged-out-view');
   const loggedInView = document.getElementById('auth-logged-in-view');
+  const headerLcSyncBtn = document.getElementById('header-lc-sync-btn');
 
   if (user) {
     const fullName = getCleanUserDisplayName(user);
@@ -2087,6 +2382,7 @@ function updateAuthUserUI(user) {
       authBtn.title = `Signed in as ${fullName} (${user.email})`;
     }
     if (syncDot) syncDot.className = 'sync-dot synced';
+    if (headerLcSyncBtn) headerLcSyncBtn.style.display = 'inline-flex';
 
     if (loggedOutView) loggedOutView.style.display = 'none';
     if (loggedInView) loggedInView.style.display = 'block';
@@ -2117,6 +2413,7 @@ function updateAuthUserUI(user) {
       authBtn.title = 'Firebase Cloud Sync & Account';
     }
     if (syncDot) syncDot.className = 'sync-dot';
+    if (headerLcSyncBtn) headerLcSyncBtn.style.display = 'none';
 
     if (loggedOutView) loggedOutView.style.display = 'block';
     if (loggedInView) loggedInView.style.display = 'none';
@@ -2210,9 +2507,30 @@ window.addEventListener('firebase-auth-change', (e) => {
 });
 
 window.addEventListener('cloud-data-received', (e) => {
-  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates, customQuestions: cloudCustom } = e.detail;
+  const { solvedProblems: cloudSolved, starredProblems: cloudStarred, solvedDates: cloudDates, bookmarkDates: cloudBmDates, customQuestions: cloudCustom, leetcodeUsername: cloudLcUser, lastAutoSyncAt: cloudLastSync } = e.detail;
 
   cloudAuthoritativeDataLoaded = true;
+
+  if (cloudLcUser) {
+    currentLeetCodeUsername = cloudLcUser;
+    const lcInput = document.getElementById('user-leetcode-username');
+    if (lcInput && document.activeElement !== lcInput) {
+      lcInput.value = cloudLcUser;
+    }
+    const statusEl = document.getElementById('user-leetcode-status');
+    if (statusEl) {
+      if (cloudLastSync) {
+        const syncDate = new Date(cloudLastSync).toLocaleString();
+        statusEl.textContent = `✓ Auto-sync active (Last check: ${syncDate})`;
+        statusEl.className = 'user-lc-status success';
+      } else {
+        statusEl.textContent = `✓ Connected to @${cloudLcUser}`;
+        statusEl.className = 'user-lc-status success';
+      }
+    }
+    const headerBtn = document.getElementById('header-lc-sync-btn');
+    if (headerBtn) headerBtn.style.display = 'inline-flex';
+  }
 
   // Cloud Firestore is the authoritative source of truth for the logged-in user
   solvedProblems = new Set((cloudSolved || []).map(t => (typeof t === 'string' ? t.trim() : t)));

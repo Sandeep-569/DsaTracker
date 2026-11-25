@@ -95,19 +95,12 @@ function buildLookups(questionBank) {
   return { titleLookup, slugLookup };
 }
 
-async function main() {
-  console.log(`Starting LeetCode sync for ${LEETCODE_USERNAME}...`);
-
+async function fetchUserSolvedList(username, sessionToken = '') {
   let solvedList = [];
-  let totalSolved = null;
-  const sessionToken = (process.env.LEETCODE_SESSION || '').trim();
-
-  // ── 1. Fetch from official LeetCode GraphQL (recentAcSubmissionList) ────────
-  console.log(`Fetching recent AC submissions for "${LEETCODE_USERNAME}" via LeetCode GraphQL...`);
   try {
     const headers = {
       'Content-Type': 'application/json',
-      'Referer': `https://leetcode.com/u/${LEETCODE_USERNAME}/`,
+      'Referer': `https://leetcode.com/u/${username}/`,
       'Origin': 'https://leetcode.com',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36'
     };
@@ -127,7 +120,7 @@ async function main() {
             timestamp
           }
         }`,
-        variables: { username: LEETCODE_USERNAME, limit: 20 }
+        variables: { username, limit: 20 }
       })
     }, 20000);
 
@@ -140,23 +133,19 @@ async function main() {
           titleSlug: s.titleSlug,
           timestamp: s.timestamp ? Number(s.timestamp) : null
         }));
-        console.log(`✓ LeetCode GraphQL returned ${solvedList.length} recent submission(s).`);
       }
-    } else {
-      console.log(`LeetCode GraphQL returned HTTP ${lcRes.status}`);
     }
   } catch (e) {
-    console.log(`LeetCode GraphQL request encountered an issue: ${e.message}`);
+    console.log(`LeetCode GraphQL request encountered an issue for "${username}": ${e.message}`);
   }
 
-  // ── 2. Fallback to alfa-leetcode-api if direct GraphQL returned nothing ─────
+  // Fallback to alfa-leetcode-api if direct GraphQL returned nothing
   if (solvedList.length === 0) {
-    console.log('Calling alfa-leetcode-api (fallback)...');
     try {
       const acRes = await fetchWithTimeout(
-        `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(LEETCODE_USERNAME)}/acSubmissions?limit=20`,
+        `https://alfa-leetcode-api.onrender.com/${encodeURIComponent(username)}/acSubmissions?limit=20`,
         { headers: { 'Accept': 'application/json' } },
-        60000
+        30000
       );
       if (acRes.ok) {
         const acData = await acRes.json();
@@ -167,50 +156,29 @@ async function main() {
             titleSlug: s.titleSlug,
             timestamp: s.timestamp ? Number(s.timestamp) : null
           }));
-          console.log(`✓ alfa-leetcode-api returned ${solvedList.length} submission(s).`);
         }
       }
-    } catch (e) {
-      console.log(`alfa-leetcode-api failed: ${e.message}`);
-    }
+    } catch (_) {}
   }
+  return solvedList;
+}
 
-  // Get total solved count for logging
-  try {
-    const statsRes = await fetchWithTimeout(`https://leetcode-stats-api.herokuapp.com/${LEETCODE_USERNAME}`,
-      { headers: { 'Accept': 'application/json' } }, 15000);
-    if (statsRes.ok) {
-      const sd = await statsRes.json();
-      if (sd?.status === 'success') totalSolved = sd.totalSolved ?? null;
-    }
-  } catch (_) {}
-
-  console.log(`Fetched ${solvedList.length} recent accepted submission(s) from LeetCode.`);
-  if (totalSolved !== null) console.log(`LeetCode reports total solved: ${totalSolved}`);
+async function syncUserRecord(uid, leetcodeUsername, email, titleLookup, slugLookup, sessionToken = '') {
+  console.log(`\n--- Syncing user: ${email || uid} (LeetCode: ${leetcodeUsername}) ---`);
+  const solvedList = await fetchUserSolvedList(leetcodeUsername, sessionToken);
+  console.log(`Fetched ${solvedList.length} recent accepted submission(s) for "${leetcodeUsername}".`);
 
   if (solvedList.length === 0) {
-    console.log('Nothing to sync. Exiting.');
-    return;
+    console.log(`No submissions found or profile private for ${leetcodeUsername}.`);
+    return 0;
   }
 
-  // 2. Load question bank and build lookups
-  const questionBank = loadQuestionBank();
-  const { titleLookup, slugLookup } = buildLookups(questionBank);
-  console.log(`Question bank loaded. ${titleLookup.size} titles and ${slugLookup.size} slugs indexed.`);
-
-  // 3. Resolve the owner's Firestore doc (by uid, looked up from email)
-  const userRecord = await auth.getUserByEmail(OWNER_EMAIL);
-  const uid = userRecord.uid;
-  console.log(`Resolved user uid: ${uid}`);
   const docRef = db.collection('users').doc(uid);
   const docSnap = await docRef.get();
   const existing = docSnap.exists ? docSnap.data() : {};
 
   const existingSolved = new Set(existing.solvedProblems || []);
   const existingDates = existing.solvedDates || {};
-  console.log(`Current solved count in Firestore: ${existingSolved.size}`);
-
-  // 4. Match and merge — only ADD new items, never remove/overwrite existing ones
   let newlyAdded = 0;
   let skippedNotInBank = 0;
   let skippedAlreadySolved = 0;
@@ -222,7 +190,7 @@ async function main() {
     const matchedTitle = (key && titleLookup.get(key)) || (slugKey && slugLookup.get(slugKey));
     if (!matchedTitle) {
       skippedNotInBank++;
-      return; // not in this tracker's question bank, skip
+      return;
     }
 
     if (existingSolved.has(matchedTitle)) {
@@ -235,25 +203,65 @@ async function main() {
       ? new Date(item.timestamp * 1000).toISOString()
       : new Date().toISOString();
     newlyAdded++;
-    console.log(`  + Adding: "${matchedTitle}"`);
+    console.log(`  + [${leetcodeUsername}] Adding: "${matchedTitle}"`);
   });
 
-  console.log(`Sync summary: ${newlyAdded} new, ${skippedAlreadySolved} already tracked, ${skippedNotInBank} not in question bank.`);
+  console.log(`Sync summary for ${leetcodeUsername}: ${newlyAdded} new, ${skippedAlreadySolved} already tracked, ${skippedNotInBank} not in question bank.`);
 
-  if (newlyAdded === 0) {
-    console.log('No new solves to add. Firestore already up to date.');
-    return;
+  if (newlyAdded > 0) {
+    await docRef.set({
+      solvedProblems: Array.from(existingSolved),
+      solvedDates: existingDates,
+      updatedAt: new Date().toISOString(),
+      lastAutoSyncAt: new Date().toISOString()
+    }, { merge: true });
+    console.log(`Successfully added ${newlyAdded} newly solved problem(s) to Firestore for ${leetcodeUsername}.`);
+  } else {
+    console.log(`Firestore already up to date for ${leetcodeUsername}.`);
+  }
+  return newlyAdded;
+}
+
+async function main() {
+  console.log(`Starting multi-user LeetCode Auto-Sync Pipeline...`);
+
+  // 1. Load question bank and build lookups once
+  const questionBank = loadQuestionBank();
+  const { titleLookup, slugLookup } = buildLookups(questionBank);
+  console.log(`Question bank loaded. ${titleLookup.size} titles and ${slugLookup.size} slugs indexed.`);
+
+  let ownerUid = null;
+  const ownerSessionToken = (process.env.LEETCODE_SESSION || '').trim();
+
+  // 2. Primary: Always sync repository OWNER first
+  try {
+    const userRecord = await auth.getUserByEmail(OWNER_EMAIL);
+    ownerUid = userRecord.uid;
+    console.log(`Resolved owner UID: ${ownerUid} (${OWNER_EMAIL})`);
+    await syncUserRecord(ownerUid, LEETCODE_USERNAME, OWNER_EMAIL, titleLookup, slugLookup, ownerSessionToken);
+  } catch (err) {
+    console.error(`Error resolving owner by email (${OWNER_EMAIL}):`, err.message);
   }
 
-  // 5. Write back — merge:true so starredProblems and any other fields are untouched
-  await docRef.set({
-    solvedProblems: Array.from(existingSolved),
-    solvedDates: existingDates,
-    updatedAt: new Date().toISOString(),
-    lastAutoSyncAt: new Date().toISOString()
-  }, { merge: true });
+  // 3. Multi-User: Query Firestore for other registered users who saved a leetcodeUsername
+  try {
+    console.log('\nChecking for other registered users with LeetCode usernames...');
+    const snapshot = await db.collection('users').get();
+    let otherUsersCount = 0;
 
-  console.log(`Successfully added ${newlyAdded} newly solved problem(s) to Firestore.`);
+    for (const doc of snapshot.docs) {
+      if (doc.id === ownerUid) continue; // Already processed
+      const data = doc.data();
+      const userHandle = (data.leetcodeUsername || '').trim();
+      if (userHandle) {
+        otherUsersCount++;
+        await syncUserRecord(doc.id, userHandle, data.email, titleLookup, slugLookup);
+      }
+    }
+    console.log(`\nCompleted auto-sync for ${otherUsersCount} registered visitor(s) + 1 owner.`);
+  } catch (err) {
+    console.warn('Could not query other users (proceeding):', err.message);
+  }
 }
 
 main().catch((err) => {

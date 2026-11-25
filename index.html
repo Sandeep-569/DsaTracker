@@ -123,6 +123,10 @@
               <span id="auth-btn-label">Cloud Sync</span>
               <span class="sync-dot" id="sync-dot"></span>
             </button>
+            <button class="social-btn lc-sync-btn" id="header-lc-sync-btn" onclick="syncUserLeetCodeSolves()" style="display: none;" title="Fetch and sync your recent accepted LeetCode solves">
+              <span id="header-lc-sync-icon">⚡</span>
+              <span id="header-lc-sync-label">Sync LeetCode</span>
+            </button>
             <button class="social-btn backup-btn" id="backup-btn" onclick="openBackupModal()"
               title="Export or Import DSA progress">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1109,6 +1113,38 @@
             <div class="pstat-item">
               <span class="pstat-val" id="profile-starred-count">0</span>
               <span class="pstat-lbl">Cloud Bookmarked</span>
+            </div>
+          </div>
+
+          <!-- LeetCode Auto-Fetch Section for any user -->
+          <div class="user-leetcode-sync-card">
+            <div class="user-leetcode-header">
+              <span class="user-leetcode-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z" fill="#B3B3B3"/>
+                  <path d="M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
+                  <path d="M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
+                </svg>
+              </span>
+              <div>
+                <h4 style="margin: 0; font-size: 13.5px; color: #fff;">LeetCode Auto-Fetch</h4>
+                <p style="margin: 2px 0 0; font-size: 11.5px; color: var(--text-secondary);">Connect your username to automatically import accepted solves</p>
+              </div>
+            </div>
+
+            <div class="user-leetcode-body">
+              <div class="user-leetcode-input-row">
+                <input type="text" id="user-leetcode-username" class="user-lc-input" placeholder="e.g. your_leetcode_username" onkeydown="if(event.key === 'Enter') saveUserLeetCodeUsername()">
+                <button class="action-btn btn-secondary" id="user-leetcode-save-btn" onclick="saveUserLeetCodeUsername()" title="Save username">Save</button>
+              </div>
+              <div id="user-leetcode-status" class="user-lc-status"></div>
+
+              <button class="action-btn btn-accent user-lc-fetch-btn" id="user-leetcode-sync-btn" onclick="syncUserLeetCodeSolves()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                </svg>
+                <span id="user-lc-sync-label">Fetch My Latest Solves</span>
+              </button>
             </div>
           </div>
 

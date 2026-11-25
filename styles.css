@@ -262,6 +262,101 @@ header p {
   position: relative;
 }
 
+.lc-sync-btn {
+  background: linear-gradient(135deg, rgba(255, 184, 0, 0.16) 0%, rgba(255, 107, 0, 0.18) 100%);
+  border: 1px solid rgba(255, 184, 0, 0.45);
+  color: #ffb800;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+}
+
+.lc-sync-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 184, 0, 0.28) 0%, rgba(255, 107, 0, 0.32) 100%);
+  border-color: #ffb800;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(255, 184, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+/* LeetCode Auto-Fetch Card inside User Profile */
+.user-leetcode-sync-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 161, 22, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.user-leetcode-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.user-leetcode-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 161, 22, 0.12);
+  border: 1px solid rgba(255, 161, 22, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-leetcode-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.user-lc-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.user-lc-input:focus {
+  border-color: #ffa116;
+}
+
+.user-lc-status {
+  font-size: 12px;
+  margin-top: 6px;
+  min-height: 18px;
+  line-height: 1.4;
+}
+
+.user-lc-status.loading { color: var(--accent); }
+.user-lc-status.success { color: var(--easy); }
+.user-lc-status.error { color: var(--hard); }
+.user-lc-status.info { color: var(--text-secondary); }
+
+.user-lc-fetch-btn {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  padding: 10px 14px;
+}
+
 .auth-btn:hover {
   background: linear-gradient(135deg, rgba(255, 161, 22, 0.22) 0%, rgba(255, 75, 43, 0.22) 100%);
   border-color: #ffa116;

@@ -328,6 +328,8 @@
             solvedDates: data.solvedDates || {},
             bookmarkDates: data.bookmarkDates || {},
             customQuestions: data.customQuestions || [],
+            leetcodeUsername: data.leetcodeUsername || '',
+            lastAutoSyncAt: data.lastAutoSyncAt || '',
             updatedAt: data.updatedAt
           } 
         }));
@@ -345,6 +347,26 @@
     });
   }
 
+  // Firestore: Save User LeetCode Handle
+  async function saveUserLeetCodeHandle(username) {
+    if (!db || !currentUser) {
+      console.warn("[FirebaseService] Cannot save LeetCode username: user not signed in.");
+      return false;
+    }
+    try {
+      const cleanHandle = (username || '').trim();
+      await db.collection('users').doc(currentUser.uid).set({
+        leetcodeUsername: cleanHandle,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      console.log("[FirebaseService] Saved LeetCode username:", cleanHandle);
+      return true;
+    } catch (err) {
+      console.error("[FirebaseService] Error saving LeetCode username:", err);
+      return false;
+    }
+  }
+
   // Expose immediately on global window
   window.FirebaseService = {
     getFirebaseConfig: () => firebaseConfig,
@@ -354,6 +376,7 @@
     logoutUser,
     saveProgressToCloud,
     saveCustomQuestionsToCloud,
+    saveUserLeetCodeHandle,
     getCurrentUser: () => currentUser
   };
 
