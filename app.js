@@ -29,148 +29,148 @@ let cloudAuthoritativeDataLoaded = false;
 const TOPIC_RULES = [
   {
     name: 'Math & Geometry', icon: '🧮', order: 1,
-    slugs: ['add-two-integers','palindrome-number','roman-to-integer','integer-to-roman','plus-one','add-binary','add-strings','add-digits','happy-number','fizz-buzz','count-primes','power-of-two','power-of-three','power-of-four','excel-sheet-column-number','excel-sheet-column-title','factorial-trailing-zeroes','sqrtx','powx-n','reverse-integer','integer-break','ugly-number','ugly-number-ii','super-ugly-number','perfect-number','nth-digit','self-dividing-numbers','water-bottles','nim-game','bulb-switcher','maximum-swap','gcd-of-strings','greatest-common-divisor-of-strings','count-partitions-with-even-sum-difference','smallest-divisible-digit-product-i','smallest-divisible-digit-product-ii','maximum-number-of-balls-in-a-box','maximum-area-of-longest-diagonal-rectangle','preimage-size-of-factorial-zeroes-function','consecutive-numbers-sum','multiply-strings','rotate-function','find-polygon-with-the-largest-perimeter','sum-of-all-subset-xor-totals','smallest-range-i','smallest-range-ii','ant-on-the-boundary','find-the-child-who-has-the-ball-after-k-seconds','count-tested-devices-after-test-operations','permutation-difference-between-two-strings','find-the-winner-of-the-circular-game','check-divisibility-by-digit-sum-and-product','sum-multiples','count-commas-in-range','count-commas-in-range-ii'],
-    keywords: ['math','prime','gcd','roman','sqrt','pow','factorial','geometry','rectangle','area','circle','angle','polygon','divisor','divisible','modulo']
+    slugs: ['add-two-integers', 'palindrome-number', 'roman-to-integer', 'integer-to-roman', 'plus-one', 'add-binary', 'add-strings', 'add-digits', 'happy-number', 'fizz-buzz', 'count-primes', 'power-of-two', 'power-of-three', 'power-of-four', 'excel-sheet-column-number', 'excel-sheet-column-title', 'factorial-trailing-zeroes', 'sqrtx', 'powx-n', 'reverse-integer', 'integer-break', 'ugly-number', 'ugly-number-ii', 'super-ugly-number', 'perfect-number', 'nth-digit', 'self-dividing-numbers', 'water-bottles', 'nim-game', 'bulb-switcher', 'maximum-swap', 'gcd-of-strings', 'greatest-common-divisor-of-strings', 'count-partitions-with-even-sum-difference', 'smallest-divisible-digit-product-i', 'smallest-divisible-digit-product-ii', 'maximum-number-of-balls-in-a-box', 'maximum-area-of-longest-diagonal-rectangle', 'preimage-size-of-factorial-zeroes-function', 'consecutive-numbers-sum', 'multiply-strings', 'rotate-function', 'find-polygon-with-the-largest-perimeter', 'sum-of-all-subset-xor-totals', 'smallest-range-i', 'smallest-range-ii', 'ant-on-the-boundary', 'find-the-child-who-has-the-ball-after-k-seconds', 'count-tested-devices-after-test-operations', 'permutation-difference-between-two-strings', 'find-the-winner-of-the-circular-game', 'check-divisibility-by-digit-sum-and-product', 'sum-multiples', 'count-commas-in-range', 'count-commas-in-range-ii'],
+    keywords: ['math', 'prime', 'gcd', 'roman', 'sqrt', 'pow', 'factorial', 'geometry', 'rectangle', 'area', 'circle', 'angle', 'polygon', 'divisor', 'divisible', 'modulo']
   },
   {
     name: 'Array', icon: '📦', order: 3,
-    slugs: ['two-sum','contains-duplicate','contains-duplicate-ii','move-zeroes','remove-element','remove-duplicates-from-sorted-array','remove-duplicates-from-sorted-array-ii','merge-sorted-array','majority-element','rotate-array','rotate-image','spiral-matrix','spiral-matrix-ii','product-of-array-except-self','find-the-difference-of-two-arrays','intersection-of-two-arrays','intersection-of-two-arrays-ii','set-matrix-zeroes','game-of-life','next-permutation','max-consecutive-ones','max-consecutive-ones-iii','pascal s-triangle','pascals-triangle','contiguous-array','maximum-subarray','maximum-product-subarray','find-pivot-index','find-the-peaks','find-subsequence-of-length-k-with-the-largest-sum','sort-array-by-increasing-frequency','number-of-good-pairs','find-the-number-of-good-pairs-i','find-the-number-of-good-pairs-ii','rank-transform-of-an-array','split-the-array','check-if-array-pairs-are-divisible-by-k','minimum-right-shifts-to-sort-the-array','final-value-of-variable-after-performing-operations','count-subarrays-where-max-element-appears-at-least-k-times','number-of-subarrays-with-bounded-maximum','minimum-number-of-operations-to-have-distinct-elements','minimizing-array-after-replacing-pairs-with-their-product','minimum-array-changes-to-make-differences-equal','increment-submatrices-by-one','plates-between-candles','separate-black-and-white-balls','n-repeated-element-in-size-2n-array','flatten-2d-vector','maximum-product-difference-between-two-pairs'],
-    keywords: ['array','subarrays','matrix','grid','rotate','zeroes','indices','intervals','duplicate','moves','pairs','contiguous','subarray']
+    slugs: ['two-sum', 'contains-duplicate', 'contains-duplicate-ii', 'move-zeroes', 'remove-element', 'remove-duplicates-from-sorted-array', 'remove-duplicates-from-sorted-array-ii', 'merge-sorted-array', 'majority-element', 'rotate-array', 'rotate-image', 'spiral-matrix', 'spiral-matrix-ii', 'product-of-array-except-self', 'find-the-difference-of-two-arrays', 'intersection-of-two-arrays', 'intersection-of-two-arrays-ii', 'set-matrix-zeroes', 'game-of-life', 'next-permutation', 'max-consecutive-ones', 'max-consecutive-ones-iii', 'pascal s-triangle', 'pascals-triangle', 'contiguous-array', 'maximum-subarray', 'maximum-product-subarray', 'find-pivot-index', 'find-the-peaks', 'find-subsequence-of-length-k-with-the-largest-sum', 'sort-array-by-increasing-frequency', 'number-of-good-pairs', 'find-the-number-of-good-pairs-i', 'find-the-number-of-good-pairs-ii', 'rank-transform-of-an-array', 'split-the-array', 'check-if-array-pairs-are-divisible-by-k', 'minimum-right-shifts-to-sort-the-array', 'final-value-of-variable-after-performing-operations', 'count-subarrays-where-max-element-appears-at-least-k-times', 'number-of-subarrays-with-bounded-maximum', 'minimum-number-of-operations-to-have-distinct-elements', 'minimizing-array-after-replacing-pairs-with-their-product', 'minimum-array-changes-to-make-differences-equal', 'increment-submatrices-by-one', 'plates-between-candles', 'separate-black-and-white-balls', 'n-repeated-element-in-size-2n-array', 'flatten-2d-vector', 'maximum-product-difference-between-two-pairs'],
+    keywords: ['array', 'subarrays', 'matrix', 'grid', 'rotate', 'zeroes', 'indices', 'intervals', 'duplicate', 'moves', 'pairs', 'contiguous', 'subarray']
   },
   {
     name: 'Sorting Algorithms', icon: '🔃', order: 4,
-    slugs: ['sort-an-array','sort-colors','largest-number','merge-intervals','meeting-rooms-ii','insert-interval','non-overlapping-intervals','minimum-number-of-arrows-to-burst-balloons','sort-characters-by-frequency','sort-list','wiggle-sort','wiggle-sort-ii','h-index','valid-triangle-number','queue-reconstruction-by-height','relative-sort-array','custom-sort-string','pancake-sorting','orderly-queue','car-fleet','car-pooling','divide-intervals-into-minimum-number-of-groups','maximum-team-size-with-overlapping-intervals','eliminate-maximum-number-of-monsters','minimum-absolute-difference','reformat-phone-number'],
-    keywords: ['sort-an-array','sort-colors','merge-intervals','meeting-rooms','insert-interval']
+    slugs: ['sort-an-array', 'sort-colors', 'largest-number', 'merge-intervals', 'meeting-rooms-ii', 'insert-interval', 'non-overlapping-intervals', 'minimum-number-of-arrows-to-burst-balloons', 'sort-characters-by-frequency', 'sort-list', 'wiggle-sort', 'wiggle-sort-ii', 'h-index', 'valid-triangle-number', 'queue-reconstruction-by-height', 'relative-sort-array', 'custom-sort-string', 'pancake-sorting', 'orderly-queue', 'car-fleet', 'car-pooling', 'divide-intervals-into-minimum-number-of-groups', 'maximum-team-size-with-overlapping-intervals', 'eliminate-maximum-number-of-monsters', 'minimum-absolute-difference', 'reformat-phone-number'],
+    keywords: ['sort-an-array', 'sort-colors', 'merge-intervals', 'meeting-rooms', 'insert-interval']
   },
   {
     name: 'Prefix Sum', icon: '➕', order: 5,
-    slugs: ['range-sum-query-immutable','range-sum-query-2d-immutable','subarray-sum-equals-k','contiguous-array','find-pivot-index','product-of-array-except-self','count-number-of-nice-subarrays','binary-subarrays-with-sum','maximum-size-subarray-sum-equals-k','continuous-subarray-sum','random-pick-with-weight','xor-queries-of-a-subarray'],
-    keywords: ['prefix-sum','range-sum','subarray-sum']
+    slugs: ['range-sum-query-immutable', 'range-sum-query-2d-immutable', 'subarray-sum-equals-k', 'contiguous-array', 'find-pivot-index', 'product-of-array-except-self', 'count-number-of-nice-subarrays', 'binary-subarrays-with-sum', 'maximum-size-subarray-sum-equals-k', 'continuous-subarray-sum', 'random-pick-with-weight', 'xor-queries-of-a-subarray'],
+    keywords: ['prefix-sum', 'range-sum', 'subarray-sum']
   },
   {
     name: 'String', icon: '🔤', order: 6,
-    slugs: ['reverse-string','reverse-string-ii','reverse-vowels-of-a-string','reverse-words-in-a-string','valid-palindrome','valid-anagram','first-unique-character-in-a-string','longest-common-prefix','longest-palindrome','longest-palindromic-substring','longest-palindromic-subsequence','is-subsequence','string-compression','string-to-integer-atoi','find-all-anagrams-in-a-string','group-anagrams','rotate-string','reformat-date','validate-ip-address','count-pairs-of-similar-strings','shortest-palindrome','minimum-insertion-steps-to-make-a-string-palindrome','shortest-uncommon-substring-in-an-array','backspace-string-compare','palindromic-substrings','longest-repeating-character-replacement','strings-differ-by-one-character','lexicographically-smallest-string-after-substring-operation','regular-expression-matching','text-justification','replace-the-substring-for-balanced-string','decode-string','largest-odd-number-in-string','find-the-difference','permutation-difference-between-two-strings','reorganize-string','remove-all-adjacent-duplicates-in-string-ii','minimum-number-of-swaps-to-make-the-string-balanced','special-binary-string','to-be-or-not-to-be','check-if-digits-are-equal-in-string-after-operations-ii'],
-    keywords: ['string','substring','word','character','palindrome','vowels','anagram','letters','atoi','text']
+    slugs: ['reverse-string', 'reverse-string-ii', 'reverse-vowels-of-a-string', 'reverse-words-in-a-string', 'valid-palindrome', 'valid-anagram', 'first-unique-character-in-a-string', 'longest-common-prefix', 'longest-palindrome', 'longest-palindromic-substring', 'longest-palindromic-subsequence', 'is-subsequence', 'string-compression', 'string-to-integer-atoi', 'find-all-anagrams-in-a-string', 'group-anagrams', 'rotate-string', 'reformat-date', 'validate-ip-address', 'count-pairs-of-similar-strings', 'shortest-palindrome', 'minimum-insertion-steps-to-make-a-string-palindrome', 'shortest-uncommon-substring-in-an-array', 'backspace-string-compare', 'palindromic-substrings', 'longest-repeating-character-replacement', 'strings-differ-by-one-character', 'lexicographically-smallest-string-after-substring-operation', 'regular-expression-matching', 'text-justification', 'replace-the-substring-for-balanced-string', 'decode-string', 'largest-odd-number-in-string', 'find-the-difference', 'permutation-difference-between-two-strings', 'reorganize-string', 'remove-all-adjacent-duplicates-in-string-ii', 'minimum-number-of-swaps-to-make-the-string-balanced', 'special-binary-string', 'to-be-or-not-to-be', 'check-if-digits-are-equal-in-string-after-operations-ii'],
+    keywords: ['string', 'substring', 'word', 'character', 'palindrome', 'vowels', 'anagram', 'letters', 'atoi', 'text']
   },
   {
     name: 'Hash Table', icon: '🔑', order: 7,
-    slugs: ['two-sum','contains-duplicate','contains-duplicate-ii','contains-duplicate-iii','group-anagrams','valid-anagram','first-unique-character-in-a-string','intersection-of-two-arrays','longest-consecutive-sequence','top-k-frequent-elements','top-k-frequent-words','subarray-sum-equals-k','longest-substring-without-repeating-characters','number-of-good-pairs','find-the-difference-of-two-arrays','count-pairs-of-similar-strings'],
-    keywords: ['hash','two-sum','contains-duplicate','group-anagrams','frequency','lru-cache']
+    slugs: ['two-sum', 'contains-duplicate', 'contains-duplicate-ii', 'contains-duplicate-iii', 'group-anagrams', 'valid-anagram', 'first-unique-character-in-a-string', 'intersection-of-two-arrays', 'longest-consecutive-sequence', 'top-k-frequent-elements', 'top-k-frequent-words', 'subarray-sum-equals-k', 'longest-substring-without-repeating-characters', 'number-of-good-pairs', 'find-the-difference-of-two-arrays', 'count-pairs-of-similar-strings'],
+    keywords: ['hash', 'two-sum', 'contains-duplicate', 'group-anagrams', 'frequency', 'lru-cache']
   },
   {
     name: 'Two Pointers', icon: '⚖️', order: 8,
-    slugs: ['two-sum-ii-input-array-is-sorted','3sum','4sum','container-with-most-water','trapping-rain-water','move-zeroes','sort-colors','remove-duplicates-from-sorted-array','remove-duplicates-from-sorted-array-ii','remove-element','squares-of-a-sorted-array','valid-palindrome','merge-sorted-array','backspace-string-compare','is-subsequence','merge-operations-to-turn-array-into-a-palindrome','subarray-product-less-than-k'],
-    keywords: ['two-pointer','container-with-most-water','trapping-rain-water']
+    slugs: ['two-sum-ii-input-array-is-sorted', '3sum', '4sum', 'container-with-most-water', 'trapping-rain-water', 'move-zeroes', 'sort-colors', 'remove-duplicates-from-sorted-array', 'remove-duplicates-from-sorted-array-ii', 'remove-element', 'squares-of-a-sorted-array', 'valid-palindrome', 'merge-sorted-array', 'backspace-string-compare', 'is-subsequence', 'merge-operations-to-turn-array-into-a-palindrome', 'subarray-product-less-than-k'],
+    keywords: ['two-pointer', 'container-with-most-water', 'trapping-rain-water']
   },
   {
     name: 'Sliding Window', icon: '🪟', order: 9,
-    slugs: ['longest-substring-without-repeating-characters','minimum-window-substring','minimum-window-subsequence','sliding-window-maximum','find-all-anagrams-in-a-string','permutation-in-string','longest-repeating-character-replacement','fruit-into-baskets','max-consecutive-ones-iii','minimum-swaps-to-group-all-1s-together-ii','count-subarrays-where-max-element-appears-at-least-k-times','minimum-number-of-days-to-make-m-bouquets','subarray-product-less-than-k','number-of-subarrays-with-bounded-maximum','maximum-width-ramp'],
-    keywords: ['sliding-window','min-window','longest-substring-without']
+    slugs: ['longest-substring-without-repeating-characters', 'minimum-window-substring', 'minimum-window-subsequence', 'sliding-window-maximum', 'find-all-anagrams-in-a-string', 'permutation-in-string', 'longest-repeating-character-replacement', 'fruit-into-baskets', 'max-consecutive-ones-iii', 'minimum-swaps-to-group-all-1s-together-ii', 'count-subarrays-where-max-element-appears-at-least-k-times', 'minimum-number-of-days-to-make-m-bouquets', 'subarray-product-less-than-k', 'number-of-subarrays-with-bounded-maximum', 'maximum-width-ramp'],
+    keywords: ['sliding-window', 'min-window', 'longest-substring-without']
   },
   {
     name: 'Binary Search', icon: '🔍', order: 10,
-    slugs: ['binary-search','search-insert-position','search-a-2d-matrix','search-in-rotated-sorted-array','search-in-rotated-sorted-array-ii','find-first-and-last-position-of-element-in-sorted-array','find-peak-element','peak-index-in-a-mountain-array','koko-eating-bananas','capacity-to-ship-packages-within-d-days','find-the-smallest-divisor-given-a-threshold','single-element-in-a-sorted-array','median-of-two-sorted-arrays','heaters','random-pick-with-weight','convert-sorted-array-to-binary-search-tree','minimum-number-of-days-to-make-m-bouquets','maximum-profit-in-job-scheduling'],
-    keywords: ['binary-search','search-insert','rotated-sorted','peak','find-first-and-last','median-of-two','koko']
+    slugs: ['binary-search', 'search-insert-position', 'search-a-2d-matrix', 'search-in-rotated-sorted-array', 'search-in-rotated-sorted-array-ii', 'find-first-and-last-position-of-element-in-sorted-array', 'find-peak-element', 'peak-index-in-a-mountain-array', 'koko-eating-bananas', 'capacity-to-ship-packages-within-d-days', 'find-the-smallest-divisor-given-a-threshold', 'single-element-in-a-sorted-array', 'median-of-two-sorted-arrays', 'heaters', 'random-pick-with-weight', 'convert-sorted-array-to-binary-search-tree', 'minimum-number-of-days-to-make-m-bouquets', 'maximum-profit-in-job-scheduling'],
+    keywords: ['binary-search', 'search-insert', 'rotated-sorted', 'peak', 'find-first-and-last', 'median-of-two', 'koko']
   },
   {
     name: 'Linked List', icon: '🔗', order: 11,
-    slugs: ['reverse-linked-list','reverse-nodes-in-k-group','linked-list-cycle','linked-list-cycle-ii','middle-of-the-linked-list','merge-two-sorted-lists','merge-k-sorted-lists','add-two-numbers','remove-nth-node-from-end-of-list','remove-duplicates-from-sorted-list','intersection-of-two-linked-lists','sort-list','palindrome-linked-list','delete-node-in-a-linked-list','odd-even-linked-list','reorder-list','swap-nodes-in-pairs','rotate-list','copy-list-with-random-pointer','flatten-a-multilevel-doubly-linked-list'],
-    keywords: ['linked-list','reverse-linked','middle-of-the-linked','merge-two-sorted-lists','add-two-numbers','remove-nth-node']
+    slugs: ['reverse-linked-list', 'reverse-nodes-in-k-group', 'linked-list-cycle', 'linked-list-cycle-ii', 'middle-of-the-linked-list', 'merge-two-sorted-lists', 'merge-k-sorted-lists', 'add-two-numbers', 'remove-nth-node-from-end-of-list', 'remove-duplicates-from-sorted-list', 'intersection-of-two-linked-lists', 'sort-list', 'palindrome-linked-list', 'delete-node-in-a-linked-list', 'odd-even-linked-list', 'reorder-list', 'swap-nodes-in-pairs', 'rotate-list', 'copy-list-with-random-pointer', 'flatten-a-multilevel-doubly-linked-list'],
+    keywords: ['linked-list', 'reverse-linked', 'middle-of-the-linked', 'merge-two-sorted-lists', 'add-two-numbers', 'remove-nth-node']
   },
   {
     name: 'Stack & Queue', icon: '🥞', order: 12,
-    slugs: ['valid-parentheses','min-stack','decode-string','basic-calculator','basic-calculator-ii','evaluate-reverse-polish-notation','simplify-path','remove-k-digits','asteroid-collision','remove-all-adjacent-duplicates-in-string-ii','longest-valid-parentheses','generate-parentheses','reverse-substrings-between-each-pair-of-parentheses','flatten-nested-list-iterator','mini-parser','number-of-atoms','parse-lisp-expression','implement-queue-using-stacks','implement-stack-using-queues','design-circular-queue','design-circular-deque'],
-    keywords: ['stack','queue','parentheses','calculator','eval','reverse-polish']
+    slugs: ['valid-parentheses', 'min-stack', 'decode-string', 'basic-calculator', 'basic-calculator-ii', 'evaluate-reverse-polish-notation', 'simplify-path', 'remove-k-digits', 'asteroid-collision', 'remove-all-adjacent-duplicates-in-string-ii', 'longest-valid-parentheses', 'generate-parentheses', 'reverse-substrings-between-each-pair-of-parentheses', 'flatten-nested-list-iterator', 'mini-parser', 'number-of-atoms', 'parse-lisp-expression', 'implement-queue-using-stacks', 'implement-stack-using-queues', 'design-circular-queue', 'design-circular-deque'],
+    keywords: ['stack', 'queue', 'parentheses', 'calculator', 'eval', 'reverse-polish']
   },
   {
     name: 'Monotonic Stack / Queue', icon: '📊', order: 13,
-    slugs: ['daily-temperatures','next-greater-element-i','next-greater-element-ii','next-greater-element-iii','largest-rectangle-in-histogram','maximal-rectangle','sum-of-subarray-minimums','sum-of-subarray-ranges','online-stock-span','sliding-window-maximum','trapping-rain-water','maximum-width-ramp','car-fleet','132-pattern','shortest-unsorted-continuous-subarray'],
-    keywords: ['daily-temperatures','next-greater','histogram','monotonic','stock-span']
+    slugs: ['daily-temperatures', 'next-greater-element-i', 'next-greater-element-ii', 'next-greater-element-iii', 'largest-rectangle-in-histogram', 'maximal-rectangle', 'sum-of-subarray-minimums', 'sum-of-subarray-ranges', 'online-stock-span', 'sliding-window-maximum', 'trapping-rain-water', 'maximum-width-ramp', 'car-fleet', '132-pattern', 'shortest-unsorted-continuous-subarray'],
+    keywords: ['daily-temperatures', 'next-greater', 'histogram', 'monotonic', 'stock-span']
   },
   {
     name: 'Heap / Priority Queue', icon: '⛰️', order: 14,
-    slugs: ['kth-largest-element-in-an-array','kth-largest-element-in-a-stream','top-k-frequent-elements','top-k-frequent-words','merge-k-sorted-lists','find-median-from-data-stream','meeting-rooms-ii','task-scheduler','reorganize-string','sort-characters-by-frequency','last-stone-weight','k-closest-points-to-origin','ugly-number-ii','super-ugly-number','ipo','employee-free-time','sliding-window-median','the-skyline-problem'],
-    keywords: ['kth-largest','top-k','merge-k-sorted','priority-queue','heap','median-from-data-stream']
+    slugs: ['kth-largest-element-in-an-array', 'kth-largest-element-in-a-stream', 'top-k-frequent-elements', 'top-k-frequent-words', 'merge-k-sorted-lists', 'find-median-from-data-stream', 'meeting-rooms-ii', 'task-scheduler', 'reorganize-string', 'sort-characters-by-frequency', 'last-stone-weight', 'k-closest-points-to-origin', 'ugly-number-ii', 'super-ugly-number', 'ipo', 'employee-free-time', 'sliding-window-median', 'the-skyline-problem'],
+    keywords: ['kth-largest', 'top-k', 'merge-k-sorted', 'priority-queue', 'heap', 'median-from-data-stream']
   },
   {
     name: 'Recursion', icon: '🔄', order: 15,
-    slugs: ['fibonacci-number','n-th-tribonacci-number','climbing-stairs','powx-n','swap-nodes-in-pairs','letter-combinations-of-a-phone-number','count-complete-tree-nodes','nested-list-weight-sum','flatten-nested-list-iterator'],
-    keywords: ['fibonacci','tribonacci','recursion']
+    slugs: ['fibonacci-number', 'n-th-tribonacci-number', 'climbing-stairs', 'powx-n', 'swap-nodes-in-pairs', 'letter-combinations-of-a-phone-number', 'count-complete-tree-nodes', 'nested-list-weight-sum', 'flatten-nested-list-iterator'],
+    keywords: ['fibonacci', 'tribonacci', 'recursion']
   },
   {
     name: 'Backtracking', icon: '🔀', order: 16,
-    slugs: ['subsets','subsets-ii','permutations','permutations-ii','combination-sum','combination-sum-ii','combination-sum-iii','combinations','letter-combinations-of-a-phone-number','generate-parentheses','palindrome-partitioning','n-queens','n-queens-ii','sudoku-solver','word-search','word-search-ii','restore-ip-addresses','target-sum','count-all-valid-pickup-and-delivery-options','shopping-offers','pyramid-transition-matrix'],
-    keywords: ['n-queens','sudoku','subsets','permutations','combination-sum','word-search','restore-ip','backtrack']
+    slugs: ['subsets', 'subsets-ii', 'permutations', 'permutations-ii', 'combination-sum', 'combination-sum-ii', 'combination-sum-iii', 'combinations', 'letter-combinations-of-a-phone-number', 'generate-parentheses', 'palindrome-partitioning', 'n-queens', 'n-queens-ii', 'sudoku-solver', 'word-search', 'word-search-ii', 'restore-ip-addresses', 'target-sum', 'count-all-valid-pickup-and-delivery-options', 'shopping-offers', 'pyramid-transition-matrix'],
+    keywords: ['n-queens', 'sudoku', 'subsets', 'permutations', 'combination-sum', 'word-search', 'restore-ip', 'backtrack']
   },
   {
     name: 'Tree & Binary Tree', icon: '🌳', order: 17,
-    slugs: ['maximum-depth-of-binary-tree','minimum-depth-of-binary-tree','same-tree','symmetric-tree','invert-binary-tree','binary-tree-level-order-traversal','binary-tree-zigzag-level-order-traversal','binary-tree-right-side-view','binary-tree-maximum-path-sum','binary-tree-cameras','construct-binary-tree-from-preorder-and-inorder-traversal','validate-binary-search-tree','convert-sorted-array-to-binary-search-tree','binary-search-tree-iterator','lowest-common-ancestor-of-a-binary-tree','lowest-common-ancestor-of-a-binary-search-tree','path-sum','path-sum-ii','path-sum-iii','count-complete-tree-nodes','count-univalue-subtrees','subtree-of-another-tree','trim-a-binary-search-tree','serialize-and-deserialize-binary-tree','flatten-binary-tree-to-linked-list','amount-of-time-for-binary-tree-to-be-infected','boundary-of-binary-tree','cousins-in-binary-tree','populating-next-right-pointers-in-each-node','diameter-of-binary-tree','balanced-binary-tree','kth-smallest-element-in-a-bst','delete-node-in-a-bst','longest-increasing-path-in-a-matrix','number-of-increasing-paths-in-a-grid','find-diameter-endpoints-of-a-tree','count-ways-to-build-rooms-in-an-ant-colony','maximum-number-of-moves-in-a-grid','special-binary-string'],
-    keywords: ['tree','bst','inorder','preorder','postorder','subtree','binary-tree','leaf','root','depth','ancestor']
+    slugs: ['maximum-depth-of-binary-tree', 'minimum-depth-of-binary-tree', 'same-tree', 'symmetric-tree', 'invert-binary-tree', 'binary-tree-level-order-traversal', 'binary-tree-zigzag-level-order-traversal', 'binary-tree-right-side-view', 'binary-tree-maximum-path-sum', 'binary-tree-cameras', 'construct-binary-tree-from-preorder-and-inorder-traversal', 'validate-binary-search-tree', 'convert-sorted-array-to-binary-search-tree', 'binary-search-tree-iterator', 'lowest-common-ancestor-of-a-binary-tree', 'lowest-common-ancestor-of-a-binary-search-tree', 'path-sum', 'path-sum-ii', 'path-sum-iii', 'count-complete-tree-nodes', 'count-univalue-subtrees', 'subtree-of-another-tree', 'trim-a-binary-search-tree', 'serialize-and-deserialize-binary-tree', 'flatten-binary-tree-to-linked-list', 'amount-of-time-for-binary-tree-to-be-infected', 'boundary-of-binary-tree', 'cousins-in-binary-tree', 'populating-next-right-pointers-in-each-node', 'diameter-of-binary-tree', 'balanced-binary-tree', 'kth-smallest-element-in-a-bst', 'delete-node-in-a-bst', 'longest-increasing-path-in-a-matrix', 'number-of-increasing-paths-in-a-grid', 'find-diameter-endpoints-of-a-tree', 'count-ways-to-build-rooms-in-an-ant-colony', 'maximum-number-of-moves-in-a-grid', 'special-binary-string'],
+    keywords: ['tree', 'bst', 'inorder', 'preorder', 'postorder', 'subtree', 'binary-tree', 'leaf', 'root', 'depth', 'ancestor']
   },
   {
     name: 'Trie', icon: '🌲', order: 18,
-    slugs: ['implement-trie-prefix-tree','design-add-and-search-words-data-structure','word-search-ii','search-suggestions-system','palindrome-pairs','longest-word-in-dictionary','replace-words','map-sum-pairs','maximum-xor-of-two-numbers-in-an-array'],
-    keywords: ['trie','prefix-tree','search-suggestions']
+    slugs: ['implement-trie-prefix-tree', 'design-add-and-search-words-data-structure', 'word-search-ii', 'search-suggestions-system', 'palindrome-pairs', 'longest-word-in-dictionary', 'replace-words', 'map-sum-pairs', 'maximum-xor-of-two-numbers-in-an-array'],
+    keywords: ['trie', 'prefix-tree', 'search-suggestions']
   },
   {
     name: 'Segment Tree / BIT', icon: '🏗️', order: 19,
-    slugs: ['range-sum-query-mutable','count-of-smaller-numbers-after-self','reverse-pairs','the-skyline-problem','my-calendar-i','my-calendar-ii','my-calendar-iii','count-of-range-sum','threshold-majority-queries'],
-    keywords: ['segment-tree','binary-indexed-tree','range-sum-query-mutable','fenwick']
+    slugs: ['range-sum-query-mutable', 'count-of-smaller-numbers-after-self', 'reverse-pairs', 'the-skyline-problem', 'my-calendar-i', 'my-calendar-ii', 'my-calendar-iii', 'count-of-range-sum', 'threshold-majority-queries'],
+    keywords: ['segment-tree', 'binary-indexed-tree', 'range-sum-query-mutable', 'fenwick']
   },
   {
     name: 'Graph & DFS/BFS', icon: '🕸️', order: 20,
-    slugs: ['number-of-islands','number-of-provinces','max-area-of-island','flood-fill','rotting-oranges','01-matrix','surrounded-regions','pacific-atlantic-water-flow','course-schedule','course-schedule-ii','clone-graph','word-ladder','making-a-large-island','shortest-path-in-binary-matrix','shortest-path-in-a-grid-with-obstacles-elimination','shortest-path-to-get-all-keys','minimum-jumps-to-reach-home','detonate-the-maximum-bombs','minimum-number-of-vertices-to-reach-all-nodes','sliding-puzzle','minimum-number-of-flips-to-convert-binary-matrix-to-zero-matrix','divide-nodes-into-the-maximum-number-of-groups','reconstruct-itinerary','unit-conversion-i'],
-    keywords: ['islands','flood-fill','rotting-oranges','course-schedule','provinces','surrounded-regions','pacific-atlantic','clone-graph']
+    slugs: ['number-of-islands', 'number-of-provinces', 'max-area-of-island', 'flood-fill', 'rotting-oranges', '01-matrix', 'surrounded-regions', 'pacific-atlantic-water-flow', 'course-schedule', 'course-schedule-ii', 'clone-graph', 'word-ladder', 'making-a-large-island', 'shortest-path-in-binary-matrix', 'shortest-path-in-a-grid-with-obstacles-elimination', 'shortest-path-to-get-all-keys', 'minimum-jumps-to-reach-home', 'detonate-the-maximum-bombs', 'minimum-number-of-vertices-to-reach-all-nodes', 'sliding-puzzle', 'minimum-number-of-flips-to-convert-binary-matrix-to-zero-matrix', 'divide-nodes-into-the-maximum-number-of-groups', 'reconstruct-itinerary', 'unit-conversion-i'],
+    keywords: ['islands', 'flood-fill', 'rotting-oranges', 'course-schedule', 'provinces', 'surrounded-regions', 'pacific-atlantic', 'clone-graph']
   },
   {
     name: 'Topological Sort', icon: '📐', order: 21,
-    slugs: ['course-schedule','course-schedule-ii','alien-dictionary','parallel-courses-iii','sequence-reconstruction','minimum-height-trees','longest-increasing-path-in-a-matrix','sort-items-by-groups-respecting-dependencies'],
-    keywords: ['topological','alien-dictionary','course-schedule']
+    slugs: ['course-schedule', 'course-schedule-ii', 'alien-dictionary', 'parallel-courses-iii', 'sequence-reconstruction', 'minimum-height-trees', 'longest-increasing-path-in-a-matrix', 'sort-items-by-groups-respecting-dependencies'],
+    keywords: ['topological', 'alien-dictionary', 'course-schedule']
   },
   {
     name: 'Union Find', icon: '🔗', order: 22,
-    slugs: ['number-of-provinces','accounts-merge','redundant-connection','redundant-connection-ii','most-stones-removed-with-same-row-or-column','number-of-connected-components-in-an-undirected-graph','making-a-large-island','smallest-common-region','number-of-operations-to-make-network-connected'],
-    keywords: ['union-find','disjoint-set','accounts-merge','redundant-connection']
+    slugs: ['number-of-provinces', 'accounts-merge', 'redundant-connection', 'redundant-connection-ii', 'most-stones-removed-with-same-row-or-column', 'number-of-connected-components-in-an-undirected-graph', 'making-a-large-island', 'smallest-common-region', 'number-of-operations-to-make-network-connected'],
+    keywords: ['union-find', 'disjoint-set', 'accounts-merge', 'redundant-connection']
   },
   {
     name: 'Shortest Path', icon: '🛤️', order: 23,
-    slugs: ['cheapest-flights-within-k-stops','network-delay-time','path-with-minimum-effort','swim-in-rising-water','minimum-cost-to-reach-destination-in-time','shortest-path-in-binary-matrix','shortest-path-in-a-grid-with-obstacles-elimination','shortest-path-to-get-all-keys','word-ladder','find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance'],
-    keywords: ['dijkstra','bellman-ford','shortest-path','cheapest-flights','network-delay']
+    slugs: ['cheapest-flights-within-k-stops', 'network-delay-time', 'path-with-minimum-effort', 'swim-in-rising-water', 'minimum-cost-to-reach-destination-in-time', 'shortest-path-in-binary-matrix', 'shortest-path-in-a-grid-with-obstacles-elimination', 'shortest-path-to-get-all-keys', 'word-ladder', 'find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance'],
+    keywords: ['dijkstra', 'bellman-ford', 'shortest-path', 'cheapest-flights', 'network-delay']
   },
   {
     name: 'Minimum Spanning Tree', icon: '🌉', order: 24,
-    slugs: ['min-cost-to-connect-all-points','connecting-cities-with-minimum-cost','optimize-water-distribution-in-a-village'],
-    keywords: ['kruskal','prim','minimum-spanning','min-cost-to-connect']
+    slugs: ['min-cost-to-connect-all-points', 'connecting-cities-with-minimum-cost', 'optimize-water-distribution-in-a-village'],
+    keywords: ['kruskal', 'prim', 'minimum-spanning', 'min-cost-to-connect']
   },
   {
     name: 'Greedy', icon: '⚡', order: 25,
-    slugs: ['best-time-to-buy-and-sell-stock','best-time-to-buy-and-sell-stock-ii','jump-game','jump-game-ii','gas-station','candy','assign-cookies','lemonade-change','task-scheduler','can-place-flowers','partition-labels','minimum-number-of-arrows-to-burst-balloons','non-overlapping-intervals','queue-reconstruction-by-height','ipo','minimum-number-of-taps-to-open-to-water-a-garden','maximum-subarray','filling-bookcase-shelves','delete-and-earn','minimum-cost-for-tickets'],
-    keywords: ['greedy','gas-station','jump-game','candy','assign-cookies','lemonade','task-scheduler','can-place-flowers']
+    slugs: ['best-time-to-buy-and-sell-stock', 'best-time-to-buy-and-sell-stock-ii', 'jump-game', 'jump-game-ii', 'gas-station', 'candy', 'assign-cookies', 'lemonade-change', 'task-scheduler', 'can-place-flowers', 'partition-labels', 'minimum-number-of-arrows-to-burst-balloons', 'non-overlapping-intervals', 'queue-reconstruction-by-height', 'ipo', 'minimum-number-of-taps-to-open-to-water-a-garden', 'maximum-subarray', 'filling-bookcase-shelves', 'delete-and-earn', 'minimum-cost-for-tickets'],
+    keywords: ['greedy', 'gas-station', 'jump-game', 'candy', 'assign-cookies', 'lemonade', 'task-scheduler', 'can-place-flowers']
   },
   {
     name: 'Dynamic Programming', icon: '🧠', order: 26,
-    slugs: ['climbing-stairs','house-robber','house-robber-ii','coin-change','coin-change-2','longest-increasing-subsequence','longest-common-subsequence','edit-distance','word-break','word-break-ii','unique-paths','unique-paths-ii','minimum-path-sum','maximum-subarray','maximum-product-subarray','decode-ways','perfect-squares','partition-equal-subset-sum','target-sum','triangle','best-time-to-buy-and-sell-stock','best-time-to-buy-and-sell-stock-ii','best-time-to-buy-and-sell-stock-iii','best-time-to-buy-and-sell-stock-iv','best-time-to-buy-and-sell-stock-with-cooldown','maximal-square','longest-palindromic-substring','longest-palindromic-subsequence','palindrome-partitioning-ii','regular-expression-matching','wildcard-matching','interleaving-string','distinct-subsequences','minimum-insertion-steps-to-make-a-string-palindrome','minimum-cost-for-tickets','delete-and-earn','arithmetic-slices','maximum-profit-from-trading-stocks','maximum-number-of-moves-in-a-grid','number-of-increasing-paths-in-a-grid','filling-bookcase-shelves','choose-numbers-from-two-arrays-in-range','maximum-profit-in-job-scheduling','number-of-ways-to-build-house-of-cards','longest-string-chain','optimal-account-balancing','count-all-valid-pickup-and-delivery-options','integer-break','minimum-operations-to-reduce-an-integer-to-0'],
-    keywords: ['climbing-stairs','house-robber','coin-change','longest-increasing-subsequence','longest-common-subsequence','edit-distance','word-break','unique-paths','knapsack','decode-ways','perfect-squares','maximal-square']
+    slugs: ['climbing-stairs', 'house-robber', 'house-robber-ii', 'coin-change', 'coin-change-2', 'longest-increasing-subsequence', 'longest-common-subsequence', 'edit-distance', 'word-break', 'word-break-ii', 'unique-paths', 'unique-paths-ii', 'minimum-path-sum', 'maximum-subarray', 'maximum-product-subarray', 'decode-ways', 'perfect-squares', 'partition-equal-subset-sum', 'target-sum', 'triangle', 'best-time-to-buy-and-sell-stock', 'best-time-to-buy-and-sell-stock-ii', 'best-time-to-buy-and-sell-stock-iii', 'best-time-to-buy-and-sell-stock-iv', 'best-time-to-buy-and-sell-stock-with-cooldown', 'maximal-square', 'longest-palindromic-substring', 'longest-palindromic-subsequence', 'palindrome-partitioning-ii', 'regular-expression-matching', 'wildcard-matching', 'interleaving-string', 'distinct-subsequences', 'minimum-insertion-steps-to-make-a-string-palindrome', 'minimum-cost-for-tickets', 'delete-and-earn', 'arithmetic-slices', 'maximum-profit-from-trading-stocks', 'maximum-number-of-moves-in-a-grid', 'number-of-increasing-paths-in-a-grid', 'filling-bookcase-shelves', 'choose-numbers-from-two-arrays-in-range', 'maximum-profit-in-job-scheduling', 'number-of-ways-to-build-house-of-cards', 'longest-string-chain', 'optimal-account-balancing', 'count-all-valid-pickup-and-delivery-options', 'integer-break', 'minimum-operations-to-reduce-an-integer-to-0'],
+    keywords: ['climbing-stairs', 'house-robber', 'coin-change', 'longest-increasing-subsequence', 'longest-common-subsequence', 'edit-distance', 'word-break', 'unique-paths', 'knapsack', 'decode-ways', 'perfect-squares', 'maximal-square']
   },
   {
     name: 'Bit Manipulation', icon: '🔢', order: 27,
-    slugs: ['single-number','single-number-ii','single-number-iii','number-of-1-bits','counting-bits','reverse-bits','missing-number','power-of-two','bitwise-and-of-numbers-range','sum-of-two-integers','find-the-difference','complement-of-base-10-integer','bitwise-or-of-adjacent-elements','largest-combination-with-bitwise-and-greater-than-zero','minimize-xor','xor-queries-of-a-subarray','sum-of-values-at-indices-with-k-set-bits','maximum-xor-of-two-numbers-in-an-array'],
-    keywords: ['bit','bitwise','xor','single-number','counting-bits','reverse-bits','number-of-1-bits']
+    slugs: ['single-number', 'single-number-ii', 'single-number-iii', 'number-of-1-bits', 'counting-bits', 'reverse-bits', 'missing-number', 'power-of-two', 'bitwise-and-of-numbers-range', 'sum-of-two-integers', 'find-the-difference', 'complement-of-base-10-integer', 'bitwise-or-of-adjacent-elements', 'largest-combination-with-bitwise-and-greater-than-zero', 'minimize-xor', 'xor-queries-of-a-subarray', 'sum-of-values-at-indices-with-k-set-bits', 'maximum-xor-of-two-numbers-in-an-array'],
+    keywords: ['bit', 'bitwise', 'xor', 'single-number', 'counting-bits', 'reverse-bits', 'number-of-1-bits']
   },
   {
     name: 'Design Problems', icon: '🏛️', order: 28,
-    slugs: ['lru-cache','lfu-cache','min-stack','insert-delete-getrandom-o1','insert-delete-getrandom-o1-duplicates-allowed','design-twitter','design-hit-counter','design-tic-tac-toe','design-file-system','design-excel-sum-formula','design-circular-queue','design-circular-deque','all-oone-data-structure','simple-bank-system','time-based-key-value-store','flatten-nested-list-iterator','flatten-2d-vector','binary-search-tree-iterator','implement-trie-prefix-tree','serialize-and-deserialize-binary-tree','find-median-from-data-stream'],
-    keywords: ['lru-cache','lfu-cache','design-','insert-delete-getrandom','all-oone']
+    slugs: ['lru-cache', 'lfu-cache', 'min-stack', 'insert-delete-getrandom-o1', 'insert-delete-getrandom-o1-duplicates-allowed', 'design-twitter', 'design-hit-counter', 'design-tic-tac-toe', 'design-file-system', 'design-excel-sum-formula', 'design-circular-queue', 'design-circular-deque', 'all-oone-data-structure', 'simple-bank-system', 'time-based-key-value-store', 'flatten-nested-list-iterator', 'flatten-2d-vector', 'binary-search-tree-iterator', 'implement-trie-prefix-tree', 'serialize-and-deserialize-binary-tree', 'find-median-from-data-stream'],
+    keywords: ['lru-cache', 'lfu-cache', 'design-', 'insert-delete-getrandom', 'all-oone']
   },
   {
     name: 'Simulation', icon: '🎮', order: 29,
-    slugs: ['game-of-life','spiral-matrix','spiral-matrix-ii','rotate-image','robot-bounded-in-circle','pour-water','fizz-buzz','number-of-divisible-triplet-sums','find-the-student-that-will-replace-the-chalk','minimum-processing-time','ip-to-cidr','convert-to-base-2','tenth-line'],
-    keywords: ['simulation','game-of-life','robot-bounded','pour-water']
+    slugs: ['game-of-life', 'spiral-matrix', 'spiral-matrix-ii', 'rotate-image', 'robot-bounded-in-circle', 'pour-water', 'fizz-buzz', 'number-of-divisible-triplet-sums', 'find-the-student-that-will-replace-the-chalk', 'minimum-processing-time', 'ip-to-cidr', 'convert-to-base-2', 'tenth-line'],
+    keywords: ['simulation', 'game-of-life', 'robot-bounded', 'pour-water']
   },
   {
     name: 'SQL & Database', icon: '🗄️', order: 30,
-    slugs: ['combine-two-tables','second-highest-salary','nth-highest-salary','rank-scores','consecutive-numbers','employees-earning-more-than-their-managers','department-top-three-salaries','rising-temperature','customer-who-visited-but-did-not-make-any-transactions','find-customer-referee','article-views-i','average-time-of-process-per-machine','invalid-tweets','fill-missing-data'],
-    keywords: ['salary','employees-earning','department-top','rising-temperature','customer-who-visited','find-customer-referee','article-views','average-time-of-process','invalid-tweets','fill-missing']
+    slugs: ['combine-two-tables', 'second-highest-salary', 'nth-highest-salary', 'rank-scores', 'consecutive-numbers', 'employees-earning-more-than-their-managers', 'department-top-three-salaries', 'rising-temperature', 'customer-who-visited-but-did-not-make-any-transactions', 'find-customer-referee', 'article-views-i', 'average-time-of-process-per-machine', 'invalid-tweets', 'fill-missing-data'],
+    keywords: ['salary', 'employees-earning', 'department-top', 'rising-temperature', 'customer-who-visited', 'find-customer-referee', 'article-views', 'average-time-of-process', 'invalid-tweets', 'fill-missing']
   },
   {
     name: 'General DSA', icon: '📝', order: 31,
@@ -292,7 +292,7 @@ function initData() {
       if (Array.isArray(savedCustom) && savedCustom.length > 0) {
         customQuestions = savedCustom;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   for (const [rawName, rawProblems] of Object.entries(dataObj)) {
@@ -402,6 +402,7 @@ function initData() {
 
   // Sort companies descending by total problem count by default
   companyList.sort((a, b) => b.total - a.total);
+  companyList.forEach((c, idx) => { c.rank = idx + 1; });
   if (companyList.length > 0) {
     maxTotal = companyList[0].total;
   }
@@ -440,7 +441,7 @@ function initData() {
         });
       }
       // Clean up legacy recall items if present
-      try { localStorage.removeItem('leetcode_recall_items_v1'); } catch (err) {}
+      try { localStorage.removeItem('leetcode_recall_items_v1'); } catch (err) { }
       // Load custom questions from localStorage
       try {
         const savedCustom = JSON.parse(localStorage.getItem('custom_questions_v1') || '[]');
@@ -542,23 +543,129 @@ function sortCompanies() {
 // 1. HOME VIEW: List of Ranked Companies
 // ----------------------------------------------------
 let currentRenderToken = 0;
+let currentCompanyPage = 1;
+let companyPageSize = 10;
+let currentCompanyData = [];
+
+function setCompanyPageSize(size) {
+  companyPageSize = size === 'All' ? Infinity : parseInt(size, 10);
+  currentCompanyPage = 1;
+  document.querySelectorAll('.pagination-page-size .size-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.size === String(size));
+  });
+  renderCompanies(currentCompanyData);
+}
+
+function changeCompanyPage(delta) {
+  const total = currentCompanyData.length;
+  const pageSize = companyPageSize === Infinity ? total : companyPageSize;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const newPage = Math.min(Math.max(1, currentCompanyPage + delta), totalPages);
+  if (newPage !== currentCompanyPage) {
+    currentCompanyPage = newPage;
+    renderCompanies(currentCompanyData);
+    document.getElementById('home-companies-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function goToCompanyPage(pageNum) {
+  currentCompanyPage = pageNum;
+  renderCompanies(currentCompanyData);
+  document.getElementById('home-companies-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function createPageBtn(pageNum, isActive = false) {
+  const btn = document.createElement('button');
+  btn.className = `page-num-btn ${isActive ? 'active' : ''}`;
+  btn.textContent = pageNum;
+  btn.onclick = () => goToCompanyPage(pageNum);
+  return btn;
+}
+
+function renderPaginationControls(totalItems, startIdx, endIdx, totalPages) {
+  const pagEl = document.getElementById('companies-pagination');
+  if (!pagEl) return;
+
+  if (totalItems <= 0) {
+    pagEl.style.display = 'none';
+    return;
+  }
+  pagEl.style.display = 'flex';
+
+  // Info label
+  const rangeEl = document.getElementById('pagination-range');
+  const totalEl = document.getElementById('pagination-total');
+  if (rangeEl) rangeEl.textContent = `${totalItems === 0 ? 0 : startIdx + 1}–${endIdx}`;
+  if (totalEl) totalEl.textContent = totalItems.toLocaleString();
+
+  // Prev / Next button states
+  const prevBtn = document.getElementById('pagination-prev');
+  const nextBtn = document.getElementById('pagination-next');
+  if (prevBtn) prevBtn.disabled = currentCompanyPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentCompanyPage >= totalPages;
+
+  // Numbered page buttons
+  const numbersEl = document.getElementById('pagination-numbers');
+  if (!numbersEl) return;
+  numbersEl.innerHTML = '';
+
+  if (totalPages <= 1) return;
+
+  const maxButtons = 5;
+  let startPage = Math.max(1, currentCompanyPage - 2);
+  let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  if (endPage - startPage < maxButtons - 1) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+
+  if (startPage > 1) {
+    numbersEl.appendChild(createPageBtn(1));
+    if (startPage > 2) {
+      const dots = document.createElement('span');
+      dots.className = 'page-dots';
+      dots.textContent = '...';
+      numbersEl.appendChild(dots);
+    }
+  }
+
+  for (let p = startPage; p <= endPage; p++) {
+    numbersEl.appendChild(createPageBtn(p, p === currentCompanyPage));
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      const dots = document.createElement('span');
+      dots.className = 'page-dots';
+      dots.textContent = '...';
+      numbersEl.appendChild(dots);
+    }
+    numbersEl.appendChild(createPageBtn(totalPages));
+  }
+}
 
 function renderCompanies(dataToRender = companyList) {
+  currentCompanyData = dataToRender;
   const compTbody = document.getElementById('companies-tbody');
+  if (!compTbody) return;
   compTbody.innerHTML = '';
 
-  const renderToken = ++currentRenderToken;
-  const CHUNK_SIZE = 50;
-  let idx = 0;
+  const totalItems = dataToRender.length;
+  const pageSize = companyPageSize === Infinity ? totalItems : companyPageSize;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
-  function renderChunk() {
-    if (renderToken !== currentRenderToken) return;
+  // Clamp current page
+  if (currentCompanyPage > totalPages) currentCompanyPage = totalPages;
+  if (currentCompanyPage < 1) currentCompanyPage = 1;
 
+  const startIdx = (currentCompanyPage - 1) * pageSize;
+  const endIdx = Math.min(startIdx + pageSize, totalItems);
+  const pageItems = dataToRender.slice(startIdx, endIdx);
+
+  if (pageItems.length === 0) {
+    compTbody.innerHTML = `<tr><td colspan="7" class="empty-state">No matching companies found.</td></tr>`;
+  } else {
     const frag = document.createDocumentFragment();
-    const end = Math.min(idx + CHUNK_SIZE, dataToRender.length);
-
-    for (; idx < end; idx++) {
-      const c = dataToRender[idx];
+    pageItems.forEach((c, idx) => {
       const tr = document.createElement('tr');
       tr.className = 'row';
       tr.onclick = () => openCompany(c);
@@ -570,9 +677,10 @@ function renderCompanies(dataToRender = companyList) {
 
       const relPct = Math.max(((c.total / maxTotal) * 100).toFixed(1), 1.5);
       const solvedPct = c.total > 0 ? Math.round((companySolved / c.total) * 100) : 0;
+      const rankDisplay = c.rank ? `#${c.rank}` : `#${startIdx + idx + 1}`;
 
       tr.innerHTML = `
-        <td class="rank">#${idx + 1}</td>
+        <td class="rank">${rankDisplay}</td>
         <td class="company-name">
           ${c.name}
           <div style="font-size:11px; color:var(--text-secondary); font-weight:normal; margin-top:2px;">
@@ -588,20 +696,11 @@ function renderCompanies(dataToRender = companyList) {
         <td class="count c-hard">${c.h}</td>
       `;
       frag.appendChild(tr);
-    }
-
+    });
     compTbody.appendChild(frag);
-
-    if (idx < dataToRender.length) {
-      requestAnimationFrame(renderChunk);
-    }
   }
 
-  if (dataToRender.length === 0) {
-    compTbody.innerHTML = `<tr><td colspan="7" class="empty-state">No matching companies found.</td></tr>`;
-  } else {
-    renderChunk();
-  }
+  renderPaginationControls(totalItems, startIdx, endIdx, totalPages);
 }
 
 // Calculate company search relevance score for intelligent ranking
@@ -650,15 +749,18 @@ function getCompanyRelevanceScore(c, query, lcNum) {
 }
 
 function filterCompanies() {
+  currentCompanyPage = 1;
   const q = document.getElementById('search').value.trim().toLowerCase();
   const resultsDiv = document.getElementById('home-problems-results');
   const homeView = document.getElementById('home-view');
   const companiesCard = document.getElementById('home-companies-card');
 
+  const targetCard = (companiesCard && companiesCard.parentElement === homeView) ? companiesCard : (companiesCard ? companiesCard.closest('#home-view > *') : null);
+
   if (!q) {
     if (resultsDiv) resultsDiv.style.display = 'none';
-    if (homeView && resultsDiv && companiesCard && resultsDiv.nextElementSibling !== companiesCard) {
-      homeView.insertBefore(resultsDiv, companiesCard);
+    if (homeView && resultsDiv && targetCard && resultsDiv.nextElementSibling !== targetCard) {
+      homeView.insertBefore(resultsDiv, targetCard);
     }
     renderCompanies(companyList);
     return;
@@ -741,8 +843,8 @@ function filterCompanies() {
   }
 
   // Always maintain layout order: Matching Questions first, followed by Companies table
-  if (homeView && resultsDiv && companiesCard && resultsDiv.nextElementSibling !== companiesCard) {
-    homeView.insertBefore(resultsDiv, companiesCard);
+  if (homeView && resultsDiv && targetCard && resultsDiv.nextElementSibling !== targetCard) {
+    homeView.insertBefore(resultsDiv, targetCard);
   }
 
   renderCompanies(filteredCompanies);
@@ -771,7 +873,7 @@ function renderHomeProblemsResults(problemsList) {
       const shown = p.companies.slice(0, maxShown);
       const remaining = p.companies.length - maxShown;
 
-      companyBadgeHTML = shown.map(comp => 
+      companyBadgeHTML = shown.map(comp =>
         `<button class="back-btn" data-comp="${escapeHtml(comp)}" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName(this.dataset.comp)">🏢 ${escapeHtml(comp)}</button>`
       ).join('');
 
@@ -921,7 +1023,7 @@ function renderCompanyTopics() {
 
   // Filter topics by query: match topic name OR any problem title/number inside the topic!
   const topicQueryLcNum = query ? parseLeetCodeNumberQuery(query) : null;
-  const filteredTopics = query ? topicsList.filter(t => 
+  const filteredTopics = query ? topicsList.filter(t =>
     t.name.toLowerCase().includes(query) ||
     t.problems.some(p => {
       if (topicQueryLcNum !== null && p.lcNum === topicQueryLcNum) return true;
@@ -1298,7 +1400,7 @@ function renderBookmarkTableSection(tbodyId, sectionId, problemsList) {
       const shown = p.companies.slice(0, maxShown);
       const remaining = p.companies.length - maxShown;
 
-      companyBadgeHTML = shown.map(comp => 
+      companyBadgeHTML = shown.map(comp =>
         `<button class="back-btn" data-comp="${escapeHtml(comp)}" style="padding: 2px 7px; font-size: 11px; margin-right: 4px; margin-bottom: 2px;" onclick="event.stopPropagation(); openCompanyByName(this.dataset.comp)">🏢 ${escapeHtml(comp)}</button>`
       ).join('');
 
@@ -1500,6 +1602,14 @@ function closeBackupModal() {
   document.getElementById('backup-modal')?.classList.remove('active');
 }
 
+function openAboutModal() {
+  document.getElementById('about-modal')?.classList.add('active');
+}
+
+function closeAboutModal() {
+  document.getElementById('about-modal')?.classList.remove('active');
+}
+
 function generateBackupPayload() {
   const solvedDatesObj = {};
   solvedDates.forEach((date, title) => { solvedDatesObj[title] = date; });
@@ -1677,7 +1787,7 @@ function processImportJsonString(jsonString) {
     if (customQuestionsList.length > 0) {
       try {
         localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
-      } catch (e) {}
+      } catch (e) { }
       if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
         window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
       }
@@ -1882,11 +1992,21 @@ function closeAuthModal() {
   document.getElementById('auth-modal')?.classList.remove('active');
 }
 
+function getCleanUserDisplayName(user) {
+  if (!user) return 'Learner';
+  const emailLower = (user.email || '').toLowerCase();
+  const rawName = user.displayName || (user.email ? user.email.split('@')[0] : 'Learner');
+  if (emailLower === 'codedbysandeep@gmail.com' || emailLower === 'builtbysandeep@gmail.com' || /sandeep.*saha/i.test(rawName)) {
+    return 'Sandeep Saha';
+  }
+  return rawName;
+}
+
 async function handleGoogleSignIn() {
   try {
     const user = await window.FirebaseService.signInWithGoogle();
     if (user) {
-      showToast(`👋 Welcome back, ${user.displayName || user.email}!`, 'success');
+      showToast(`👋 Welcome back, ${getCleanUserDisplayName(user)}!`, 'success');
     }
   } catch (err) {
     console.error("Google sign-in error:", err);
@@ -1959,7 +2079,7 @@ function updateAuthUserUI(user) {
   const loggedInView = document.getElementById('auth-logged-in-view');
 
   if (user) {
-    const fullName = user.displayName || user.email.split('@')[0] || 'Learner';
+    const fullName = getCleanUserDisplayName(user);
     const shortName = fullName.trim().split(/\s+/)[0];
     if (authLabel) authLabel.textContent = shortName;
     if (authBtn) {
@@ -1977,7 +2097,7 @@ function updateAuthUserUI(user) {
     const pSolved = document.getElementById('profile-solved-count');
     const pStarred = document.getElementById('profile-starred-count');
 
-    if (userDispName) userDispName.textContent = user.displayName || 'Learner';
+    if (userDispName) userDispName.textContent = fullName;
     if (userEmail) userEmail.textContent = user.email || '';
     if (pSolved) pSolved.textContent = solvedProblems.size;
     if (pStarred) pStarred.textContent = starredProblems.size;
@@ -2212,15 +2332,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function openSolvedViewWithFilter(diff) {
+  if (typeof openSolvedView === 'function') {
+    openSolvedView();
+    if (typeof setSolvedFilter === 'function') {
+      setSolvedFilter(diff);
+    }
+  }
+}
+
 /* ── Solved Activity Heatmap ─────────────────────────────────────────────── */
 function renderSolvedHeatmap() {
-  const grid         = document.getElementById('heatmap-grid');
-  const monthsEl     = document.getElementById('heatmap-months');
-  const totalEl      = document.getElementById('heatmap-total-count');
+  const grid = document.getElementById('heatmap-grid');
+  const monthsEl = document.getElementById('heatmap-months');
+  const totalEl = document.getElementById('heatmap-total-count');
   const activeDaysEl = document.getElementById('heatmap-active-days');
-  const maxStreakEl  = document.getElementById('heatmap-max-streak');
-  const past7DaysEl  = document.getElementById('heatmap-past-7-days');
-  const curMonthEl   = document.getElementById('heatmap-current-month');
+  const maxStreakEl = document.getElementById('heatmap-max-streak');
+  const past7DaysEl = document.getElementById('heatmap-past-7-days');
+  const curMonthEl = document.getElementById('heatmap-current-month');
   if (!grid || !monthsEl) return;
 
   // ── 1. Build date→count map from solvedDates (UTC calendar day) ───────────
@@ -2233,26 +2362,26 @@ function renderSolvedHeatmap() {
       try {
         const d = new Date(iso);
         if (isNaN(d.getTime())) return;
-        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
         dayCount.set(key, (dayCount.get(key) || 0) + 1);
-      } catch {}
+      } catch { }
     });
   }
 
-  // ── 2. Date range: 1 year window (today going back 365 days) ─────────────
+  // ── 2. Date range: exactly 12 months (starts 1st of month following this month last year) ──
   const todayUTC = new Date();
-  const endDay   = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate()));
-  const startDay = new Date(Date.UTC(endDay.getUTCFullYear() - 1, endDay.getUTCMonth(), endDay.getUTCDate() + 1));
+  const endDay = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth(), todayUTC.getUTCDate()));
+  const startDay = new Date(Date.UTC(endDay.getUTCFullYear() - 1, endDay.getUTCMonth() + 1, 1));
 
   // ── 3. Compute stats over the 1-year window ───────────────────────────────
-  let totalSolved   = 0;
-  let activeDays    = 0;
-  let maxStreak     = 0;
-  let curStreak     = 0;
+  let totalSolved = 0;
+  let activeDays = 0;
+  let maxStreak = 0;
+  let curStreak = 0;
   let prevWasActive = false;
 
   for (let d = new Date(startDay); d <= endDay; d.setUTCDate(d.getUTCDate() + 1)) {
-    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
     const cnt = dayCount.get(key) || 0;
     totalSolved += cnt;
     if (cnt > 0) {
@@ -2283,29 +2412,86 @@ function renderSolvedHeatmap() {
     currentMonthSolved += (dayCount.get(key) || 0);
   }
 
-  if (totalEl)      totalEl.textContent      = totalSolved;
+  if (totalEl) totalEl.textContent = totalSolved;
   if (activeDaysEl) activeDaysEl.textContent = activeDays;
-  if (maxStreakEl)  maxStreakEl.textContent   = maxStreak;
-  if (past7DaysEl)  past7DaysEl.textContent  = past7DaysSolved;
-  if (curMonthEl)   curMonthEl.textContent   = currentMonthSolved;
+  if (maxStreakEl) maxStreakEl.textContent = maxStreak;
+  if (past7DaysEl) past7DaysEl.textContent = past7DaysSolved;
+  if (curMonthEl) curMonthEl.textContent = currentMonthSolved;
+
+  // ── 3c. Solved count breakdown by difficulty (Total & Current Month) ───────
+  const diffMap = new Map();
+  if (typeof companyList !== 'undefined') {
+    companyList.forEach(c => {
+      c.problems.forEach(p => {
+        if (p.title && p.diff) diffMap.set(p.title.trim(), p.diff);
+      });
+    });
+  }
+  if (typeof customQuestions !== 'undefined') {
+    customQuestions.forEach(q => {
+      if (q.title && q.diff) diffMap.set(q.title.trim(), q.diff);
+    });
+  }
+
+  let easyTotal = 0, medTotal = 0, hardTotal = 0;
+  let easyMonth = 0, medMonth = 0, hardMonth = 0;
+
+  if (typeof solvedProblems !== 'undefined') {
+    solvedProblems.forEach(rawTitle => {
+      const title = typeof rawTitle === 'string' ? rawTitle.trim() : rawTitle;
+      const diff = diffMap.get(title) || 'Medium';
+
+      if (diff === 'Easy') easyTotal++;
+      else if (diff === 'Hard') hardTotal++;
+      else medTotal++;
+
+      const iso = (typeof solvedDates !== 'undefined') ? (solvedDates.get(title) || solvedDates.get(rawTitle)) : null;
+      if (iso) {
+        try {
+          const d = new Date(iso);
+          if (d.getUTCFullYear() === curYearNum && d.getUTCMonth() === curMonthNum) {
+            if (diff === 'Easy') easyMonth++;
+            else if (diff === 'Hard') hardMonth++;
+            else medMonth++;
+          }
+        } catch { }
+      }
+    });
+  }
+
+  const easySolvedEl = document.getElementById('heatmap-easy-solved');
+  const medSolvedEl = document.getElementById('heatmap-med-solved');
+  const hardSolvedEl = document.getElementById('heatmap-hard-solved');
+
+  if (easySolvedEl) easySolvedEl.textContent = easyTotal;
+  if (medSolvedEl) medSolvedEl.textContent = medTotal;
+  if (hardSolvedEl) hardSolvedEl.textContent = hardTotal;
+
+  const easyMonthEl = document.getElementById('heatmap-easy-month');
+  const medMonthEl = document.getElementById('heatmap-med-month');
+  const hardMonthEl = document.getElementById('heatmap-hard-month');
+
+  if (easyMonthEl) easyMonthEl.textContent = `(${easyMonth} this mo)`;
+  if (medMonthEl) medMonthEl.textContent = `(${medMonth} this mo)`;
+  if (hardMonthEl) hardMonthEl.textContent = `(${hardMonth} this mo)`;
 
   // ── 4 & 5. Render month blocks matching LeetCode structure ────────────────
-  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   monthsEl.innerHTML = '';
   grid.innerHTML = '';
 
   const monthsFrag = document.createDocumentFragment();
-  const gridFrag   = document.createDocumentFragment();
+  const gridFrag = document.createDocumentFragment();
 
-  let curYear  = startDay.getUTCFullYear();
+  let curYear = startDay.getUTCFullYear();
   let curMonth = startDay.getUTCMonth();
-  const endYear  = endDay.getUTCFullYear();
+  const endYear = endDay.getUTCFullYear();
   const endMonth = endDay.getUTCMonth();
 
   while (curYear < endYear || (curYear === endYear && curMonth <= endMonth)) {
     const firstDayOfMonth = new Date(Date.UTC(curYear, curMonth, 1));
-    const lastDayOfMonth  = new Date(Date.UTC(curYear, curMonth + 1, 0));
+    const lastDayOfMonth = new Date(Date.UTC(curYear, curMonth + 1, 0));
     const totalDaysInMonth = lastDayOfMonth.getUTCDate();
     const startDow = firstDayOfMonth.getUTCDay(); // 0=Sun..6=Sat
     const totalCols = Math.floor((startDow + totalDaysInMonth - 1) / 7) + 1;
@@ -3030,7 +3216,7 @@ async function autoEnrichCustomQuestions() {
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   isEnrichingCustom = false;
@@ -3038,7 +3224,7 @@ async function autoEnrichCustomQuestions() {
   if (hasChanges) {
     try {
       localStorage.setItem('custom_questions_v1', JSON.stringify(customQuestions));
-    } catch (e) {}
+    } catch (e) { }
     if (window.FirebaseService && window.FirebaseService.getCurrentUser()) {
       window.FirebaseService.saveCustomQuestionsToCloud(customQuestions);
     }

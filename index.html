@@ -116,28 +116,31 @@
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <span>Backup / Restore</span>
+            <span>Backup</span>
+          </button>
+          <button class="social-btn about-btn" id="about-btn" onclick="openAboutModal()" title="System Architecture & Design">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <span>Architecture</span>
           </button>
           <div class="social-links">
-            <a href="https://www.linkedin.com/in/codedbysandeep" id="linkedin-link" target="_blank" class="social-btn linkedin" title="Sandeep Kumar Saha on LinkedIn">
+            <a href="https://www.linkedin.com/in/codedbysandeep" id="linkedin-link" target="_blank" rel="noopener" class="social-btn social-icon-btn linkedin" title="Sandeep Saha on LinkedIn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
               </svg>
-              <span>LinkedIn</span>
             </a>
-            <a href="https://github.com/Sandeep-569/DsaTracker" id="github-link" target="_blank" class="social-btn github" title="DsaTracker on GitHub">
+            <a href="https://github.com/Sandeep-569/DsaTracker" id="github-link" target="_blank" rel="noopener" class="social-btn social-icon-btn github" title="DsaTracker on GitHub">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
               </svg>
-              <span>GitHub</span>
             </a>
-            <a href="https://leetcode.com/u/codedbysandeep/" id="leetcode-link" target="_blank" class="social-btn leetcode" title="codedbysandeep on LeetCode">
+            <a href="https://leetcode.com/u/codedbysandeep/" id="leetcode-link" target="_blank" rel="noopener" class="social-btn social-icon-btn leetcode" title="codedbysandeep on LeetCode">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z" fill="#B3B3B3"/>
                 <path d="M10.702 5.07l5.597-5.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-5.597 5.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
                 <path d="M16.102 11.93l6.597-6.597c.515-.515 1.366-.497 1.9.038.536.536.554 1.387.039 1.902l-6.597 6.596c-.515.515-1.366.497-1.9-.038-.535-.536-.553-1.387-.039-1.901z" fill="#FFA116"/>
               </svg>
-              <span>LeetCode</span>
             </a>
           </div>
         </div>
@@ -165,10 +168,16 @@
 
       <!-- Solved Activity Heatmap -->
       <div class="heatmap-wrapper" id="heatmap-wrapper">
-        <div class="heatmap-header">
-          <div class="heatmap-title">
-            <span id="heatmap-total-count">0</span> questions solved in the past one year
-            <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
+        <div class="heatmap-layout">
+          <div class="heatmap-left">
+            <div class="heatmap-title">
+              <span id="heatmap-total-count">0</span> questions solved in the past one year
+              <span class="heatmap-info-icon" title="Based on the date each question was marked solved">ⓘ</span>
+            </div>
+            <div class="heatmap-scroll-container">
+              <div class="heatmap-months" id="heatmap-months"></div>
+              <div class="heatmap-grid" id="heatmap-grid"></div>
+            </div>
           </div>
           <div class="heatmap-stats">
             <div class="heatmap-stats-row">
@@ -177,11 +186,16 @@
             </div>
             <span title="Number of questions solved in the past 7 days">Past 7 days: <strong id="heatmap-past-7-days">0</strong></span>
             <span title="Number of questions solved in the current calendar month">Current month: <strong id="heatmap-current-month">0</strong></span>
+            <span class="heatmap-diff-item easy clickable" onclick="openSolvedViewWithFilter('Easy')" title="Total Easy questions solved (click to view)">
+              <span class="diff-bullet easy"></span>Easy: <strong id="heatmap-easy-solved">0</strong>
+            </span>
+            <span class="heatmap-diff-item med clickable" onclick="openSolvedViewWithFilter('Medium')" title="Total Medium questions solved (click to view)">
+              <span class="diff-bullet med"></span>Med: <strong id="heatmap-med-solved">0</strong>
+            </span>
+            <span class="heatmap-diff-item hard clickable" onclick="openSolvedViewWithFilter('Hard')" title="Total Hard questions solved (click to view)">
+              <span class="diff-bullet hard"></span>Hard: <strong id="heatmap-hard-solved">0</strong>
+            </span>
           </div>
-        </div>
-        <div class="heatmap-scroll-container">
-          <div class="heatmap-months" id="heatmap-months"></div>
-          <div class="heatmap-grid" id="heatmap-grid"></div>
         </div>
       </div>
 
@@ -240,8 +254,8 @@
         </div>
       </div>
 
-      <!-- Home Companies List -->
-      <div class="table-card" id="home-companies-card" style="margin-bottom: 32px;">
+      <!-- Home Companies List with Pagination -->
+      <div class="table-card" id="home-companies-card">
         <table>
           <thead>
             <tr>
@@ -256,6 +270,31 @@
           </thead>
           <tbody id="companies-tbody"></tbody>
         </table>
+        
+        <!-- Modern Pagination Bar -->
+        <div class="table-pagination" id="companies-pagination">
+          <div class="pagination-info" id="pagination-info">
+            Showing <strong id="pagination-range">1–10</strong> of <strong id="pagination-total">0</strong> companies
+          </div>
+          <div class="pagination-controls">
+            <button class="page-btn nav-btn" id="pagination-prev" onclick="changeCompanyPage(-1)" title="Previous Page">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <span>Prev</span>
+            </button>
+            <div class="page-numbers" id="pagination-numbers"></div>
+            <button class="page-btn nav-btn" id="pagination-next" onclick="changeCompanyPage(1)" title="Next Page">
+              <span>Next</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+          <div class="pagination-page-size">
+            <span class="size-label">Per page:</span>
+            <button class="size-btn active" data-size="10" onclick="setCompanyPageSize(10)">10</button>
+            <button class="size-btn" data-size="25" onclick="setCompanyPageSize(25)">25</button>
+            <button class="size-btn" data-size="50" onclick="setCompanyPageSize(50)">50</button>
+            <button class="size-btn" data-size="All" onclick="setCompanyPageSize('All')">All</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -626,7 +665,169 @@
         </div>
       </div>
     </div>
+
+    <!-- App Footer / Creator Credits -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <div class="footer-brand">
+            <span class="footer-dot"></span>
+            <strong>DSA Tracker</strong>
+            <span class="footer-ver">v3.0.0</span>
+          </div>
+          <p class="footer-tagline">Engineered for LeetCode interview mastery • Multi-tenant Cloud Sync & Automated CI/CD Pipeline</p>
+        </div>
+        <div class="footer-right">
+          <div class="footer-author">
+            Crafted with ❤️ by <a href="https://www.linkedin.com/in/codedbysandeep" target="_blank" rel="noopener"><strong>Sandeep Saha</strong></a>
+          </div>
+          <div class="footer-socials">
+            <a href="https://github.com/Sandeep-569/DsaTracker" target="_blank" rel="noopener" title="GitHub Repository">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+              <span>GitHub</span>
+            </a>
+            <a href="https://www.linkedin.com/in/codedbysandeep" target="_blank" rel="noopener" title="LinkedIn Profile">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+              <span>LinkedIn</span>
+            </a>
+            <a href="https://leetcode.com/u/codedbysandeep/" target="_blank" rel="noopener" title="LeetCode Profile">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z"/></svg>
+              <span>LeetCode</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </main>
+
+  <!-- Modal for Architecture & Engineering Highlights -->
+  <div class="modal-overlay" id="about-modal" onclick="if(event.target === this) closeAboutModal()">
+    <div class="modal-box about-modal-box">
+      <div class="backup-modal-header">
+        <div class="modal-title-group">
+          <div class="modal-badge-icon" style="background: linear-gradient(135deg, rgba(66, 153, 225, 0.2), rgba(128, 90, 213, 0.2)); border: 1px solid rgba(66, 153, 225, 0.4); color: #63b3ed;">⚡</div>
+          <div>
+            <h2 style="font-size: 19px; font-weight: 700; color: #fff; margin: 0;">System Architecture & Design</h2>
+            <p class="modal-subtitle" style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 13px;">Engineering overview, automated CI/CD pipeline, and multi-tenant cloud architecture.</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeAboutModal()" title="Close">&times;</button>
+      </div>
+
+      <!-- Author Card -->
+      <div class="about-creator-card">
+        <div class="about-creator-info">
+          <div class="about-avatar">👨‍💻</div>
+          <div>
+            <div class="about-name">Sandeep Saha</div>
+            <div class="about-tagline">Software Developer • Problem Solver</div>
+          </div>
+        </div>
+        <div class="about-creator-links">
+          <a href="https://www.linkedin.com/in/codedbysandeep" target="_blank" rel="noopener" class="about-link-pill linkedin">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+            <span>LinkedIn</span>
+          </a>
+          <a href="https://github.com/Sandeep-569/DsaTracker" target="_blank" rel="noopener" class="about-link-pill github">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+            <span>GitHub</span>
+          </a>
+          <a href="https://leetcode.com/u/codedbysandeep/" target="_blank" rel="noopener" class="about-link-pill leetcode">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16.102 17.93l-2.697 2.607c-.466.467-1.111.662-1.823.662s-1.357-.195-1.824-.662l-4.332-4.363c-.467-.467-.702-1.15-.702-1.863 0-.713.235-1.357.702-1.824l4.319-4.38c.467-.467 1.125-.645 1.837-.645s1.357.195 1.823.662l2.697 2.606c.514.515 1.365.497 1.9-.038.535-.536.553-1.387.039-1.901l-2.697-2.607c-1.02-1.02-2.52-1.523-4.002-1.523s-2.982.503-4.003 1.523l-4.318 4.38c-1.02 1.02-1.536 2.457-1.536 3.939s.516 2.919 1.536 3.939l4.332 4.363c1.02 1.02 2.52 1.524 4.003 1.524s2.982-.503 4.002-1.524l2.697-2.606c.514-.515.496-1.366-.039-1.901-.535-.536-1.386-.554-1.9.038z"/></svg>
+            <span>LeetCode</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Visual Data Flow Pipeline -->
+      <div class="about-section-label">DATA PIPELINE & REAL-TIME FLOW</div>
+      <div class="about-diagram-card">
+        <div class="diagram-step">
+          <div class="d-icon">⚡</div>
+          <div class="d-title">LeetCode API</div>
+          <div class="d-sub">GraphQL Submissions</div>
+        </div>
+        <div class="d-arrow">→</div>
+        <div class="diagram-step">
+          <div class="d-icon">🤖</div>
+          <div class="d-title">GitHub Actions</div>
+          <div class="d-sub">Automated Cron Sync</div>
+        </div>
+        <div class="d-arrow">→</div>
+        <div class="diagram-step">
+          <div class="d-icon">🔥</div>
+          <div class="d-title">Cloud Firestore</div>
+          <div class="d-sub">Multi-Tenant Isolation</div>
+        </div>
+        <div class="d-arrow">⇄</div>
+        <div class="diagram-step">
+          <div class="d-icon">💻</div>
+          <div class="d-title">DSA Tracker App</div>
+          <div class="d-sub">Real-Time Sync UI</div>
+        </div>
+      </div>
+
+      <!-- 4 Engineering Highlight Cards -->
+      <div class="about-section-label">ENGINEERING HIGHLIGHTS</div>
+      <div class="about-features-grid">
+        <div class="about-feature-card">
+          <div class="afc-head">
+            <span class="afc-icon">🤖</span>
+            <h4>Automated Cron Pipeline</h4>
+          </div>
+          <p>Scheduled GitHub Actions worker fetches recent accepted solves via LeetCode GraphQL, matches them to problem slugs, and automatically updates Firestore via the Firebase Admin SDK with zero manual input.</p>
+        </div>
+
+        <div class="about-feature-card">
+          <div class="afc-head">
+            <span class="afc-icon">🔒</span>
+            <h4>Multi-Tenant Cloud Security</h4>
+          </div>
+          <p>Fine-grained Cloud Firestore Security Rules enforce strict per-user boundaries (<code>users/{uid}</code>). Each authenticated user has their own private cloud document that cannot be accessed or modified by others.</p>
+        </div>
+
+        <div class="about-feature-card">
+          <div class="afc-head">
+            <span class="afc-icon">⚡</span>
+            <h4>Optimistic Real-Time Sync</h4>
+          </div>
+          <p>Powered by Firestore <code>onSnapshot</code> listeners with bidirectional synchronization, debounced writes, and immediate local caching for sub-millisecond perceived latency across desktop and mobile.</p>
+        </div>
+
+        <div class="about-feature-card">
+          <div class="afc-head">
+            <span class="afc-icon">📊</span>
+            <h4>Intelligent Search & Analytics</h4>
+          </div>
+          <p>Multi-token fuzzy search supporting problem names, company tags, and LeetCode IDs. Includes a GitHub-style 53-week interactive contribution heatmap tracking daily solving consistency.</p>
+        </div>
+      </div>
+
+      <!-- Tech Stack Badges -->
+      <div class="about-section-label">CORE TECHNOLOGY STACK</div>
+      <div class="about-tech-chips">
+        <span class="tech-chip">JavaScript (ES6+)</span>
+        <span class="tech-chip">Node.js</span>
+        <span class="tech-chip">Firebase Authentication</span>
+        <span class="tech-chip">Cloud Firestore</span>
+        <span class="tech-chip">GitHub Actions CI/CD</span>
+        <span class="tech-chip">GraphQL API</span>
+        <span class="tech-chip">Telegram Bot API</span>
+        <span class="tech-chip">CSS3 Flexbox/Grid</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="about-modal-actions">
+        <a href="https://github.com/Sandeep-569/DsaTracker" target="_blank" rel="noopener" class="action-btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+        <button class="action-btn btn-secondary" onclick="closeAboutModal()">
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal for Backup & Restore (Export / Import) -->
   <div class="modal-overlay" id="backup-modal" onclick="if(event.target === this) closeBackupModal()">

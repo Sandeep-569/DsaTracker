@@ -47,11 +47,14 @@
       });
 
       const deviceType = /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '📱 Mobile' : '💻 Desktop';
+      const cleanName = (isOwner || /sandeep.*saha/i.test(user.displayName || '')) 
+        ? 'Sandeep Saha' 
+        : (user.displayName || 'Learner');
 
       const messageText = [
         `🚀 *DSA Tracker Login Alert!*`,
         ``,
-        `👤 *Name:* ${user.displayName || 'Learner'}`,
+        `👤 *Name:* ${cleanName}`,
         `📧 *Email:* \`${user.email || 'No Email'}\``,
         `🏷️ *Type:* ${userTypeBadge}`,
         `💻 *Device:* ${deviceType}`,
@@ -94,10 +97,16 @@
       const userRef = db.collection('users').doc(user.uid);
       const docSnap = await userRef.get();
       const now = new Date().toISOString();
+      const emailLower = (user.email || '').toLowerCase();
+      const isOwner = emailLower === 'codedbysandeep@gmail.com' || emailLower === 'builtbysandeep@gmail.com';
+      const cleanName = (isOwner || /sandeep.*saha/i.test(user.displayName || '')) 
+        ? 'Sandeep Saha' 
+        : (user.displayName || '');
+
       if (!docSnap.exists) {
         await userRef.set({
           email: user.email || '',
-          displayName: user.displayName || '',
+          displayName: cleanName,
           photoURL: user.photoURL || '',
           firstLoginAt: now,
           lastLoginAt: now,
@@ -109,7 +118,7 @@
         const data = docSnap.data() || {};
         await userRef.set({
           email: user.email || '',
-          displayName: user.displayName || '',
+          displayName: cleanName,
           photoURL: user.photoURL || '',
           lastLoginAt: now,
           loginCount: firebase.firestore.FieldValue.increment(1)
