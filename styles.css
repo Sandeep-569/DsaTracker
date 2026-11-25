@@ -223,6 +223,15 @@ header p {
   box-shadow: 0 0 18px rgba(63, 185, 80, 0.35);
 }
 
+#auth-btn-label {
+  max-width: 95px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .sync-dot {
   width: 7px;
   height: 7px;

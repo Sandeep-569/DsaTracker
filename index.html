@@ -12,28 +12,15 @@
   <link rel="apple-touch-icon" href="favicon.svg?v=2.1.0">
   <link rel="stylesheet" href="styles.css?v=3.4.0">
   <style>
-    /* Critical Lock Screen Enforcement - Prevents any FOUC on mobile */
-    body.auth-locked {
-      overflow: hidden !important;
-      height: 100vh !important;
-      height: 100dvh !important;
-      background: #0d0f14 !important;
-    }
-    body.auth-locked #app-content {
-      display: none !important;
-    }
-    body.auth-locked #auth-gate-screen {
-      display: flex !important;
-    }
-    #app-content {
+    #auth-gate-screen {
       display: none;
     }
   </style>
 </head>
 
-<body class="auth-locked">
-  <!-- Auth Gate Screen (Locked by Default until Owner Signs In) -->
-  <div id="auth-gate-screen" class="auth-gate-screen">
+<body>
+  <!-- Auth Gate Screen (Hidden in Guest Mode) -->
+  <div id="auth-gate-screen" class="auth-gate-screen" style="display: none;">
     <div class="gate-card">
       <div class="gate-logo">
         <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -79,8 +66,8 @@
     </div>
   </div>
 
-  <!-- Main Application Content (Hidden by default until owner authenticated) -->
-  <div id="app-content" style="display: none;">
+  <!-- Main Application Content -->
+  <div id="app-content">
     <main>
     <!-- Header -->
     <header class="app-header" id="main-header">
@@ -782,7 +769,7 @@
       <!-- Logged Out View (Single Click Google Sign In) -->
       <div id="auth-logged-out-view" style="padding: 8px 0; text-align: center;">
         <div style="margin-bottom: 20px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">
-          Sign in with your Google account (<strong style="color: var(--accent);">codedbysandeep@gmail.com</strong>) to securely synchronize your solved and bookmarked problems in real-time across all your devices.
+          Sign in with your Google account to securely save and synchronize your solved and bookmarked problems in real-time across all your devices.
         </div>
 
         <!-- Quick Google Sign In -->
