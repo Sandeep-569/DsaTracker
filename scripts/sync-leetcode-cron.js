@@ -29,6 +29,14 @@ if (!LEETCODE_USERNAME || !OWNER_EMAIL || !SERVICE_ACCOUNT_JSON) {
   process.exit(1);
 }
 
+// Multi-user safety caps & polite rate-limiting
+const MAX_USERS_PER_RUN = 25;
+const DELAY_BETWEEN_USERS_MS = 1000;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Helper: fetch with an explicit timeout (ms)
 async function fetchWithTimeout(url, options = {}, timeoutMs = 60000) {
   const controller = new AbortController();
@@ -217,6 +225,10 @@ async function syncUserRecord(uid, leetcodeUsername, email, titleLookup, slugLoo
     }, { merge: true });
     console.log(`Successfully added ${newlyAdded} newly solved problem(s) to Firestore for ${leetcodeUsername}.`);
   } else {
+    // Keep timestamp updated so round-robin rotation prioritizes other users fairly
+    await docRef.set({
+      lastAutoSyncAt: new Date().toISOString()
+    }, { merge: true });
     console.log(`Firestore already up to date for ${leetcodeUsername}.`);
   }
   return newlyAdded;
@@ -247,18 +259,45 @@ async function main() {
   try {
     console.log('\nChecking for other registered users with LeetCode usernames...');
     const snapshot = await db.collection('users').get();
-    let otherUsersCount = 0;
-
+    
+    // Collect all visitor candidates (excluding owner) who configured a handle
+    const candidates = [];
     for (const doc of snapshot.docs) {
-      if (doc.id === ownerUid) continue; // Already processed
+      if (doc.id === ownerUid) continue; // Already processed as owner
       const data = doc.data();
       const userHandle = (data.leetcodeUsername || '').trim();
       if (userHandle) {
-        otherUsersCount++;
-        await syncUserRecord(doc.id, userHandle, data.email, titleLookup, slugLookup);
+        candidates.push({
+          uid: doc.id,
+          handle: userHandle,
+          email: data.email || 'Visitor',
+          lastAutoSyncAt: data.lastAutoSyncAt ? new Date(data.lastAutoSyncAt).getTime() : 0
+        });
       }
     }
-    console.log(`\nCompleted auto-sync for ${otherUsersCount} registered visitor(s) + 1 owner.`);
+
+    console.log(`Found ${candidates.length} registered visitor(s) with LeetCode handles.`);
+
+    // Fair Rotation: sort by least recently synced (oldest timestamp or never synced first)
+    candidates.sort((a, b) => a.lastAutoSyncAt - b.lastAutoSyncAt);
+
+    // Enforce safety cap of up to MAX_USERS_PER_RUN (e.g. 25)
+    const toProcess = candidates.slice(0, MAX_USERS_PER_RUN);
+    if (candidates.length > MAX_USERS_PER_RUN) {
+      console.log(`Capping to ${MAX_USERS_PER_RUN} users for this 3-hour run. Remaining ${candidates.length - MAX_USERS_PER_RUN} user(s) will be prioritized in the next run.`);
+    }
+
+    let processedCount = 0;
+    for (const user of toProcess) {
+      processedCount++;
+      await syncUserRecord(user.uid, user.handle, user.email, titleLookup, slugLookup);
+
+      // Polite 1-second delay between users to avoid bursting LeetCode GraphQL
+      if (processedCount < toProcess.length) {
+        await sleep(DELAY_BETWEEN_USERS_MS);
+      }
+    }
+    console.log(`\nCompleted auto-sync for ${processedCount} registered visitor(s) + 1 owner.`);
   } catch (err) {
     console.warn('Could not query other users (proceeding):', err.message);
   }
