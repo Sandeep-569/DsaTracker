@@ -285,24 +285,24 @@ header p {
 
 /* LeetCode Auto-Fetch Card inside User Profile */
 .user-leetcode-sync-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 161, 22, 0.04);
   border: 1px solid rgba(255, 161, 22, 0.25);
   border-radius: var(--radius-md);
   padding: 14px 16px;
-  margin: 16px 0;
+  margin: 14px 0;
   text-align: left;
 }
 
 .user-leetcode-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
 .user-leetcode-icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: rgba(255, 161, 22, 0.12);
   border: 1px solid rgba(255, 161, 22, 0.3);
@@ -320,41 +320,130 @@ header p {
 
 .user-lc-input {
   flex: 1;
-  background: rgba(0, 0, 0, 0.35);
+  height: 38px;
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 0 12px;
   color: var(--text-primary);
+  font-family: var(--sans);
   font-size: 13px;
   outline: none;
-  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .user-lc-input:focus {
   border-color: #ffa116;
+  box-shadow: 0 0 0 2px rgba(255, 161, 22, 0.15);
+}
+
+.user-lc-save-btn {
+  width: auto;
+  min-width: 68px;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 16px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-lc-save-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.user-lc-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.user-lc-status:empty {
+  display: none;
 }
 
 .user-lc-status {
   font-size: 12px;
-  margin-top: 6px;
-  min-height: 18px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.user-lc-status.loading { color: var(--accent); }
-.user-lc-status.success { color: var(--easy); }
-.user-lc-status.error { color: var(--hard); }
-.user-lc-status.info { color: var(--text-secondary); }
+.user-lc-status.loading {
+  background: rgba(88, 166, 255, 0.1);
+  border: 1px solid rgba(88, 166, 255, 0.25);
+  color: var(--accent);
+}
+
+.user-lc-status.success {
+  background: rgba(63, 185, 80, 0.1);
+  border: 1px solid rgba(63, 185, 80, 0.25);
+  color: var(--easy);
+}
+
+.user-lc-status.error {
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.25);
+  color: var(--hard);
+}
+
+.user-lc-status.info {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
 
 .user-lc-fetch-btn {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  font-family: var(--sans);
   font-weight: 600;
-  padding: 10px 14px;
+  font-size: 13px;
+  padding: 0 16px;
+  background: linear-gradient(135deg, rgba(255, 161, 22, 0.16) 0%, rgba(255, 107, 0, 0.22) 100%) !important;
+  border: 1px solid rgba(255, 161, 22, 0.45) !important;
+  color: #ffa116 !important;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.user-lc-fetch-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 161, 22, 0.28) 0%, rgba(255, 107, 0, 0.35) 100%) !important;
+  border-color: #ffa116 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(255, 161, 22, 0.3);
+  transform: translateY(-1px);
+}
+
+.user-lc-fetch-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .auth-btn:hover {
@@ -1632,8 +1721,27 @@ td.count {
    AUTH & CLOUD SYNC MODAL STYLES
    ============================================================ */
 .auth-modal-box {
-  max-width: 520px;
+  max-width: 500px;
   text-align: left;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.auth-modal-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-modal-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-modal-box::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.auth-modal-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .auth-tabs {
